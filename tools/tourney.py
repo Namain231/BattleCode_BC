@@ -1,6 +1,6 @@
 """Round-robin matches between two bots in the judge's sandbox, in parallel.
 
-    python tools/tourney.py viper_v6 viper_v3 [--maps a,b] [--seeds 2] [-j 10] [--one-side]
+    python tools/tourney.py viper_v7 baselines/v7_5 [--maps a,b] [--seeds 2] [-j 10] [--one-side]
 
 Each map is played with the first bot as team A and again as team B (turn
 order depends on dragon ids, so sides matter). C/C++ bots are built to wasm

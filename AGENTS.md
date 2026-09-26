@@ -76,14 +76,18 @@ redirects).
 
 ## Pitfalls
 
-- Quotas: 60 challenge games per team per hour (a 10-map challenge uses 10); 120 API requests/min.
-- A new build's first ranked battles use a high K (up to 96) only if it is the first new-code build to play
-  ranked after the team's 12-hour window reopens; otherwise it inherits the team's count (K = 24).
-- Ranked challenges: opponent must have ranked on and be rated no more than 50 below us.
-- CPU: 100M points per dragon-turn; exceeding it kills the dragon. Keep `max` in `unswbc run --sandbox`
-  output ≲ 65M. `elapsedMs()` guards exist in the code (1 ms ≈ 1M points).
-- Windows: Python `subprocess` needs `encoding="utf-8"` (team names are not ASCII). Writing C++ through a
-  shell heredoc turns `\n` inside string literals into real newlines: edit with an editor or a patch file.
-- Indicator strings are visible to opponents in replays; strip them before the final tournament.
-- Debug builds: copy the bot to `dbg7/` and add `debug_cfg.hpp` with `#define DEBUG_FROM a` / `#define DEBUG_TO b`
-  for board dumps and per-option evaluation logs in the replay.
+- Local wins against our own old bots did **not** predict ladder results; test against real teams with unranked challenges.
+- Quota: 60 games/hour per team (a 10-map challenge = 10 games); 120 API requests/min (30 for `/leaderboard`).
+- A new submission becomes active as soon as it builds and plays ranked autoscrims (every 2 h, UTC). New code gets a high K-factor (up to 96) for its first 10 ranked battles: big swings both ways.
+- Ranked challenges: only targets ≤ 50 below us, both teams need the ranked switch on.
+- CPU: 100M points per dragon per turn; exceeding it kills the dragon. `unswbc run --sandbox` prints p99/max; keep max ≲ 65M. The code has elapsed-time guards (`elapsedMs()`, 1 ms ≈ 1M points).
+- Windows gotchas: Python `subprocess` needs `encoding="utf-8"` (team names are not ASCII); writing C++ through bash heredocs turns `\n` in string literals into real newlines — use the Edit tool or a patch file for such edits.
+- Output: every `print` costs 2.5M points + 4000/byte; the helpers flush once per turn. Indicators are visible to opponents in replays — consider stripping them before the final tournament.
+
+## Open problems / next steps
+
+1. **Devil early expansion**: 6–10 units at round 100 vs the swarms' 15–38 (fountains sit in 1-wide kelp tubes). Still 0/3 on Devil with V7.4.
+2. **Top-3 gap**: they expand ~2x faster in the first 100 rounds and win the tiebreak with longest 23–31.
+3. **Per-map policy is live**: `bigFeed` (Portals, Slithery, Schooltime) uses v7.2 consolidation; everywhere else there's no mass feeding and budding runs to r420 while under 40 units (Autarky: stops at r300). Revisit whenever the map pool changes (`GET /maps`).
+4. Head-on war: top teams make 26–90 head-on kills per game. Revisit `findAttack` for cheap drones.
+5. Before the final tournament: strip indicator strings, re-verify CPU.

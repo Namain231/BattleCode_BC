@@ -1,0 +1,11 @@
+# build + caches
+**/.unswbc-build/
+**/__pycache__/
+*.pyc
+# match data: large, and includes other teams' games
+replays/
+ladder/
+# scratch / debug copies
+dbg*/
+v71/
+debug_cfg.hpp

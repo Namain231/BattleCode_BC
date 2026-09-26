@@ -1,6 +1,6 @@
 """Play one verbose sandbox match and print what chosen dragons did each round.
 
-    python tools/trace.py maps/arena.map viper_v6 starter_bot --seed 5 [--ids 0,2] [--team A]
+    python tools/trace.py maps/trauma.map viper_v7 baselines/v7_5 --seed 5 [--ids 0,2] [--team A]
 """
 import argparse
 import re

@@ -1,4 +1,4 @@
-"""Generate viper_v6/maps_data.hpp from the bundled .map files.
+"""Generate viper_v7/maps_data.hpp from the bundled .map files.
 
 The bot uses these only as a hint: it identifies the map from its spawn and
 first view, keeps validating every edge it sees, and drops the hint the moment
@@ -11,7 +11,7 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 maps_dir = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "maps"
-out_path = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "viper_v6" / "maps_data.hpp"
+out_path = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "viper_v7" / "maps_data.hpp"
 
 
 def parse(path):

@@ -1,4 +1,0 @@
-# created for viper_v6
-[project]
-language = "c++"
-include = [ "*.cpp", "*.hpp" ]

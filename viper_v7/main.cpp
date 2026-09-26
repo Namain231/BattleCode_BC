@@ -51,14 +51,11 @@ struct Params {
     // hunting (small dragons steer towards big enemy heads)
     double wProgress = 0.8;     // per step of progress towards the committed goal
     int budAt = 4;              // swarm: split a length-2 child off at this length
+    int mineUntil = 300;        // greedy mining only while the swarm is still expanding
     int budUntil = 300;         // stop budding late so the dragons grow for the tiebreak
     int feedFrom = 350;
     int feedRadius = 10;        // only drones this close to the queen feed; the rest keep foraging
-    int protectFrom = 400;      // from here the longest dragon never splits voluntarily
-    int endFeedFrom = 470;      // last-rounds consolidation: nearby drones dissolve into the queen
-    int endFeedRadius = 6;
-    int goalPatience = 12;      // turns without getting closer before a goal is dropped
-    int goalBanFor = 40;         // from here, small dragons feed themselves to the queen
+    int protectFrom = 400;      // from here the longest dragon never splits voluntarily         // from here, small dragons feed themselves to the queen
     int gossipFrom = 300;       // sonar gossip of the queen's position (disables the radar)
     int huntMaxLen = 5;
     double wHunt = 2.2;
@@ -677,8 +674,6 @@ static double valT[MAXN];
 struct QueenInfo { int cell = -1, len = 0, round = -1000, id = -1; };
 static QueenInfo queen;
 static int goalCell = -1, lastGoal = -1, goalDistNow = -1;
-static int banUntil[MAXN];             // goals we gave up on (unreachable in practice)
-static int trackGoal = -1, trackBest = 1 << 20, trackSince = 0;
 static bool feeding = false;
 
 struct EnemyReach { int id; int len; vector<pair<int, int>> cells; };
@@ -895,7 +890,7 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
                     p *= farmBonus(n);
                     fsum += p * powG[nd];
                     double v = p * powT[nd];
-                    if (v > fmax && banUntil[n] <= ROUND) { fmax = v; e.targetCell = n; }
+                    if (v > fmax) { fmax = v; e.targetCell = n; }
                     if (recordVals) valT[n] = v;
                 }
             }
@@ -992,8 +987,11 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
     score -= danger;
     // in a big swarm a small drone is cheap: its death costs little more than its length
     bool cheap = UNITS >= 4 && L <= 4 && queen.id != MY_ID;
-    score -= e.pDeath * (L + (cheap ? 3.0 : P.deathExtra));
-    score -= P.wPocket * e.pocket * (2.0 + L / 4.0);
+    // greedy miner (what every top team does): a small drone dives into dead-end pockets for
+    // pearls; it may die there, but it buds a child out first and the swarm grows 2x faster
+    bool miner = UNITS >= 3 && L <= 4 && queen.id != MY_ID && ROUND < P.mineUntil;
+    score -= e.pDeath * (L + (miner ? 1.0 : cheap ? 3.0 : P.deathExtra));
+    if (!miner) score -= P.wPocket * e.pocket * (2.0 + L / 4.0);
     score += P.spaceBonus * min(1.0, space / (double)(2 * L + 20));
     if (s.outside) {
         // on a known map we know what is behind a portal except for dragons: a modest risk,
@@ -1002,11 +1000,11 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
         if (KM && !remembered) score -= 0.8 + 0.03 * L;
         else { score -= 3.0 + 0.12 * (L + P.deathExtra); e.safeClass = 0; }
     }
-    e.corridor = corridorRisk(B);
+    e.corridor = miner ? 0.0 : corridorRisk(B);
     score -= e.corridor * (L / 2.0 + 10.0);
     e.score = score;
     // one coarse safety class: greed chooses freely among moves that are reasonably safe
-    bool riskOk = e.pDeath < 0.25 || (cheap && !bigFeed && e.pDeath < 0.9);
+    bool riskOk = e.pDeath < 0.25 || miner || (cheap && !bigFeed && e.pDeath < 0.9);
     e.safeClass = (riskOk && !adjacentThreat && (!s.outside || (KM && e.safeClass > 0))) ? 1 : 0;
     return e;
 }
@@ -1260,21 +1258,7 @@ static bool protectedQueen() { return !bigFeed && ROUND >= P.protectFrom && quee
 static bool outranks(int len, int id) { return len > MY_LEN || (len == MY_LEN && id < MY_ID); }
 
 // feeding: a small dragon near the queen turns itself into pearls right in her path
-static bool endFeedPhase() {
-    return ROUND >= P.endFeedFrom && UNITS > 3 && !iAmQueen() && outranks(queen.len, queen.id)
-           && ROUND - queen.round <= 10 && queen.cell >= 0 && torusDist(queen.cell, body[0]) <= P.endFeedRadius;
-}
-
 static bool tryFeed() {
-    // last rounds: losing units no longer matters for the numbers war, the tiebreak does
-    if (endFeedPhase()) {
-        for (auto& dr : others)
-            if (dr.team == MY_TEAM && dr.headCell >= 0 && dr.id == queen.id && torusDist(dr.headCell, body[0]) <= 2) {
-                printf("SPLIT 1\n");
-                indicator = "ENDFEED " + to_string(dr.id);
-                return true;
-            }
-    }
     if (ROUND < P.feedFrom || iAmQueen() || !outranks(queen.len, queen.id) || ROUND - queen.round > 25) return false;
     if (queen.cell < 0 || torusDist(queen.cell, body[0]) > P.feedRadius) return false;
     for (auto& dr : others) {
@@ -1309,21 +1293,12 @@ static void think() {
         recordVals = false;
         int best = he.targetCell;
         int g = best;
-        if (lastGoal >= 0 && lastGoal != best && best >= 0 && distA[lastGoal] > 0 && banUntil[lastGoal] <= ROUND
-            && valT[lastGoal] >= 0.75 * valT[best])
+        if (lastGoal >= 0 && lastGoal != best && best >= 0 && distA[lastGoal] > 0 && valT[lastGoal] >= 0.75 * valT[best])
             g = lastGoal;
         if (g >= 0 && distA[g] > 0) { goalCell = g; goalDistNow = distA[g]; }
-        // frustration: a goal we stop closing in on (blocked by a crowd, unreachable in
-        // practice) gets banned for a while so we go and eat something else
-        if (goalCell >= 0) {
-            if (goalCell != trackGoal) { trackGoal = goalCell; trackBest = goalDistNow; trackSince = ROUND; }
-            else if (goalDistNow < trackBest) { trackBest = goalDistNow; trackSince = ROUND; }
-            else if (ROUND - trackSince >= P.goalPatience) { banUntil[goalCell] = ROUND + P.goalBanFor; trackGoal = -1; }
-        }
         feeding = ROUND >= P.feedFrom && !iAmQueen() && (bigFeed ? outranks(queen.len, queen.id) : queen.len >= max(10, 2 * MY_LEN))
                   && ROUND - queen.round <= 25
                   && queen.cell >= 0 && torusDist(queen.cell, body[0]) <= P.feedRadius;
-        if (endFeedPhase()) feeding = true;
         if (feeding && queen.cell >= 0 && distA[queen.cell] != 0) {
             int qd = distA[queen.cell];
             if (qd < 0) {  // her head cell is occupied: aim next to it
@@ -1401,7 +1376,7 @@ static void think() {
         // splitting: evaluate staying put (parent does not move this turn)
         SimResult stay; stay.body = body; stay.len = MY_LEN;
         Eval se = evaluate(stay, false);
-        if (!protectedQueen() && opts[0].ev.pDeath < 0.5 && !opts[0].ev.adjacent && swarmSplit()) return;
+        if (!protectedQueen() && (opts[0].ev.pDeath < 0.5 || (MY_LEN <= 4 && ROUND < P.mineUntil)) && !opts[0].ev.adjacent && swarmSplit()) return;
         if (!protectedQueen() && (opts[0].ev.pDeath == 0 || MY_LEN > capLen) && trySplit(se)) return;
         auto& o = opts[0];
         emitMove(o.dirs, o.sim.cells);

@@ -7,5 +7,5 @@ replays/
 ladder/
 # scratch / debug copies
 dbg*/
-v71/
+v7[0-9]/
 debug_cfg.hpp

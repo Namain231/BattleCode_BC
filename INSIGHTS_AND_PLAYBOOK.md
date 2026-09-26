@@ -412,3 +412,20 @@ Analyzing the V5 vs V3 tournament logs reveals a critical strategic dynamic:
 | #1 龙虎豹 | — | 0/10 (V7.0) |
 
 **Remaining gap vs the top**: expansion speed (15 units at round 100 vs their 31) and consolidation yield (we collapse to 2 units with longest 12; #2 keeps 26 units and reaches 23). V7.2 addresses both partially (60% vs V7.1 locally).
+
+---
+
+## 13. Fixing the weak maps (2026-09-27): per-map consolidation (V7.3–V7.4)
+
+**Symptom**: vs mid-ladder swarms (hmm, Aviators, Give me a job) we won Portals, Slithery Fight and Schooltime but lost Devil, Prisoners Dilemma, Autarky and Trophy every time. Ranked 2–3 results were simply unlucky 5-map draws: per-map outcomes were identical between ranked and unranked games with the same submissions.
+
+**Diagnosis from replays** (`ladder/c9–c14`):
+1. *Consolidation collapse*: on Trophy we had **60 units vs 9** at round 300, then 35 feeders suicided between rounds 350 and 400 while the longest only went 3→8. The queen was then cut by late danger splits, and we lost with longest 4 vs 7. Mass feeding only pays on big open maps.
+2. *Attrition*: without feeding but with budding stopped at round 300, our swarm shrank under one-for-one head-on trades while the opponent kept budding to 30–64 units. Numbers win the pearls and the tiebreak.
+3. *Timid drones*: the lexicographic safety class still ranked safe moves above pearl-rich ones for cheap drones, so the tube and pocket fountains went unmined.
+
+**Fixes**
+- `bigFeed` maps (Portals, Slithery Fight, Schooltime): v7.2 behaviour, unchanged.
+- Other maps: feed only for a visible dragon with length ≥ max(10, 2× the feeder's); from round 400 the longest dragon never splits voluntarily and doubles its danger aversion; cheap drones accept death risk < 0.9 in the safety class; keep budding until round 420 while under 40 units (Autarky: stop at 300).
+
+**Results**: V7.3 70% vs V7.2 locally; V7.4 83% vs V7.3 on changed maps. On the ladder, maze maps vs the three swarms went from 8/21 (V7.1/V7.2) to **15/21** (V7.4); the four problem maps went from 1/12 to 7/12. Remaining: Devil 0/3 (early expansion 6–10 units at round 100 vs 15–38).

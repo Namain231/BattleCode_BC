@@ -9,12 +9,16 @@ Read this first, then `INSIGHTS_AND_PLAYBOOK.md` (the long-form record of what w
 | | |
 |---|---|
 | Team | Bhole Chature (team id 98), members Namain231 (leader), forcefullegend, yashguy65, SoHanSolo |
-| Active submission | `v7.2-partial-feed` (id 7741), source in `viper_v7/` |
-| Previous good builds | `v6.6-danger-split` (7682, source = `viper_v6/` minus later V6 edits), `v7.1-feed` (7726) |
-| Rating | ~1428 (rank ~290 of 851) as of 2026-09-27; top of ladder ~2124 |
+| Active submission | `v7.4-numbers` (id 7763), source in `viper_v7/` |
+| Previous good builds | `v7.2-partial-feed` (7741), `v7.3-mapwise` (7758), `v6.6-danger-split` (7682). Exact sources: `GET /submissions/<id>/download` |
+| Rating | ~1430 (rank ~290 of 851) as of 2026-09-27; top of ladder ~2124 |
 | Live map pool | Portals, Slithery Fight, Schooltime, Trophy, Queen Of Spades, Default, Prisoners Dilemma, Autarky, Devil, Trauma |
 
-Latest ladder measurements (unranked, 10 maps): V7.x vs Aviators 5/10, Give me a job 6/10, hmm 6/10; vs the top three (龙虎豹, 中国人能飞, Sponge) 0/10 each.
+Latest ladder measurements (unranked):
+- V7.4 on the 7 maze maps (Devil, Dilemma, Autarky, Trophy, QoS, Default, Trauma) vs hmm / Aviators / Give me a job: **15/21** (V7.2 was 8/21).
+- V7.2 on the 3 open maps (Portals, Slithery, Schooltime) wins consistently vs those swarms; V7.4 plays identically there.
+- V7.2 vs just bored 8/10. Top three (龙虎豹, 中国人能飞, Sponge): 0/10 each (V7.0–V7.2).
+- Games are near-deterministic per (bot, bot, map): a ranked 2–3 is usually just the 5-map draw. Judge versions by per-map results.
 
 ## Secrets
 
@@ -90,8 +94,8 @@ Unranked challenges do not move ELO. Map ids: Portals 20, Slithery 21, Schooltim
 
 ## Open problems / next steps
 
-1. **Expansion speed**: top teams have ~31 units at round 100, we have ~15. Small drones need to eat more aggressively (less caution when cheap, better pearl routing).
-2. **Consolidation yield**: our feeding still collapses units and wastes pearls (longest ~12–20 vs top teams' 23–31). Try: feeders approach the queen's *path*, queen routes towards dropped pearls, tune `feedFrom`/`feedRadius`.
-3. **Head-on war**: top teams make 26–90 head-on kills per game. Revisit `findAttack` for cheap drones (trade into bigger enemies more readily when we outnumber them).
-4. Map-specific: Trauma/Dilemma dead-end fountain corridors, Portals cages (require portal traversal — handled on known maps).
+1. **Devil early expansion**: 6–10 units at round 100 vs the swarms' 15–38 (fountains sit in 1-wide kelp tubes). Still 0/3 on Devil with V7.4.
+2. **Top-3 gap**: they expand ~2x faster in the first 100 rounds and win the tiebreak with longest 23–31.
+3. **Per-map policy is live**: `bigFeed` (Portals, Slithery, Schooltime) uses v7.2 consolidation; everywhere else there's no mass feeding and budding runs to r420 while under 40 units (Autarky: stops at r300). Revisit whenever the map pool changes (`GET /maps`).
+4. Head-on war: top teams make 26–90 head-on kills per game. Revisit `findAttack` for cheap drones.
 5. Before the final tournament: strip indicator strings, re-verify CPU.

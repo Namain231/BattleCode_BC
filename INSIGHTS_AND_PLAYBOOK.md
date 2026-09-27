@@ -23,7 +23,10 @@ Only write here what was measured (say how); delete things that stop being true.
 - Sonar: up to one 64-bit value per direction per turn. A ray travels straight (through portals and the wrap)
   and stops at kelp or at the **first dragon** in line, which reads it next turn (same round if its id is higher).
 - Round-500 tiebreaks: longest living dragon, then total length. Many games are decided by 1–2 segments.
-- CPU budget 100M points per dragon-turn; output costs 2.5M + 4000/byte per write.
+- CPU budget 100M points per dragon-turn; output costs 2.5M + 4000/byte per write. Memory 48 MB per dragon.
+  V7.12 measured (`unswbc run --sandbox -v`, ~105k dragon-turns): mean 4–7M points, p99 < 10M, worst 59M;
+  memory ~1 MB. There is room for 10× more thinking per turn (deeper search, per-pearl assignment BFS, more
+  remembered state); vision itself is fixed at 7×7.
 
 ## 2. What the top of the ladder does
 

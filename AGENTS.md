@@ -75,7 +75,9 @@ Autoscrims (ranked) run every 2 hours on the hour and use whatever is active at 
 | `challenge_wait.py outdir <our sub id> <battle ids…>` | Wait for challenges, print map results, download replays. |
 | `scout.py` / `scout_report.py` / `profile_team.py` | Download and profile other teams' public replays (top of the ladder). |
 | `find_targets.py` | Higher-rated teams whose rating is falling: candidates for ranked challenges. |
-| `elo_bot.py --our-sub <id>` | Daemon: whenever quota frees, tests teams above us (5 maze maps) and sends ranked challenges on the maps we won. Log `ladder/elo_log.txt`. |
+| `elo_bot.py --our-sub <champion id>` | Always-on ELO daemon on the champion: whenever quota frees, tests teams ≥ 20 above us (5 maze maps) and sends a ranked challenge on the maps we won if the test was ≥ 3/5 **and** ≥ Elo-expected + 0.2. Pauses while a candidate is active; re-activates the champion 5 min before every autoscrim. Log `ladder/elo_log.txt`. |
+| `loss_report.py <battle id…>` | Why we lost: downloads the lost games, classifies each (outnumbered by r100, mid-game war, late collapse, tiebreak…) with the timeline and the death causes of the decisive phase. `elo_bot.py` runs it on every finished battle with a loss → `ladder/loss_log.txt`. |
+| `strong_panel.py <cand> <champ> --teams … --deadline-utc HH:MM` | Unranked test of a candidate against a team list, then re-activates the champion (by the deadline at the latest). |
 | `gen_maps.py` | Regenerate `maps_data.hpp` after adding maps. |
 
 Unranked challenge: `curl -s $BASE/battles -H "Authorization: Bearer $UNSWBC_KEY" -H "Content-Type: application/json"

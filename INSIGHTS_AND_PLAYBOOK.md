@@ -52,13 +52,27 @@ Portals, Slithery Fight and Schooltime; elsewhere no mass feeding, budding conti
 40 units, and the longest dragon stops splitting from round 400. Sonar: a forward radar ray early, then the
 queen's position is gossiped between dragons. Tunables live in `struct Params` at the top of `main.cpp`.
 
-## 4. Where V7.5 is weak
+## 4. Where we are weak
 
-- **Trophy, Autarky, Devil** against strong mid-ladder teams (e.g. 777, iced calamansi). Trophy and Devil are
-  numbers wars decided before round 200; Autarky is decided by late growth (opponents reach 15–24).
-- **The top three** beat it on every map: they expand faster in the first 100 rounds and end with longest
-  23–31.
-- Midgame deaths of small drones cornered in pockets are its largest loss of material.
+- Per-map ladder panel (4 panel teams, one game each), V7.5 → V7.10: Trophy 1 → 4, Devil 1 → 3,
+  Default 2 → 4, QoS 3 → 3, Dilemma 3 → 2, Trauma 3 → 2, **Autarky 1 → 1**. Single games are noisy, but the
+  even-trade doctrine clearly fixed Trophy and Devil, which were head-on wars (on Trophy we already ate about
+  as many pearls as the top teams; we were being eliminated).
+- **Autarky**: the V7.3–V7.10 rule "stop budding at round 300 on Autarky" came from self-play and was wrong.
+  Removing it (V7.11; top teams keep 55–64 units there until ~round 400) took Autarky from 2/8 to 5/8 on the panel.
+- **The top three** beat every build on every map. V7.12 still goes 2/5 against 1690+ teams (Rogo, WCTW);
+  it beats Blub Blub Blub (1663) 3/5.
+- Teams change bots: a target that lost 5/5 an hour earlier (w daniel ma) beat us after a rating jump.
+  Re-test right before a ranked challenge if the target's rating moved sharply.
+
+- **Losing on the longest dragon while far ahead on total** (fixed by V7.12): V7.10/V7.11 panel losses included
+  Trauma 138 vs 34 total but longest 7 vs 8, Dilemma 55 vs 10 but 6 vs 10, Devil 104 vs 47 but 7 vs 8. Cause:
+  every dragon budded at length 4 until round 420, so no queen existed, and maze feeding needs a queen ≥ 10.
+  Just stopping the *designated* queen from budding did nothing (the swarm churns at length 3–4 and whoever
+  reaches 4 is rarely the id-designated queen). What worked: from round 340 on maze maps, **any dragon tied for
+  the longest known (length ≥ 4) stops budding**, the queen ignores the "a friend is closer" pearl discount, and
+  drones discount pearls nearer the queen; from round 440 drones within reach feed a queen ≥ their length + 2.
+  Self-play 25–17 vs V7.11 on maze maps; ladder panel 23/28 (V7.10 ~19/28).
 
 ## 5. Things that did not work (so you don't repeat them blindly)
 
@@ -72,14 +86,45 @@ queen's position is gossiped between dragons. Tunables live in `struct Params` a
 
 ## 6. Open directions (not yet tried)
 
+Recent variants that were neutral in self-play against V7.10 (≈50%) and have **not** been ladder-tested:
+flee when locally outnumbered (`exp_flee`), even trades from 8 units instead of 12 (`exp_trade8`), and
+contesting fountains on Devil/Trophy only (`exp_devil`). Self-play among close variants has saturated;
+only the ladder panel can separate them now.
+
+Also neutral in self-play against V7.12 (84 games each, maze maps), not ladder-tested: queen from round 300 instead
+of 340, late feeding from round 420, and capping the miners' risk-taking at round 100/150/200. Starting the queen
+later (380) was worse (43%). Stopping mining altogether at round 150/200 was worse.
+
+**Mid-game gap (V7.12's main loss mode):** in its panel/target losses the opponent grows from ~20 units at round 100
+to ~50 at round 300 while we stay flat at 10–15. Per dragon-turn in rounds 100–300 our splits equal our deaths
+(0.021 vs 0.022); half our deaths are self-inflicted (walls 0.006, own body 0.005) against the opponent's 0.002 walls.
+Self-play cannot show this (both sides share the flaw); study the winners' rounds 100–300 on the ladder.
+In V7.12's Autarky loss to 777 every wall/self death in rounds 100–300 was a trapped length-2–3 drone with no
+safe move (`DOOMED`), about as many as head-on trades. Idea: keep small drones out of dead-end pockets once the
+swarm is past ~15 units, or let them bud *out* of a pocket earlier.
+
 Ideas nobody has tested. Pick one, build it, put it through the gate:
+- **Short-horizon targets for early drones (tested, partly positive)**: letting mining drones value pearls
+  on a steep distance discount (0.80/step, fountain bonus capped) instead of trekking to far fountains
+  raised units at round 100 sharply in self-play and scored 16/28 vs V7.5's 14/28 on the ladder panel
+  (gains on Devil, Trophy, Autarky, Default), but lost Prisoners Dilemma to three panel teams and hurt the
+  open maps in self-play. Candidate V7.9 applies it only off the open maps and off Dilemma.
+- **Contest the fountains**: on Devil the top-8 eat ~200 pearls per game in the first 100 rounds, 78 of
+  them in the central fountain block; V7.4/V7.5 ate ~68, only 5 in the center. Removing the "enemy is
+  closer" discount on fast-respawning tiles (`exp_center`) brings our Devil early eating to ~220, but did not
+  convert into wins across the pool in self-play (45% vs V7.9); ladder panel pending.
 - **Early expansion (highest leverage)**: on Trophy, Autarky and Devil the top teams die at about our rate
   but eat 25–35% more pearls per dragon-turn in the first 100 rounds (e.g. Devil 0.110 vs 0.086). Through
   budding that compounds exponentially: Devil ~28 units vs our ~8 at round 100. So the lever is
   pearl-finding efficiency, not safety. Study their first 100 rounds tile by tile (`board_at.py` on their
   replays): target choice, spacing between drones, how they avoid chasing the same pearls.
-- **Head-on war doctrine**: when to trade drones deliberately (e.g. when we outnumber them), when to flee.
-  Currently only lopsided trades are taken.
+  Update: V7.9's short-horizon miners closed most of this on Devil. Units at round 100 in panel games went
+  from ~9 (V7.5) to ~20 (V7.9/V7.10), level with the panel teams; top-6 teams still reach ~28 there. Trophy
+  and Autarky are ~20–23 for us vs ~27 for the top-6.
+- **Head-on war doctrine (worked)**: small drones (length ≤ 3) trade evenly into enemy heads when our
+  swarm has 12+ units and more heads in view than the enemy. V7.10 = V7.9 + this: 16/21 on the ladder panel
+  (ANON_TOKYO, hmm, Aviators; 7 maze maps) vs ~14/21 for V7.9 and 10/21 for V7.5. Next: tune the thresholds,
+  and consider a matching *flee* rule when we are locally outnumbered.
 - **Tiebreak #2 awareness**: protect total length when longest dragons are likely to tie.
 - **Opponent modelling**: identify a swarm vs a grower from the first ~50 rounds (unit ids, sightings) and
   adapt the macro instead of hard-coding it per map.
@@ -104,4 +149,6 @@ Ideas nobody has tested. Pick one, build it, put it through the gate:
 - Measure mechanisms, not just results: per-phase eats, splits and deaths per dragon-turn located every real
   leak we found (starvation on Portals, doomed buds, consolidation collapse).
 - Borrow from the very top; one mid-ladder team's quirk is rarely a robust signal.
+- One game per map is noisy (random pearl seeds): identical code flipped Dilemma results against two panel
+  teams. Compare panel totals, and repeat a map before concluding it regressed.
 - Replays show everything, including opponents' indicator strings, so assume ours are read too.

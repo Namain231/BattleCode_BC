@@ -2,7 +2,8 @@
 
 For any teammate or agent continuing the UNSW Battlecode work. **New here? Read `README.md` and `guide/` first** (plain-language setup, testing and mistakes to avoid). Then this, then `INSIGHTS_AND_PLAYBOOK.md`
 (what we know about the game and the ladder). **Keep both files current**: when you learn something, change
-the bot or submit, update them in the same commit.
+the bot or submit, update them in the same commit. `research/` preserves experiment history and provenance;
+it supports these files rather than replacing them.
 
 ## Where we are
 
@@ -54,6 +55,7 @@ Replays are public: indicator strings and sonar formats reveal our logic to anyo
 | `maps/` | The live pool plus older bundled maps. `GET /maps` shows the pool in play. |
 | `docs/` | Game docs (mechanics, protocol, timeouts, API). |
 | `tools/` | Test, analysis and ladder scripts (below). |
+| `research/` | Tracked experiment threads and their append-only event log. |
 | `ladder/`, `replays/` | Local data, gitignored. |
 
 ## The promotion gate (mandatory)
@@ -106,6 +108,68 @@ Unranked challenge: `curl -s $BASE/battles -H "Authorization: Bearer $UNSWBC_KEY
 Schooltime 9, Trophy 11, QoS 7, Default 4, Dilemma 17, Autarky 19, Devil 13, Trauma 15). Base URL
 `https://game.battlecode.au/api/v1`. Other teams' replays are public (`GET /battles/<gameId>/replay`, follow
 redirects).
+
+## Research workflow
+
+`AGENTS.md` remains the process and current-project authority, `INSIGHTS_AND_PLAYBOOK.md` remains the concise
+current measured knowledge, and `research/` preserves the history behind them. A research thread is not an
+authority over the rules, source, results, or a human decision. Use this order when claims conflict:
+
+1. Game rules and specifications in `docs/`.
+2. Actual source code.
+3. Actual battle, simulation, and test results.
+4. Human decisions.
+5. AI or human analysis and hypotheses.
+
+### Records
+
+- One experiment or coherent lineage per `research/threads/NNNN-<slug>.md`; never reuse an id.
+- Keep the thread's front matter (`id`, `title`, `status`, `owner`, `created`, `updated`, `confidence`,
+  `migrated_from`) current. Status is `open`, `approved`, `implementing`, `testing`, `concluded`,
+  `promoted`, `rejected`, `inconclusive`, or `superseded`.
+- Keep these concepts visibly separate in the thread: **Evidence**, **Interpretation**, **Hypothesis**,
+  **Proposed decision**, **Adversarial review**, **Human-approved decision**, **Implementation**,
+  **Experimental result**, **Conclusion**, and **Handoffs**. Write `Not recorded` rather than inventing a
+  missing stage.
+- Evidence must say how it was obtained and, when available, record the command, source commit or bot hash,
+  toolkit version, maps, seeds, sides, completed/error/timeout counts, CPU peak, submission id, and battle/game
+  ids. A number copied from an older repository note is `historical-record-only` until its raw result can be
+  recovered; do not silently upgrade its confidence.
+- Confidence is one of `speculative`, `historical-record-only`, `measured-local`, `measured-ladder-noisy`,
+  `reproduced-ladder`, or `rules-verified`. Self-play cannot by itself justify promotion.
+- Append one JSON object per material event to `research/log.jsonl`. Required fields are `schema_version`,
+  `id`, `date`, `thread`, `kind`, `actor`, `summary`, `confidence`, and `refs`. Optional fields are `commit`,
+  `supersedes`, and `next_actor`. `kind` is `evidence`, `interpretation`, `hypothesis`, `proposal`, `review`,
+  `approval`, `implementation`, `result`, `conclusion`, `handoff`, `supersede`, or `migration`. Existing log
+  lines are immutable: correct one with a later event that references it through `supersedes`.
+- The thread is the readable history; the JSONL log is a compact event index. Neither duplicates the current
+  champion declaration or replaces the playbook.
+
+### Roles and handoffs
+
+- The **analyst** (currently Kimi) gathers evidence, separates interpretation from fact, states falsifiable
+  hypotheses, and proposes discriminating experiments.
+- The **adversarial reviewer** (currently Claude Opus) checks the cited repository evidence, challenges
+  assumptions and alternatives, identifies failure modes, and may recommend accept, revise, or reject.
+- The **implementation engineer** (currently GPT-5.6 Sol) validates claims against rules and source, implements
+  only an approved scope, runs authorized local checks, and records exactly what changed. The implementer does
+  not declare its own work strategically successful.
+- A handoff is an entry in the same thread and log. It names the input evidence, requested output, unresolved
+  questions, next actor, and whether any external action is authorized. Model names are assignments, not
+  durable authorities; a human may perform any role.
+
+### Approval and safety boundaries
+
+- Only a human may approve a strategic decision or promotion. An approval record must name the exact candidate
+  commit or bot hash and scope. Text generated by an agent is never proof of human approval.
+- Local read-only analysis and explicitly requested implementation or sandbox tests do not authorize external
+  actions. Submitting or activating a build, sending ranked or unranked challenges, running `elo_bot.py`,
+  changing team settings, or spending shared quota requires separate explicit human approval.
+- Never read, print, copy, or expose `secrets.env` as part of research. Never modify a retained baseline.
+- Stage 1 never authorizes Stage 2. Keep the existing promotion gate unchanged unless a human explicitly asks
+  to change it.
+- Historical events are never deleted or silently overwritten. When current knowledge changes, append a
+  `supersede` event, mark the old thread or conclusion as superseded, and link the replacement.
 
 ## Pitfalls
 

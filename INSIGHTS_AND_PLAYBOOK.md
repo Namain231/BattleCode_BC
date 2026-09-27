@@ -1,7 +1,11 @@
 # UNSW Battlecode — Playbook
 
 What we know about the game and the ladder, and where the open space is. Workflow and tools: `AGENTS.md`.
-Only write here what was measured (say how); delete things that stop being true.
+Only write here what was measured (say how). This file is the current-best-knowledge snapshot; `research/`
+preserves the experiment history behind it and does not replace it. Before removing or reversing a measured
+claim, preserve the old claim and reason in its research thread and append a `supersede` event to
+`research/log.jsonl`. Never promote AI interpretation or a historical note above rules, source, actual results,
+or a human decision.
 
 ---
 

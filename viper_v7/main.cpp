@@ -51,9 +51,12 @@ struct Params {
     // hunting (small dragons steer towards big enemy heads)
     double wProgress = 0.8;     // per step of progress towards the committed goal
     int budAt = 4;              // swarm: split a length-2 child off at this length
-    int mineUntil = 300;        // greedy mining only while the swarm is still expanding
+    int mineUntil = 300;
+    double minerGamma = 0.80;   // miners judge targets on a short horizon: eat what is near
+    double minerFarmCap = 1.5;        // greedy mining only while the swarm is still expanding
     int budUntil = 300;         // stop budding late so the dragons grow for the tiebreak
     int feedFrom = 350;
+    int endFeedFrom = 440;      // maze maps: from here drones also feed a queen only slightly longer than them
     int feedRadius = 10;        // only drones this close to the queen feed; the rest keep foraging
     int protectFrom = 400;      // from here the longest dragon never splits voluntarily         // from here, small dragons feed themselves to the queen
     int gossipFrom = 300;       // sonar gossip of the queen's position (disables the radar)
@@ -293,6 +296,7 @@ static void detectSymmetry() {
 }
 
 static bool bigFeed = false;  // aggressive (v7.2-style) consolidation on this map
+static bool farSight = false; // keep long-range miner targets (ladder panel: short sight lost Dilemma)
 static void activateMap(int idx, vector<int8_t>&& k, vector<int>&& p) {
     KM = &KNOWN_MAPS[idx];
     {
@@ -300,6 +304,8 @@ static void activateMap(int idx, vector<int8_t>&& k, vector<int>&& p) {
         // measured on the ladder and in v7.2 vs v7.3: feeding wins Portals, Slithery Fight, Schooltime
         bigFeed = nm == "portals" || nm == "slithery_fight" || nm == "schooltime";
         if (bigFeed) P.budUntil = 330;
+        else P.protectFrom = 340;  // maze maps: grow one queen for the longest-dragon tiebreak
+        farSight = nm == "dilemma";
     }
     mapK = std::move(k); mapP = std::move(p);
     for (int c = 0; c < N; c++) { gmin[c] = KM->gaps[2 * c]; gmax[c] = KM->gaps[2 * c + 1]; }
@@ -668,7 +674,7 @@ static SimResult simulate(const vector<int>& dirs) {
 
 static int distA[MAXN], qA[MAXN];
 static int ownBT[MAXN], ownStamp[MAXN], stampCtr = 0;
-static double powG[256], powT[256];
+static double powG[256], powT[256], powM[256];
 static bool recordVals = false;
 static double valT[MAXN];
 struct QueenInfo { int cell = -1, len = 0, round = -1000, id = -1; };
@@ -858,6 +864,12 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
     const vector<int>& B = s.body;
     int L = s.len;
     int head = B[0];
+    // early small drones: short-horizon targets (don't trek to far, contested fountains)
+    bool shortSight = !bigFeed && !farSight && UNITS >= 3 && L <= 4 && queen.id != MY_ID && ROUND < P.mineUntil;
+    // late maze game: pearls go to the queen first
+    bool lateQ = !bigFeed && ROUND >= P.protectFrom;
+    bool meQueen = lateQ && queen.id == MY_ID;
+    int qCell = (lateQ && !meQueen && queen.cell >= 0 && ROUND - queen.round <= 25 && queen.len > L) ? queen.cell : -1;
     stampCtr++;
     for (size_t i = 0; i < B.size(); i++)
         if (B[i] >= 0) { ownStamp[B[i]] = stampCtr; ownBT[B[i]] = L - (int)i; }
@@ -886,10 +898,11 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
                     // against a swarm every pearl is contested; discounting them all just starves us
                     if (enemyDist[n] < nd) p *= swarm ? 0.8 : P.enemyCloser;
                     else if (enemyDist[n] == nd) p *= swarm ? 0.9 : P.enemyTie;
-                    if (friendDist[n] < nd || (friendDist[n] == nd && friendMinId[n] < MY_ID)) p *= P.friendCloser;
-                    p *= farmBonus(n);
+                    if (!meQueen && (friendDist[n] < nd || (friendDist[n] == nd && friendMinId[n] < MY_ID))) p *= P.friendCloser;
+                    if (qCell >= 0 && torusDist(qCell, n) < nd) p *= 0.3;
+                    p *= shortSight ? min(P.minerFarmCap, farmBonus(n)) : farmBonus(n);
                     fsum += p * powG[nd];
-                    double v = p * powT[nd];
+                    double v = p * (shortSight ? powM[nd] : powT[nd]);
                     if (v > fmax) { fmax = v; e.targetCell = n; }
                     if (recordVals) valT[n] = v;
                 }
@@ -1058,6 +1071,12 @@ static bool findAttack(bool desperate) {
         if (dr.team == MY_TEAM || dr.headCell < 0) continue;
         // a trade costs us a unit too: only take clearly lopsided ones
         bool worth = UNITS >= 2 && dr.estLen >= max(MY_LEN + 4, 2 * MY_LEN);
+        // war of numbers: a big swarm trades small drones evenly when it has local superiority
+        if (!worth && UNITS >= 12 && MY_LEN <= 3 && queen.id != MY_ID && dr.estLen >= MY_LEN) {
+            int mine = 0, theirs = 0;
+            for (auto& o : others) if (o.headCell >= 0) (o.team == MY_TEAM ? mine : theirs)++;
+            if (mine + 1 > theirs) worth = true;
+        }
         if (UNITS >= 2 && endgame() && dr.estLen >= MY_LEN + 2) worth = true;
         // never throw away a long dragon at the end: it is probably what wins the tiebreak
         if (desperate && !(endgame() && MY_LEN > dr.estLen)) worth = true;
@@ -1160,7 +1179,7 @@ static bool swarmSplit() {
     if (MY_LEN < P.budAt || UNITS >= UNIT_LIMIT) return false;
     // stop budding once late; on the maze maps keep going while the swarm is still small,
     // because a small swarm just loses the head-on war of numbers
-    bool narrow = KM && string(KM->name) == "autarky";  // measured: long budding loses the narrow map
+    bool narrow = false;  // ladder test: the top teams keep budding on Autarky (55-64 units by r300)
     int until = (bigFeed || narrow) ? P.budUntil : (UNITS < 40 ? 420 : P.budUntil);
     if (ROUND >= until) return false;
     for (int i = MY_LEN - 2; i < MY_LEN; i++) if (body[i] < 0) return false;
@@ -1254,8 +1273,10 @@ static void updateQueen() {
     if (ROUND - queen.round > 40) queen = me;
 }
 static bool iAmQueen() { return queen.id == MY_ID; }
-static bool protectedQueen() { return !bigFeed && ROUND >= P.protectFrom && queen.id == MY_ID && MY_LEN >= 6; }
+static bool protectedQueen() { return !bigFeed && ROUND >= P.protectFrom && (queen.id == MY_ID || MY_LEN >= queen.len) && MY_LEN >= (ROUND >= 400 ? 6 : 4); }
 static bool outranks(int len, int id) { return len > MY_LEN || (len == MY_LEN && id < MY_ID); }
+// late tiebreak consolidation on maze maps: the longest dragon decides, so pour mass into the queen
+static bool lateFeed() { return !bigFeed && ROUND >= P.endFeedFrom && UNITS >= 6; }
 
 // feeding: a small dragon near the queen turns itself into pearls right in her path
 static bool tryFeed() {
@@ -1263,7 +1284,8 @@ static bool tryFeed() {
     if (queen.cell < 0 || torusDist(queen.cell, body[0]) > P.feedRadius) return false;
     for (auto& dr : others) {
         // only a clearly longer dragon we can see is worth dying for; it must be able to eat us
-        bool worthy = bigFeed ? (dr.id == queen.id || dr.estLen >= MY_LEN + 3) : dr.estLen >= max(10, 2 * MY_LEN);
+        bool worthy = bigFeed ? (dr.id == queen.id || dr.estLen >= MY_LEN + 3)
+                              : (dr.estLen >= max(10, 2 * MY_LEN) || (lateFeed() && dr.id == queen.id && dr.estLen >= MY_LEN + 2));
         if (dr.team != MY_TEAM || dr.headCell < 0 || !worthy) continue;
         if (torusDist(dr.headCell, body[0]) <= 3) {
             printf("SPLIT 1\n");  // illegal on purpose: we die and crystallise into pearls
@@ -1296,7 +1318,7 @@ static void think() {
         if (lastGoal >= 0 && lastGoal != best && best >= 0 && distA[lastGoal] > 0 && valT[lastGoal] >= 0.75 * valT[best])
             g = lastGoal;
         if (g >= 0 && distA[g] > 0) { goalCell = g; goalDistNow = distA[g]; }
-        feeding = ROUND >= P.feedFrom && !iAmQueen() && (bigFeed ? outranks(queen.len, queen.id) : queen.len >= max(10, 2 * MY_LEN))
+        feeding = ROUND >= P.feedFrom && !iAmQueen() && (bigFeed ? outranks(queen.len, queen.id) : (queen.len >= max(10, 2 * MY_LEN) || (lateFeed() && queen.len >= MY_LEN + 2)))
                   && ROUND - queen.round <= 25
                   && queen.cell >= 0 && torusDist(queen.cell, body[0]) <= P.feedRadius;
         if (feeding && queen.cell >= 0 && distA[queen.cell] != 0) {
@@ -1457,7 +1479,7 @@ int main() {
 #include "debug_cfg.hpp"
     DEBUG = true; debugFrom = DEBUG_FROM; debugTo = DEBUG_TO;
 #endif
-    for (int i = 0; i < 256; i++) { powG[i] = pow(P.gamma, i); powT[i] = pow(0.94, i); }
+    for (int i = 0; i < 256; i++) { powG[i] = pow(P.gamma, i); powT[i] = pow(0.94, i); powM[i] = pow(P.minerGamma, i); }
     for (int c = 0; c < MAXN; c++) vt[c] = INT32_MIN / 2;
 
     while (readTurn()) {

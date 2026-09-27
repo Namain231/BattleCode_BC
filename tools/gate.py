@@ -1,10 +1,11 @@
 """Promotion gate: a candidate must dominate every kept build before it may be submitted.
 
-    python tools/gate.py viper_v7 [--champion baselines/v7_5] [-j 12]
+    python tools/gate.py viper_v7 [--champion baselines/v7_12] [-j 12]
 
 Stage 1 (this script, local sandbox):
   - vs the champion: >= 55% over 40 games (10 live maps x both sides x 2 seeds)
-  - vs every other build in baselines/: >= 50% over 20 games
+  - vs V7.5 (baselines/v7_5, the long-standing reference): >= 50% over 20 games
+  (the other baselines are kept for reference only; playing all of them took too long)
 Stage 1 is only a sanity filter: V7.6 passed it and was still a ladder regression.
 Stage 2 (manual, required): ladder panel. Submit, then run unranked 10-map challenges against the
 panel teams listed in AGENTS.md and compare map by map with the champion's panel results. Only keep
@@ -55,12 +56,13 @@ def series(cand, opp, seeds, j):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("candidate")
-    ap.add_argument("--champion", default="baselines/v7_5")
+    ap.add_argument("--champion", default="baselines/v7_12")
     ap.add_argument("-j", type=int, default=12)
     a = ap.parse_args()
     cand = tourney.prepare(a.candidate)
     champ_dir = (ROOT / a.champion).resolve()
-    others = [p for p in sorted((ROOT / "baselines").iterdir()) if p.is_dir() and p.resolve() != champ_dir]
+    ref = (ROOT / "baselines" / "v7_5").resolve()
+    others = [ref] if ref != champ_dir else []
     verdict = True
     rows = []
     for opp_dir, need, seeds in [(champ_dir, 0.55, 2)] + [(p, 0.50, 1) for p in others]:

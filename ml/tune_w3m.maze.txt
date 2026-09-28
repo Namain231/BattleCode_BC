@@ -1,0 +1,88 @@
+building D:\battlecode\BattleCode_BC\exp_nn_w3m to wasm with judge clang
+[WIN ] trophy           as B seed 1017: 125 rounds (by elimination)  our deaths=17 theirs=6
+[WIN ] trophy           as A seed 1068: 216 rounds (by elimination)  our deaths=55 theirs=39
+[WIN ] trophy           as B seed 1068: 205 rounds (by elimination)  our deaths=67 theirs=10
+[WIN ] trophy           as A seed 1051: 220 rounds (by elimination)  our deaths=73 theirs=71
+[WIN ] queen_of_spades  as B seed 1000:  84 rounds (by elimination)  our deaths=15 theirs=6
+[WIN ] trophy           as A seed 1034: 227 rounds (by elimination)  our deaths=58 theirs=20
+[WIN ] trophy           as A seed 1085: 160 rounds (by elimination)  our deaths=35 theirs=5
+[WIN ] queen_of_spades  as A seed 1000: 160 rounds (by elimination)  our deaths=55 theirs=7
+[LOSS] trophy           as B seed 1034: 391 rounds (by elimination)  our deaths=21 theirs=115
+[WIN ] trophy           as B seed 1051: 263 rounds (by elimination)  our deaths=86 theirs=27
+[WIN ] trophy           as A seed 1017: 308 rounds (by elimination)  our deaths=85 theirs=70
+[WIN ] queen_of_spades  as A seed 1034: 220 rounds (by elimination)  our deaths=60 theirs=14
+[WIN ] queen_of_spades  as B seed 1051:  62 rounds (by elimination)  our deaths=7 theirs=7
+[WIN ] trophy           as B seed 1000: 282 rounds (by elimination)  our deaths=66 theirs=22
+[WIN ] queen_of_spades  as B seed 1034: 203 rounds (by elimination)  our deaths=52 theirs=12
+[WIN ] queen_of_spades  as B seed 1068: 145 rounds (by elimination)  our deaths=19 theirs=26
+[WIN ] queen_of_spades  as A seed 1068: 181 rounds (by elimination)  our deaths=42 theirs=12
+[WIN ] queen_of_spades  as A seed 1017: 500 rounds (on length)  our deaths=30 theirs=154
+[WIN ] trophy           as A seed 1000: 444 rounds (by elimination)  our deaths=132 theirs=94
+[WIN ] queen_of_spades  as A seed 1051: 283 rounds (by elimination)  our deaths=104 theirs=14
+[WIN ] queen_of_spades  as A seed 1085: 298 rounds (by elimination)  our deaths=38 theirs=85
+[WIN ] queen_of_spades  as B seed 1017: 500 rounds (on length)  our deaths=78 theirs=116
+[WIN ] trophy           as B seed 1085: 244 rounds (by elimination)  our deaths=80 theirs=25
+[WIN ] queen_of_spades  as B seed 1085: 456 rounds (by elimination)  our deaths=93 theirs=87
+[LOSS] default          as A seed 1000: 500 rounds (on length)  our deaths=88 theirs=150
+[LOSS] default          as B seed 1000: 488 rounds (by elimination)  our deaths=84 theirs=156
+[WIN ] default          as B seed 1017: 500 rounds (on length)  our deaths=151 theirs=126
+[LOSS] default          as B seed 1034: 500 rounds (on length)  our deaths=93 theirs=142
+[LOSS] default          as A seed 1051: 500 rounds (on length)  our deaths=108 theirs=165
+[WIN ] default          as A seed 1017: 500 rounds (on length)  our deaths=195 theirs=65
+[WIN ] dilemma          as B seed 1000: 176 rounds (by elimination)  our deaths=78 theirs=15
+[WIN ] default          as A seed 1068: 500 rounds (on length)  our deaths=176 theirs=98
+[WIN ] default          as A seed 1034: 500 rounds (on length)  our deaths=199 theirs=51
+[WIN ] default          as B seed 1051: 500 rounds (on length)  our deaths=204 theirs=73
+[WIN ] dilemma          as A seed 1017: 291 rounds (by elimination)  our deaths=106 theirs=64
+[WIN ] dilemma          as A seed 1000: 326 rounds (by elimination)  our deaths=113 theirs=74
+[WIN ] dilemma          as B seed 1034: 163 rounds (by elimination)  our deaths=74 theirs=15
+[LOSS] default          as B seed 1085: 500 rounds (on length)  our deaths=101 theirs=154
+[WIN ] dilemma          as B seed 1051: 163 rounds (by elimination)  our deaths=72 theirs=15
+[WIN ] dilemma          as B seed 1017: 283 rounds (by elimination)  our deaths=135 theirs=15
+[WIN ] dilemma          as B seed 1068: 194 rounds (by elimination)  our deaths=89 theirs=15
+[WIN ] dilemma          as B seed 1085: 166 rounds (by elimination)  our deaths=74 theirs=15
+[WIN ] dilemma          as A seed 1034: 340 rounds (by elimination)  our deaths=126 theirs=60
+[WIN ] dilemma          as A seed 1051: 325 rounds (by elimination)  our deaths=122 theirs=59
+[WIN ] default          as A seed 1085: 500 rounds (on length)  our deaths=218 theirs=32
+[WIN ] default          as B seed 1068: 500 rounds (on length)  our deaths=197 theirs=37
+[WIN ] dilemma          as A seed 1085: 303 rounds (by elimination)  our deaths=109 theirs=72
+[WIN ] dilemma          as A seed 1068: 500 rounds (on length)  our deaths=182 theirs=81
+[WIN ] autarky          as A seed 1068: 267 rounds (by elimination)  our deaths=107 theirs=43
+[WIN ] autarky          as A seed 1000: 321 rounds (by elimination)  our deaths=145 theirs=47
+[WIN ] autarky          as B seed 1000: 391 rounds (by elimination)  our deaths=170 theirs=59
+[WIN ] autarky          as A seed 1017: 500 rounds (on length)  our deaths=187 theirs=89
+[WIN ] autarky          as A seed 1034: 500 rounds (on length)  our deaths=180 theirs=143
+[WIN ] autarky          as A seed 1051: 500 rounds (on length)  our deaths=191 theirs=105
+[WIN ] autarky          as B seed 1017: 500 rounds (on length)  our deaths=194 theirs=68
+[WIN ] autarky          as B seed 1068: 500 rounds (on length)  our deaths=204 theirs=101
+[WIN ] autarky          as B seed 1051: 500 rounds (on length)  our deaths=211 theirs=95
+[WIN ] autarky          as B seed 1034: 500 rounds (on length)  our deaths=233 theirs=42
+[WIN ] devil            as B seed 1017: 223 rounds (by elimination)  our deaths=239 theirs=31
+[WIN ] devil            as A seed 1017: 251 rounds (by elimination)  our deaths=260 theirs=42
+[WIN ] devil            as B seed 1051: 183 rounds (by elimination)  our deaths=164 theirs=52
+[WIN ] autarky          as A seed 1085: 500 rounds (on length)  our deaths=191 theirs=92
+[WIN ] devil            as A seed 1051: 220 rounds (by elimination)  our deaths=220 theirs=21
+[WIN ] devil            as A seed 1034: 293 rounds (by elimination)  our deaths=328 theirs=32
+[WIN ] autarky          as B seed 1085: 500 rounds (on length)  our deaths=224 theirs=68
+[WIN ] devil            as B seed 1000: 379 rounds (by elimination)  our deaths=445 theirs=28
+[WIN ] devil            as A seed 1000: 500 rounds (on length)  our deaths=489 theirs=71
+[WIN ] devil            as B seed 1068: 201 rounds (by elimination)  our deaths=183 theirs=34
+[WIN ] devil            as B seed 1034: 353 rounds (by elimination)  our deaths=387 theirs=33
+[LOSS] trauma           as A seed 1000: 500 rounds (on length)  our deaths=92 theirs=90
+[WIN ] devil            as A seed 1068: 304 rounds (by elimination)  our deaths=345 theirs=35
+[LOSS] trauma           as B seed 1000: 500 rounds (on length)  our deaths=89 theirs=118
+[WIN ] devil            as B seed 1085: 348 rounds (by elimination)  our deaths=391 theirs=27
+[LOSS] trauma           as B seed 1034: 500 rounds (on length)  our deaths=38 theirs=187
+[WIN ] trauma           as A seed 1017: 500 rounds (on length)  our deaths=139 theirs=131
+[WIN ] trauma           as A seed 1034: 500 rounds (on length)  our deaths=95 theirs=116
+[LOSS] trauma           as B seed 1017: 500 rounds (on length)  our deaths=131 theirs=191
+[WIN ] devil            as A seed 1085: 470 rounds (by elimination)  our deaths=505 theirs=44
+[LOSS] trauma           as A seed 1051: 500 rounds (on length)  our deaths=138 theirs=94
+[LOSS] trauma           as A seed 1068: 500 rounds (on length)  our deaths=93 theirs=81
+[WIN ] trauma           as B seed 1068: 500 rounds (on length)  our deaths=83 theirs=142
+[WIN ] trauma           as B seed 1051: 500 rounds (on length)  our deaths=146 theirs=114
+[LOSS] trauma           as A seed 1085: 500 rounds (on length)  our deaths=103 theirs=85
+[LOSS] trauma           as B seed 1085: 500 rounds (on length)  our deaths=104 theirs=106
+========================================================================
+exp_nn_w3m vs baselines/v7_12: 70W 14L 0D of 84  (83% wins)  in 330s
+our death causes: {'lost a head-to-head': 3195, 'hit another dragon': 478, 'hit itself': 3071, 'hit a wall': 4606, 'no valid action': 556}   our peak points/turn: 45.3M

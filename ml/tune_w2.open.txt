@@ -1,0 +1,15 @@
+[LOSS] portals          as B seed 1017: 500 rounds (on length)  our deaths=330 theirs=361
+[LOSS] portals          as A seed 1000: 500 rounds (on length)  our deaths=353 theirs=384
+[LOSS] portals          as B seed 1000: 500 rounds (on length)  our deaths=354 theirs=326
+[LOSS] portals          as A seed 1017: 500 rounds (on length)  our deaths=326 theirs=388
+[WIN ] schooltime       as B seed 1000: 500 rounds (on length)  our deaths=306 theirs=416
+[WIN ] schooltime       as A seed 1000: 500 rounds (on length)  our deaths=276 theirs=365
+[WIN ] slithery_fight   as A seed 1000: 500 rounds (on length)  our deaths=537 theirs=585
+[WIN ] slithery_fight   as B seed 1000: 500 rounds (on length)  our deaths=524 theirs=741
+[LOSS] slithery_fight   as A seed 1017: 500 rounds (on length)  our deaths=608 theirs=654
+[LOSS] slithery_fight   as B seed 1017: 500 rounds (on length)  our deaths=609 theirs=688
+[LOSS] schooltime       as B seed 1017: 500 rounds (on length)  our deaths=291 theirs=432
+[LOSS] schooltime       as A seed 1017: 500 rounds (on length)  our deaths=326 theirs=369
+========================================================================
+exp_nn_w2 vs baselines/v7_12: 4W 8L 0D of 12  (33% wins)  in 163s
+our death causes: {'lost a head-to-head': 1432, 'hit itself': 1243, 'hit another dragon': 310, 'hit a wall': 1467, 'no valid action': 388}   our peak points/turn: 60.0M

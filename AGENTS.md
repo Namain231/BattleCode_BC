@@ -1,19 +1,36 @@
 # AGENTS.md — working on this repo
 
-For any teammate or agent continuing the UNSW Battlecode work. Read this, then `INSIGHTS_AND_PLAYBOOK.md`
+For any teammate or agent continuing the UNSW Battlecode work. **New here? Read `README.md` and `guide/` first** (plain-language setup, testing and mistakes to avoid). Then this, then `INSIGHTS_AND_PLAYBOOK.md`
 (what we know about the game and the ladder). **Keep both files current**: when you learn something, change
 the bot or submit, update them in the same commit.
 
 ## Where we are
 
-- **Champion: V7.12** (`baselines/v7_12`, submission 8242, active). Maze panel **23/28** (V7.5 14/28, V7.10 ~19/28).
+- **Champion: Y.7.12-nn.1** (`baselines/y7_12_nn1`, submission 9285, active): V7.12 + a move-imitation network
+  trained on top teams' replays (`ml/`, `viper_nn/`), used on maze maps. Ladder: 24/40 vs 8 strong teams; same-time
+  control vs 4 of them 16/20 (V7.12 6/20). Details and numbers: `ml/results.md`.
+- Previous champion: **V7.12** Maze panel **23/28** (V7.5 14/28, V7.10 ~19/28).
   Lineage: V7.5 → V7.9 (short-horizon early miners) → V7.10 (even head-on trades) → V7.11 (keep budding on
   Autarky) → V7.12 (late queen on maze maps: from round 340 the dragon(s) tied for longest stop budding and get
-  pearls first; from round 440 nearby drones feed a queen at least 2 longer). `viper_v7/` is the working copy.
+  pearls first; from round 440 nearby drones feed a queen at least 2 longer). `viper_v7/` is V7.12; `viper_nn/` is the champion.
 - Rating ~1566 on 2026-09-27 (+31 from V7.12's first K = 96 ranked battle).
 - V7.12 still loses to most 1690+ teams (Rogo, WCTW 2/5) and to 777 on Dilemma, Autarky and Devil.
   **New directions are welcome**: a different macro, a different language, a fresh bot. Anything is fair game
   as long as it passes the gate below.
+
+**Submission names (from 2026-09-28):** neutral names only, `Y.7.12.<n>` in sequence, with a bland or empty
+description — never name what a build contains (other teams may see names; battles and replays are public).
+The mapping lives here and in `ml/results.md`:
+
+| Name | Id | Contents |
+|---|---|---|
+| test-v7.17-nn | 9258 | V7.12 + imitation network v1, wNN 2, maze maps only (first ladder test) |
+| Y.7.12-nn.1 | 9285 | same code as 9258; champion |
+| Y.7.12-nn.1-jam | 9298 | champion + sonar replay attack (experiment) |
+| Y.7.12.3 | 9357 | champion + signed sonar + pearl gossip (friends share visible pearls) |
+| Y.7.12.4 | 10047 | champion settings + signed sonar + team-conditioned network copying Vibing++'s style (league 86.3% vs 82.1%) |
+
+Replays are public: indicator strings and sonar formats reveal our logic to anyone who reads them.
 
 ## Setup
 
@@ -27,8 +44,12 @@ the bot or submit, update them in the same commit.
 
 | Path | What |
 |---|---|
-| `viper_v7/` | Working copy of the C++ bot: `main.cpp`, generated `maps_data.hpp` (`python tools/gen_maps.py`), `bot.toml`. |
-| `baselines/` | Exact submitted sources of kept builds: `v7_12` (champion), `v7_11` … `v7_9`, `v7_5`, `v7_4`, `v7_3`, `v7_2`, `v6_6` (regression opponents). |
+| `viper_nn/` | **The champion Y.7.12-nn.1** (identical to `baselines/y7_12_nn1`). Copy it to start a new build. |
+| `viper_v7/` | V7.12, the same bot without the network: `main.cpp`, generated `maps_data.hpp` (`python tools/gen_maps.py`), `bot.toml`. |
+| `guide/`, `README.md` | Plain-language guides for teammates: setup, how the bot works, testing, mistakes, the network, ideas. |
+| `experiments/` | Unproven builds kept for later: `signed_sonar`, `pearl_gossip`, `nn_generic` (network build with generic input sizes, used by `ml/`). |
+| `maps_gen/` | 300 random fair maps (`tools/gen_random_maps.py --n 300 --seed 1`, gitignored) for unseen-map tests: `tourney.py --maps maps_gen/gen_000,…`. |
+| `baselines/` | Exact submitted sources of kept builds: `y7_12_nn1` (champion), `v7_12`, `v7_5` (gate opponent). Older builds and experiments: `ladder/archive/old_builds_2026-09-28.zip` and git history. |
 | `swarm_bot/` | Python stand-in for a head-hunting swarm (slow in the sandbox). |
 | `maps/` | The live pool plus older bundled maps. `GET /maps` shows the pool in play. |
 | `docs/` | Game docs (mechanics, protocol, timeouts, API). |
@@ -37,7 +58,7 @@ the bot or submit, update them in the same commit.
 
 ## The promotion gate (mandatory)
 
-1. **Local sanity**: `python tools/gate.py viper_v7 --champion baselines/v7_12`. Needs ≥ 55% vs the champion
+1. **Local sanity**: `python tools/gate.py <candidate dir> --champion baselines/y7_12_nn1`. Needs ≥ 55% vs the champion
    (40 games) and ≥ 50% vs V7.5 (20 games), on the 10 live maps, both sides. Older baselines are kept for
    reference but are not part of the gate. This only
    filters out obvious regressions: a build can pass it and still be worse on the ladder (V7.6 did).
@@ -94,6 +115,8 @@ redirects).
 - Ranked challenges: opponent must have ranked on and be rated no more than 50 below us.
 - CPU: 100M points per dragon-turn; exceeding it kills the dragon. Keep `max` in `unswbc run --sandbox`
   output ≲ 65M. `elapsedMs()` guards exist in the code (1 ms ≈ 1M points).
+- The sandbox build cache (`unswbc run --sandbox`) is keyed on `main.cpp` only: after changing a header
+  (e.g. `maps_data.hpp`, `viper_nn/policy_weights.hpp`), also touch `main.cpp` or you silently test the old build.
 - Windows: Python `subprocess` needs `encoding="utf-8"` (team names are not ASCII). Writing C++ through a
   shell heredoc turns `\n` inside string literals into real newlines: edit with an editor or a patch file.
 - Indicator strings are visible to opponents in replays; strip them before the final tournament.

@@ -1,0 +1,46 @@
+building D:\battlecode\BattleCode_BC\exp_nn_w1 to wasm with judge clang
+[WIN ] queen_of_spades  as A seed 1000: 104 rounds (by elimination)  our deaths=20 theirs=14
+[WIN ] queen_of_spades  as A seed 1034: 121 rounds (by elimination)  our deaths=30 theirs=14
+[WIN ] queen_of_spades  as B seed 1017: 212 rounds (by elimination)  our deaths=65 theirs=15
+[WIN ] trophy           as A seed 1017: 123 rounds (by elimination)  our deaths=28 theirs=6
+[WIN ] queen_of_spades  as B seed 1034: 192 rounds (by elimination)  our deaths=44 theirs=29
+[WIN ] queen_of_spades  as A seed 1017: 500 rounds (on length)  our deaths=107 theirs=77
+[WIN ] queen_of_spades  as B seed 1000: 500 rounds (on length)  our deaths=149 theirs=36
+[LOSS] trophy           as A seed 1000: 326 rounds (by elimination)  our deaths=16 theirs=113
+[WIN ] trophy           as A seed 1034: 274 rounds (by elimination)  our deaths=107 theirs=23
+[LOSS] default          as B seed 1017: 351 rounds (by elimination)  our deaths=32 theirs=141
+[WIN ] dilemma          as B seed 1000: 148 rounds (by elimination)  our deaths=72 theirs=10
+[LOSS] trophy           as B seed 1000: 500 rounds (on length)  our deaths=127 theirs=211
+[WIN ] default          as B seed 1000: 500 rounds (on length)  our deaths=155 theirs=138
+[WIN ] trophy           as B seed 1034: 500 rounds (on length)  our deaths=128 theirs=190
+[LOSS] trophy           as B seed 1017: 500 rounds (on length)  our deaths=162 theirs=79
+[WIN ] default          as A seed 1017: 500 rounds (on length)  our deaths=133 theirs=123
+[WIN ] dilemma          as B seed 1017: 148 rounds (by elimination)  our deaths=72 theirs=10
+[WIN ] dilemma          as A seed 1000: 500 rounds (on length)  our deaths=170 theirs=92
+[LOSS] default          as B seed 1034: 500 rounds (on length)  our deaths=96 theirs=138
+[WIN ] default          as A seed 1000: 500 rounds (on length)  our deaths=196 theirs=35
+[WIN ] dilemma          as B seed 1034: 209 rounds (by elimination)  our deaths=106 theirs=10
+[LOSS] dilemma          as A seed 1017: 487 rounds (by elimination)  our deaths=111 theirs=151
+[WIN ] default          as A seed 1034: 500 rounds (on length)  our deaths=170 theirs=61
+[WIN ] dilemma          as A seed 1034: 413 rounds (by elimination)  our deaths=173 theirs=58
+[WIN ] devil            as B seed 1000: 223 rounds (by elimination)  our deaths=248 theirs=46
+[WIN ] devil            as A seed 1017: 237 rounds (by elimination)  our deaths=257 theirs=38
+[WIN ] devil            as B seed 1017: 253 rounds (by elimination)  our deaths=283 theirs=60
+[WIN ] devil            as A seed 1000: 384 rounds (by elimination)  our deaths=459 theirs=84
+[WIN ] autarky          as B seed 1017: 500 rounds (on length)  our deaths=168 theirs=108
+[WIN ] autarky          as B seed 1034: 500 rounds (on length)  our deaths=192 theirs=130
+[WIN ] autarky          as A seed 1017: 500 rounds (on length)  our deaths=198 theirs=100
+[WIN ] autarky          as A seed 1034: 500 rounds (on length)  our deaths=191 theirs=108
+[WIN ] autarky          as B seed 1000: 500 rounds (on length)  our deaths=195 theirs=95
+[WIN ] autarky          as A seed 1000: 500 rounds (on length)  our deaths=208 theirs=101
+[WIN ] devil            as B seed 1034: 463 rounds (by elimination)  our deaths=505 theirs=93
+[WIN ] devil            as A seed 1034: 500 rounds (on length)  our deaths=505 theirs=90
+[WIN ] trauma           as A seed 1000: 472 rounds (by elimination)  our deaths=160 theirs=48
+[WIN ] trauma           as B seed 1000: 500 rounds (on length)  our deaths=176 theirs=45
+[LOSS] trauma           as B seed 1017: 500 rounds (on length)  our deaths=59 theirs=226
+[LOSS] trauma           as A seed 1017: 500 rounds (on length)  our deaths=91 theirs=160
+[LOSS] trauma           as B seed 1034: 500 rounds (on length)  our deaths=135 theirs=109
+[LOSS] trauma           as A seed 1034: 500 rounds (on length)  our deaths=118 theirs=140
+========================================================================
+exp_nn_w1 vs baselines/v7_12: 32W 10L 0D of 42  (76% wins)  in 173s
+our death causes: {'hit a wall': 2532, 'hit itself': 1754, 'lost a head-to-head': 1761, 'hit another dragon': 222, 'no valid action': 348}   our peak points/turn: 45.4M

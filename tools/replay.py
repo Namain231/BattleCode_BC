@@ -140,6 +140,26 @@ def point(st):
 
 
 def load(path):
+    """Decoded replay; cached next to the file (<path>.pkl) because decoding is the slow part of every analysis."""
+    import os
+    import pickle
+    cache = str(path) + ".pkl"
+    try:
+        if os.path.getmtime(cache) >= os.path.getmtime(path):
+            with open(cache, "rb") as f:
+                return pickle.load(f)
+    except (OSError, EOFError, pickle.UnpicklingError):
+        pass
+    rep = _decode(path)
+    try:
+        with open(cache, "wb") as f:
+            pickle.dump(rep, f, protocol=pickle.HIGHEST_PROTOCOL)
+    except OSError:
+        pass
+    return rep
+
+
+def _decode(path):
     raw = open(path, "rb").read()
     if raw[:2] == b"\x1f\x8b":
         raw = gzip.decompress(raw)
@@ -187,6 +207,13 @@ def load(path):
                 e["points"] = ins.u64(0)
         elif kind == "tileChange":
             e["tile"] = point(body.struct(0)); e["pearl"] = body.bit(0)
+        elif kind == "sonarPing":
+            # EventSonarPing (replay viewer schema): the full message and what the ray stopped on
+            e["sender"] = body.i32(0); e["dir"] = DIRS[body.u16(4) % 4]
+            e["hit"] = body.i32(12) if body.u16(6) == 1 else None
+            e["value"] = body.u64(16)
+            e["hitKind"] = ["unknown", "empty", "kelp", "ally", "ally_head", "enemy", "enemy_head"][min(6, body.u16(24))]
+            e["origin"] = point(body.struct(0)); e["end"] = point(body.struct(1))
         rep["events"].append(e)
     res = root.struct(4)
     if res:

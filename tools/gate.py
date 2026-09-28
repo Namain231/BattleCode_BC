@@ -1,6 +1,6 @@
 """Promotion gate: a candidate must dominate every kept build before it may be submitted.
 
-    python tools/gate.py viper_v7 [--champion baselines/v7_12] [-j 12]
+    python tools/gate.py viper_v7 [--champion baselines/y7_12_nn1] [-j 12]
 
 Stage 1 (this script, local sandbox):
   - vs the champion: >= 55% over 40 games (10 live maps x both sides x 2 seeds)
@@ -56,7 +56,7 @@ def series(cand, opp, seeds, j):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("candidate")
-    ap.add_argument("--champion", default="baselines/v7_12")
+    ap.add_argument("--champion", default="baselines/y7_12_nn1")
     ap.add_argument("-j", type=int, default=12)
     a = ap.parse_args()
     cand = tourney.prepare(a.candidate)

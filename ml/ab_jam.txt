@@ -1,0 +1,26 @@
+sent 9285 vs 91: 430147
+sent 9298 vs 91: 430152
+sent 9285 vs 507: 430157
+sent 9298 vs 507: 430162
+sent 9285 vs 206: 430172
+sent 9298 vs 206: 430182
+sent 9285 vs 314: 430187
+sent 9298 vs 314: 430197
+sent 9285 vs 852: 430586
+sent 9298 vs 852: 430591
+sent 9285 vs 104: 430596
+sent 9298 vs 104: 430601
+  SSS                  (2001)  build 9285: 1/5 LLLWL
+  SSS                  (2001)  build 9298: 0/5 LLLLL
+  Peanut Butter        (1939)  build 9285: 1/5 LLWLL
+  Peanut Butter        (1939)  build 9298: 0/5 LLLLL
+  Stockfish            (1966)  build 9285: 0/5 LLLLL
+  Stockfish            (1966)  build 9298: 1/5 LLWLL
+  3.14159265           (1947)  build 9285: 1/5 LWLLL
+  3.14159265           (1947)  build 9298: 1/5 LWLLL
+  bread first search   (1996)  build 9285: 0/5 LLLLL
+  bread first search   (1996)  build 9298: 1/5 WLLLL
+  C--                  (1932)  build 9285: 1/5 LLWLL
+  C--                  (1932)  build 9298: 2/5 WWLLL
+TOTAL build 9285: 4/30
+TOTAL build 9298: 5/30

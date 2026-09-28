@@ -1,0 +1,177 @@
+battle 430596 vs Peanut Butter: 4 lost game(s)  (units/longest/total, us-them)
+  Trophy           WIPED EARLY
+      100:2/3/5-46/4/110 end:0/0/0-50/4/119
+      our deaths r0-100: head to head 15, hit other body 1, head to head/BUD 1
+  Default          WIPED EARLY
+      100:11/3/24-17/4/40 end:0/0/0-44/5/110
+      our deaths r0-100: head to head 8, hit other body 2, hit self 1
+  Devil            WIPED EARLY
+      100:1/2/2-37/3/81 end:0/0/0-36/4/80
+      our deaths r0-100: head to head 10, head to head/ATK 4, hit wall/DOOMED 4
+  Trauma           OUTNUMBERED
+      100:8/3/22-18/3/41 200:16/3/36-39/5/96 300:28/4/72-46/4/112 400:23/7/64-43/8/116 end:3/9/23-12/28/66
+      our deaths r0-100: hit wall/DOOMED 1
+battle 430586 vs C--: 4 lost game(s)  (units/longest/total, us-them)
+  Trophy           WIPED EARLY
+      end:0/0/0-22/4/53
+      our deaths r0-100: head to head 6
+  Default          MID-GAME WAR
+      100:9/4/24-14/3/35 200:9/3/22-31/3/72 300:6/3/15-43/3/105 400:2/4/6-57/12/162 end:3/13/21-28/27/143
+      our deaths r100-300: head to head 25, hit other body 8, hit self/DOOMED 1
+  Devil            WIPED EARLY
+      100:8/4/21-32/5/77 200:2/3/5-61/6/164 end:0/0/0-60/5/146
+      our deaths r0-100: head to head/ATK 7, head to head 5, hit self/DOOMED 4
+  Trauma           LATE COLLAPSE (lost on longest with more total)
+      100:8/3/18-5/4/12 200:33/3/81-19/7/51 300:35/4/89-16/3/38 400:32/3/84-27/6/69 end:13/10/80-6/19/33
+      our deaths r400-500: no valid action/FEED 20, hit wall/DOOMED 19, hit self/DOOMED 2
+      our longest at r400 (len 3) died r400: hit self/DOOMED
+battle 430187 vs 3.14159265: 4 lost game(s)  (units/longest/total, us-them)
+  Trophy           WIPED EARLY
+      100:6/3/15-35/4/89 end:0/0/0-55/5/138
+      our deaths r0-100: head to head 5, head to head/ATK 1
+  Autarky          MID-GAME WAR
+      100:19/3/43-23/5/61 200:17/3/37-50/6/121 300:15/4/35-56/10/157 400:6/4/17-57/10/202 end:3/6/15-30/16/146
+      our deaths r100-300: head to head 17, hit wall/DOOMED 12, head to head/ATK 11
+      our longest at r400 (len 4) died r470: head to head
+  Devil            OUTNUMBERED
+      100:10/4/26-26/6/87 200:2/3/5-36/8/125 300:1/2/2-38/12/153 400:1/2/2-46/7/155 end:1/2/2-29/8/120
+      our deaths r0-100: head to head 7, head to head/ATK 3, hit self/DOOMED 3
+  Trauma           OUTNUMBERED
+      100:7/3/17-15/6/39 200:15/3/34-36/4/84 300:15/3/35-26/11/93 400:23/5/57-14/22/75 end:7/13/50-11/30/77
+      our deaths r0-100: hit wall/DOOMED 3
+      our longest at r400 (len 5) died r441: no valid action/FEED
+battle 430147 vs SSS: 4 lost game(s)  (units/longest/total, us-them)
+  Trophy           WIPED EARLY
+      100:21/3/48-26/4/65 200:4/2/8-54/4/128 end:0/0/0-62/5/151
+      our deaths r0-100: head to head 8, hit other body 3
+  Default          MID-GAME WAR
+      100:19/3/46-13/3/34 200:21/3/46-30/4/75 300:12/3/29-38/6/115 400:7/8/21-21/37/134 end:2/11/16-20/64/140
+      our deaths r100-300: head to head 44, head to head/ATK 7, hit other body 7
+      our longest at r400 (len 8) died r449: head to head
+  Autarky          MID-GAME WAR
+      100:19/4/44-20/3/44 200:21/3/52-34/4/81 300:18/3/43-36/9/101 400:22/3/53-14/43/75 end:10/12/73-6/59/73
+      our deaths r100-300: hit wall/DOOMED 36, head to head 23, head to head/ATK 15
+      our longest at r400 (len 3) died r441: no valid action/FEED
+  Trauma           OUTNUMBERED
+      100:9/4/22-21/6/48 200:18/3/42-54/7/128 300:17/3/45-38/8/110 400:19/6/50-12/22/72 end:5/15/47-3/26/60
+      our deaths r0-100: hit wall/DOOMED 3, hit self/DOOMED 1
+      our longest at r400 (len 6) died r434: hit wall/DOOMED
+battle 430157 vs bread first search: 5 lost game(s)  (units/longest/total, us-them)
+  Trophy           OUTNUMBERED
+      100:15/3/37-28/3/68 200:5/2/10-51/4/122 300:2/2/4-61/5/163 end:0/0/0-50/18/156
+      our deaths r0-100: head to head 9, head to head/ATK 3, hit self/DOOMED 2
+  Default          OUTNUMBERED
+      100:9/3/21-25/4/63 200:6/3/14-34/4/84 300:4/2/8-47/3/112 end:0/0/0-36/11/118
+      our deaths r0-100: head to head 12, head to head/ATK 1
+  Autarky          BEHIND ON MASS
+      100:20/3/47-19/3/48 200:19/3/45-19/3/46 300:26/3/58-26/4/66 400:14/4/38-41/5/106 end:4/15/44-5/24/59
+      our deaths r400-500: no valid action/FEED 9, head to head/ATK 5, hit wall/DOOMED 1
+      our longest at r400 (len 4) died r404: hit wall/DOOMED
+  Devil            WIPED EARLY
+      100:15/4/34-36/4/93 200:4/3/9-57/4/137 end:0/0/0-60/5/163
+      our deaths r0-100: hit self/DOOMED 7, head to head/ATK 6, head to head 6
+  Trauma           BEHIND ON MASS
+      100:9/3/20-12/8/33 200:25/4/65-24/18/70 300:25/4/59-26/22/87 400:29/6/74-22/31/89 end:5/12/37-22/34/96
+      our deaths r400-500: no valid action/FEED 16, hit wall/DOOMED 14, hit self/DOOMED 3
+      our longest at r400 (len 6) died r465: hit self/DOOMED
+battle 430172 vs Stockfish: 5 lost game(s)  (units/longest/total, us-them)
+  Trophy           WIPED EARLY
+      100:14/3/35-26/4/61 end:0/0/0-45/4/113
+      our deaths r0-100: head to head 13, head to head/ATK 3, hit other body/DOOMED 1
+  Default          MID-GAME WAR
+      100:20/3/45-13/4/33 200:15/3/38-33/4/78 300:9/4/24-36/12/105 400:2/3/5-25/24/146 end:0/0/0-20/37/164
+      our deaths r100-300: head to head 54, hit other body 16, head to head/ATK 7
+      our longest at r400 (len 3) died r408: head to head
+  Autarky          WIPED EARLY
+      100:11/3/27-28/3/65 200:5/3/12-54/4/132 end:0/0/0-46/15/131
+      our deaths r0-100: hit wall/DOOMED 17, head to head 12, head to head/ATK 4
+  Devil            WIPED EARLY
+      100:8/3/17-41/4/104 end:0/0/0-56/6/139
+      our deaths r0-100: head to head 11, hit wall/DOOMED 5, hit other body/DOOMED 2
+  Trauma           LATE COLLAPSE
+      100:9/3/20-8/4/23 200:25/3/61-27/3/63 300:23/5/61-21/9/59 400:27/6/74-17/14/63 end:6/13/44-5/31/59
+      our deaths r400-500: no valid action/FEED 16, hit wall/DOOMED 11, hit self/DOOMED 5
+      our longest at r400 (len 6) died r483: no valid action/FEED
+battle 429263 vs Lon Co Kiri: 5 lost game(s)  (units/longest/total, us-them)
+  Prisoners Dilemma MID-GAME WAR
+      100:9/4/21-9/2/18 200:10/2/20-17/4/41 300:7/4/17-21/3/49 400:5/3/11-25/5/65 end:4/3/9-32/5/87
+      our deaths r100-300: hit self/DOOMED 22, hit wall/DOOMED 13, head to head/ATK 3
+  Queen Of Spades  MID-GAME WAR
+      100:10/3/24-14/3/32 200:8/3/21-21/3/53 300:11/3/24-36/5/89 400:8/3/18-41/8/124 end:4/4/11-30/10/131
+      our deaths r100-300: hit wall/DOOMED 6, hit self/DOOMED 4, head to head 1
+      our longest at r400 (len 3) died r436: hit self/DOOMED
+  Autarky          LATE COLLAPSE (lost on longest with more total)
+      100:27/3/67-8/18/35 200:42/3/101-11/18/46 300:57/4/131-23/18/65 400:54/5/142-22/18/78 end:18/17/116-20/18/90
+      our deaths r400-500: no valid action/FEED 35, hit wall/DOOMED 14, head to head 2
+  Devil            MID-GAME WAR
+      100:20/3/45-21/3/48 200:15/3/35-37/4/88 300:13/3/29-39/5/99 400:8/5/22-49/5/132 end:3/3/7-38/9/136
+      our deaths r100-300: head to head/ATK 33, hit wall/DOOMED 28, hit self/DOOMED 27
+      our longest at r400 (len 5) died r420: head to head/ATK
+  Trauma           LATE COLLAPSE (lost on longest with more total)
+      100:11/3/26-5/3/12 200:25/4/69-8/4/22 300:40/4/102-14/4/37 400:37/5/96-13/4/39 end:15/9/74-14/10/51
+      our deaths r400-500: no valid action/FEED 21, hit wall/DOOMED 12, hit self/DOOMED 6
+      our longest at r400 (len 5) died r452: no valid action/FEED
+battle 428015 vs tungtung67: 5 lost game(s)  (units/longest/total, us-them)
+  Trophy           OUTNUMBERED
+      100:15/3/39-35/4/88 200:12/3/29-44/4/102 300:4/3/9-63/4/162 end:0/0/0-63/11/192
+      our deaths r0-100: head to head 3, hit other body 2, head to head/ATK 1
+  Default          LATE COLLAPSE (lost on longest with more total)
+      100:16/3/39-20/3/44 200:22/4/55-16/3/39 300:27/3/66-19/3/45 400:24/7/66-21/5/50 end:9/15/64-6/18/31
+      our deaths r400-500: no valid action/FEED 11, head to head 7, head to head/ATK 7
+  Autarky          MID-GAME WAR
+      100:17/3/41-27/5/66 200:14/3/35-47/4/114 300:12/3/27-63/5/160 400:5/3/12-26/21/136 end:4/10/28-5/37/92
+      our deaths r100-300: head to head/ATK 10, head to head 10, hit wall/DOOMED 7
+      our longest at r400 (len 3) died r403: head to head/ATK
+  Devil            OUTNUMBERED
+      100:12/3/28-31/4/76 200:10/3/23-38/4/91 300:5/3/11-44/4/111 400:1/2/2-16/14/80 end:1/6/6-8/42/135
+      our deaths r0-100: head to head 5, hit wall/DOOMED 4, hit self/DOOMED 3
+  Trauma           LATE COLLAPSE (lost on longest with more total)
+      100:9/3/21-12/3/28 200:17/3/40-27/4/68 300:25/4/59-33/4/79 400:24/4/60-20/10/59 end:6/13/44-4/25/42
+      our deaths r400-500: no valid action/FEED 22, hit wall/DOOMED 9, head to head 1
+      our longest at r400 (len 4) died r453: no valid action/FEED
+battle 428045 vs Hakimi: 2 lost game(s)  (units/longest/total, us-them)
+  Devil            OUTNUMBERED
+      100:8/3/18-32/8/102 200:12/4/29-32/8/116 300:15/4/37-33/10/119 400:20/3/42-23/12/102 end:5/10/38-6/28/85
+      our deaths r0-100: hit self/DOOMED 9, head to head 7, hit wall/DOOMED 5
+      our longest at r400 (len 3) died r458: head to head/ATK
+  Trauma           OUTNUMBERED
+      100:7/3/16-20/6/52 200:27/4/64-24/20/75 300:43/4/107-26/38/94 400:42/9/123-12/52/82 end:19/12/92-11/64/98
+      our deaths r0-100: hit wall/DOOMED 3
+battle 428050 vs WeLikCoding: 1 lost game(s)  (units/longest/total, us-them)
+  Trauma           LATE COLLAPSE
+      100:7/3/16-7/3/18 200:16/4/41-11/3/27 300:22/4/56-17/4/41 400:30/5/75-23/3/56 end:5/14/45-5/16/46
+      our deaths r400-500: no valid action/FEED 23, hit wall/DOOMED 15, hit self/DOOMED 5
+      our longest at r400 (len 5) died r427: hit wall/DOOMED
+battle 428040 vs Shannon: 2 lost game(s)  (units/longest/total, us-them)
+  Default          MID-GAME WAR
+      100:23/4/56-9/4/23 200:14/4/39-17/3/39 300:15/3/37-35/3/78 400:14/12/45-35/5/86 end:3/10/22-16/29/79
+      our deaths r100-300: head to head 54, hit other body 25, head to head/ATK 7
+      our longest at r400 (len 12) died r417: head to head
+  Trauma           LATE COLLAPSE (lost on longest with more total)
+      100:11/3/23-6/3/15 200:34/3/86-11/3/28 300:40/3/104-15/3/37 400:42/7/115-5/11/21 end:14/10/80-1/25/25
+      our deaths r400-500: no valid action/FEED 25, hit wall/DOOMED 19, hit self/DOOMED 5
+      our longest at r400 (len 7) died r459: no valid action/FEED
+battle 428030 vs WCTW: 3 lost game(s)  (units/longest/total, us-them)
+  Default          MID-GAME WAR
+      100:18/4/50-14/3/33 200:20/4/50-21/3/53 300:12/3/30-42/3/100 400:17/3/40-27/14/98 end:9/13/71-13/13/77
+      our deaths r100-300: head to head 62, hit other body 24, head to head/ATK 19
+      our longest at r400 (len 3) died r457: head to head/ATK
+  Autarky          LATE COLLAPSE (lost on longest with more total)
+      100:21/4/52-13/18/45 200:40/3/99-21/18/63 300:52/3/121-24/18/77 400:50/7/143-6/18/57 end:30/15/140-4/41/61
+      our deaths r400-500: no valid action/FEED 21, hit wall/DOOMED 12, hit self/DOOMED 1
+  Trauma           LATE COLLAPSE (lost on longest with more total)
+      100:10/3/24-8/3/19 200:28/4/72-14/5/36 300:40/3/99-15/4/40 400:36/4/94-3/14/24 end:5/13/47-1/23/23
+      our deaths r400-500: no valid action/FEED 27, hit wall/DOOMED 6, hit self/DOOMED 6
+battle 428035 vs Rogo: 1 lost game(s)  (units/longest/total, us-them)
+  Default          MID-GAME WAR
+      100:22/3/51-16/3/42 200:20/3/48-26/3/64 300:17/4/42-34/3/84 400:17/6/44-44/6/132 end:8/16/81-3/26/47
+      our deaths r100-300: head to head 63, hit other body 16, head to head/ATK 14
+      our longest at r400 (len 6) died r480: head to head/ATK
+battle 428020 vs !ghaplebaaz: 1 lost game(s)  (units/longest/total, us-them)
+  Devil            OUTNUMBERED
+      100:10/3/23-34/4/80 200:4/3/9-44/6/116 300:1/2/2-63/8/164 end:0/0/0-61/6/159
+      our deaths r0-100: hit wall/DOOMED 9, head to head 8, hit self/DOOMED 6
+battle 428025 vs kfcvme50: 1 lost game(s)  (units/longest/total, us-them)
+  Trophy           WIPED EARLY
+      100:4/2/8-39/3/97 200:1/2/2-64/9/194 end:0/0/0-64/9/188
+      our deaths r0-100: head to head 9, hit other body 1

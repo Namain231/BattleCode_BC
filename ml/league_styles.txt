@@ -1,0 +1,13 @@
+building D:\battlecode\BattleCode_BC\yv_style_sabotage to wasm with judge clang
+building D:\battlecode\BattleCode_BC\yv_style_calc to wasm with judge clang
+candidate                     v7_12        b9195        b8982   average
+y7_12_nn1               22.0/28      25.0/28      22.0/28        82.1%
+yv_style_sabotage       22.0/28      22.0/28      23.0/28        79.8%
+yv_style_vibing         23.5/28      24.0/28      25.0/28        86.3%
+yv_style_calc           23.0/28      22.0/28      23.0/28        81.0%
+
+per map (all opponents):
+  y7_12_nn1              trophy:10/12 queen_:9/12 defaul:9/12 dilemm:10/12 autark:12/12 devil:12/12 trauma:7/12
+  yv_style_sabotage      trophy:9/12 queen_:11/12 defaul:8/12 dilemm:12/12 autark:10/12 devil:12/12 trauma:5/12
+  yv_style_vibing        trophy:12/12 queen_:10/12 defaul:9/12 dilemm:12/12 autark:11/12 devil:12/12 trauma:6/12
+  yv_style_calc          trophy:6/12 queen_:11/12 defaul:10/12 dilemm:12/12 autark:11/12 devil:12/12 trauma:6/12

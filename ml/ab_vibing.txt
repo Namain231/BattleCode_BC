@@ -1,0 +1,26 @@
+sent 9285 vs 37: 479605
+sent 10047 vs 37: 479612
+sent 9285 vs 798: 479620
+sent 10047 vs 798: 479626
+sent 9285 vs 777: 479633
+sent 10047 vs 777: 479639
+sent 9285 vs 45: 479644
+sent 10047 vs 45: 479649
+sent 9285 vs 319: 479654
+sent 10047 vs 319: 479659
+sent 9285 vs 573: 479664
+sent 10047 vs 573: 479669
+  WCTW                 (1820)  build 9285: 2/5 WWLLL
+  WCTW                 (1820)  build 10047: 3/5 WWLWL
+  WeLikCoding          (1735)  build 9285: 3/5 WLWWL
+  WeLikCoding          (1735)  build 10047: 2/5 WLWLL
+  kfcvme50             (1714)  build 9285: 4/5 LWWWW
+  kfcvme50             (1714)  build 10047: 4/5 WWWLW
+  Rogo                 (1675)  build 9285: 5/5 WWWWW
+  Rogo                 (1675)  build 10047: 3/5 WWLLW
+  Hakimi               (1799)  build 9285: 3/5 WLWWL
+  Hakimi               (1799)  build 10047: 3/5 WLWWL
+  Shannon              (1849)  build 9285: 0/5 LLLLL
+  Shannon              (1849)  build 10047: 1/5 LLLWL
+TOTAL build 9285: 17/30
+TOTAL build 10047: 16/30

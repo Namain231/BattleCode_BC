@@ -1,0 +1,13 @@
+candidate                     v7_12        b9195        b8982   average
+y7_12_nn1               22.0/28      25.0/28      22.0/28        82.1%
+yv_pgossip              24.0/28      21.0/28      22.0/28        79.8%
+yv_v3                   24.0/28      23.0/28      22.0/28        82.1%
+yv_v1b                  23.0/28      25.0/28      20.0/28        81.0%
+yv_joint_q05            21.0/28      24.0/28      24.0/28        82.1%
+
+per map (all opponents):
+  y7_12_nn1              trophy:10/12 queen_:9/12 defaul:9/12 dilemm:10/12 autark:12/12 devil:12/12 trauma:7/12
+  yv_pgossip             trophy:9/12 queen_:11/12 defaul:7/12 dilemm:10/12 autark:12/12 devil:12/12 trauma:6/12
+  yv_v3                  trophy:9/12 queen_:8/12 defaul:10/12 dilemm:12/12 autark:11/12 devil:12/12 trauma:7/12
+  yv_v1b                 trophy:9/12 queen_:9/12 defaul:7/12 dilemm:12/12 autark:12/12 devil:12/12 trauma:7/12
+  yv_joint_q05           trophy:9/12 queen_:11/12 defaul:9/12 dilemm:12/12 autark:11/12 devil:12/12 trauma:5/12

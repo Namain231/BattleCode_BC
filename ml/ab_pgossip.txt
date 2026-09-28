@@ -1,0 +1,26 @@
+sent 9285 vs 37: 435062
+sent 9357 vs 37: 435067
+sent 9285 vs 798: 435072
+sent 9357 vs 798: 435077
+sent 9285 vs 777: 435082
+sent 9357 vs 777: 435087
+sent 9285 vs 45: 435102
+sent 9357 vs 45: 435107
+sent 9285 vs 319: 435639
+sent 9357 vs 319: 435644
+sent 9285 vs 573: 435650
+sent 9357 vs 573: 435655
+  WCTW                 (1789)  build 9285: 2/5 WLLWL
+  WCTW                 (1789)  build 9357: 2/5 WLLWL
+  WeLikCoding          (1769)  build 9285: 4/5 WWWWL
+  WeLikCoding          (1769)  build 9357: 3/5 WLWWL
+  kfcvme50             (1711)  build 9285: 2/5 LLWLW
+  kfcvme50             (1711)  build 9357: 3/5 LLWWW
+  Rogo                 (1674)  build 9285: 3/5 LLWWW
+  Rogo                 (1674)  build 9357: 3/5 WLLWW
+  Hakimi               (1775)  build 9285: 3/5 WLWWL
+  Hakimi               (1775)  build 9357: 1/5 WLLLL
+  Shannon              (1864)  build 9285: 1/5 LLWLL
+  Shannon              (1864)  build 9357: 4/5 WWWLW
+TOTAL build 9285: 15/30
+TOTAL build 9357: 16/30

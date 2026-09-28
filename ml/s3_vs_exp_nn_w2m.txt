@@ -1,0 +1,43 @@
+[WIN ] queen_of_spades  as A seed 1017:  99 rounds (by elimination)  our deaths=43 theirs=3
+[LOSS] queen_of_spades  as A seed 1000: 236 rounds (by elimination)  our deaths=38 theirs=57
+[LOSS] queen_of_spades  as B seed 1000: 325 rounds (by elimination)  our deaths=39 theirs=93
+[LOSS] queen_of_spades  as B seed 1017: 316 rounds (by elimination)  our deaths=102 theirs=38
+[LOSS] trophy           as B seed 1017: 207 rounds (by elimination)  our deaths=23 theirs=64
+[LOSS] trophy           as A seed 1000: 216 rounds (by elimination)  our deaths=18 theirs=66
+[LOSS] dilemma          as A seed 1000: 314 rounds (by elimination)  our deaths=77 theirs=106
+[LOSS] default          as A seed 1000: 500 rounds (on length)  our deaths=134 theirs=103
+[LOSS] default          as B seed 1000: 500 rounds (on length)  our deaths=115 theirs=128
+[LOSS] trophy           as A seed 1017: 500 rounds (on length)  our deaths=194 theirs=89
+[LOSS] dilemma          as B seed 1000: 443 rounds (by elimination)  our deaths=80 theirs=177
+[LOSS] trophy           as B seed 1000: 413 rounds (by elimination)  our deaths=168 theirs=121
+[LOSS] dilemma          as B seed 1017: 363 rounds (by elimination)  our deaths=79 theirs=134
+[LOSS] dilemma          as A seed 1017: 500 rounds (on length)  our deaths=72 theirs=213
+[LOSS] default          as A seed 1017: 500 rounds (on length)  our deaths=61 theirs=187
+[LOSS] default          as B seed 1017: 500 rounds (on length)  our deaths=30 theirs=226
+[LOSS] autarky          as B seed 1000: 257 rounds (by elimination)  our deaths=49 theirs=102
+[LOSS] autarky          as A seed 1000: 305 rounds (by elimination)  our deaths=59 theirs=135
+[LOSS] autarky          as B seed 1017: 287 rounds (by elimination)  our deaths=65 theirs=110
+[LOSS] devil            as B seed 1000: 278 rounds (by elimination)  our deaths=30 theirs=338
+[LOSS] devil            as A seed 1017: 275 rounds (by elimination)  our deaths=50 theirs=326
+[LOSS] autarky          as A seed 1017: 346 rounds (by elimination)  our deaths=62 theirs=135
+[WIN ] trauma           as A seed 1000: 500 rounds (on length)  our deaths=328 theirs=87
+[LOSS] devil            as A seed 1000: 445 rounds (by elimination)  our deaths=24 theirs=517
+[LOSS] trauma           as B seed 1000: 500 rounds (on length)  our deaths=195 theirs=140
+[WIN ] portals          as A seed 1000: 500 rounds (on length)  our deaths=455 theirs=380
+[LOSS] devil            as B seed 1017: 457 rounds (by elimination)  our deaths=38 theirs=523
+[WIN ] portals          as B seed 1000: 500 rounds (on length)  our deaths=474 theirs=335
+[WIN ] portals          as A seed 1017: 500 rounds (on length)  our deaths=455 theirs=386
+[WIN ] portals          as B seed 1017: 500 rounds (on length)  our deaths=480 theirs=358
+[WIN ] trauma           as A seed 1017: 500 rounds (on length)  our deaths=350 theirs=95
+[LOSS] trauma           as B seed 1017: 500 rounds (on length)  our deaths=252 theirs=137
+[WIN ] schooltime       as B seed 1000: 500 rounds (on length)  our deaths=354 theirs=320
+[WIN ] slithery_fight   as A seed 1000: 500 rounds (on length)  our deaths=743 theirs=628
+[LOSS] schooltime       as A seed 1017: 500 rounds (on length)  our deaths=365 theirs=318
+[WIN ] slithery_fight   as B seed 1000: 500 rounds (on length)  our deaths=685 theirs=702
+[LOSS] schooltime       as A seed 1000: 500 rounds (on length)  our deaths=311 theirs=383
+[WIN ] slithery_fight   as A seed 1017: 500 rounds (on length)  our deaths=736 theirs=643
+[WIN ] schooltime       as B seed 1017: 500 rounds (on length)  our deaths=404 theirs=429
+[LOSS] slithery_fight   as B seed 1017: 500 rounds (on length)  our deaths=905 theirs=661
+========================================================================
+ladder/team_subs/b9195 vs exp_nn_w2m: 12W 28L 0D of 40  (30% wins)  in 234s
+our death causes: {'hit itself': 2565, 'hit a wall': 3107, 'lost a head-to-head': 2508, 'hit another dragon': 380, 'no valid action': 582}   our peak points/turn: 58.4M

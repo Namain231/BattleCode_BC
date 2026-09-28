@@ -42,15 +42,11 @@ def prepare(bot: str) -> str:
 
 
 def play(map_name, a, b, seed):
-    cmd = [
-        "unswbc", "run",
-        str(ROOT / "maps" / f"{map_name}.map"),
-        a, b,
-        "--sandbox",
-        "--no-replay",
-        "--seed", str(seed),
-    ]
-
+    # a bare name is a live map (maps/<name>.map); a path like maps_gen/gen_007 or maps_gen/gen_007.map works too
+    mp = pathlib.Path(map_name if map_name.endswith(".map") else f"{map_name}.map")
+    mp = mp if "/" in map_name or "\\" in map_name else ROOT / "maps" / mp
+    cmd = ["unswbc", "run", str(ROOT / mp if not mp.is_absolute() else mp), a, b, "--sandbox", "--no-replay",
+           "--seed", str(seed)]
     try:
         out = subprocess.run(
             cmd,

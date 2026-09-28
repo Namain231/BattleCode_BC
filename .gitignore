@@ -10,3 +10,11 @@ dbg*/
 v7[0-9]/
 debug_cfg.hpp
 exp_*/
+*.replay.pkl
+ml_upload.zip
+ml/data*/
+ml/models/
+# generated random maps (python tools/gen_random_maps.py --n 300 --out maps_gen --seed 1)
+maps_gen/
+# local training/eval logs
+ml/*.log

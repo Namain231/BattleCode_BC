@@ -1,0 +1,44 @@
+building D:\battlecode\BattleCode_BC\ladder\team_subs\b9195 to wasm with judge clang
+[WIN ] queen_of_spades  as A seed 1000: 168 rounds (by elimination)  our deaths=47 theirs=24
+[LOSS] queen_of_spades  as A seed 1017: 212 rounds (by elimination)  our deaths=45 theirs=58
+[WIN ] queen_of_spades  as B seed 1017: 500 rounds (on length)  our deaths=110 theirs=50
+[LOSS] queen_of_spades  as B seed 1000: 500 rounds (on length)  our deaths=116 theirs=44
+[LOSS] trophy           as B seed 1000: 267 rounds (by elimination)  our deaths=25 theirs=96
+[LOSS] dilemma          as A seed 1000: 339 rounds (by elimination)  our deaths=10 theirs=197
+[LOSS] dilemma          as A seed 1017: 168 rounds (by elimination)  our deaths=10 theirs=89
+[LOSS] trophy           as A seed 1000: 336 rounds (by elimination)  our deaths=23 theirs=109
+[WIN ] default          as B seed 1017: 500 rounds (on length)  our deaths=164 theirs=39
+[LOSS] dilemma          as B seed 1000: 500 rounds (on length)  our deaths=32 theirs=235
+[WIN ] default          as A seed 1000: 500 rounds (on length)  our deaths=173 theirs=50
+[LOSS] default          as A seed 1017: 447 rounds (by elimination)  our deaths=27 theirs=194
+[LOSS] default          as B seed 1000: 500 rounds (on length)  our deaths=118 theirs=112
+[WIN ] trophy           as A seed 1017: 476 rounds (by elimination)  our deaths=199 theirs=44
+[LOSS] trophy           as B seed 1017: 500 rounds (on length)  our deaths=54 theirs=146
+[LOSS] dilemma          as B seed 1017: 500 rounds (on length)  our deaths=34 theirs=243
+[LOSS] devil            as A seed 1017: 399 rounds (by elimination)  our deaths=512 theirs=146
+[LOSS] autarky          as A seed 1017: 500 rounds (on length)  our deaths=150 theirs=135
+[LOSS] devil            as A seed 1000: 477 rounds (by elimination)  our deaths=69 theirs=568
+[WIN ] devil            as B seed 1000: 500 rounds (on length)  our deaths=542 theirs=158
+[LOSS] autarky          as B seed 1017: 500 rounds (on length)  our deaths=122 theirs=146
+[LOSS] autarky          as A seed 1000: 448 rounds (by elimination)  our deaths=70 theirs=180
+[LOSS] trauma           as A seed 1000: 500 rounds (on length)  our deaths=303 theirs=112
+[LOSS] autarky          as B seed 1000: 500 rounds (on length)  our deaths=119 theirs=143
+[LOSS] trauma           as B seed 1000: 500 rounds (on length)  our deaths=224 theirs=108
+[LOSS] devil            as B seed 1017: 500 rounds (on length)  our deaths=493 theirs=256
+[WIN ] portals          as A seed 1000: 500 rounds (on length)  our deaths=455 theirs=380
+[WIN ] portals          as B seed 1000: 500 rounds (on length)  our deaths=474 theirs=335
+[WIN ] trauma           as A seed 1017: 500 rounds (on length)  our deaths=309 theirs=122
+[WIN ] portals          as A seed 1017: 500 rounds (on length)  our deaths=455 theirs=386
+[WIN ] trauma           as B seed 1017: 500 rounds (on length)  our deaths=348 theirs=112
+[WIN ] portals          as B seed 1017: 500 rounds (on length)  our deaths=480 theirs=358
+[WIN ] slithery_fight   as A seed 1000: 500 rounds (on length)  our deaths=743 theirs=628
+[WIN ] slithery_fight   as B seed 1000: 500 rounds (on length)  our deaths=685 theirs=702
+[WIN ] slithery_fight   as A seed 1017: 500 rounds (on length)  our deaths=736 theirs=643
+[LOSS] slithery_fight   as B seed 1017: 500 rounds (on length)  our deaths=905 theirs=661
+[WIN ] schooltime       as B seed 1000: 500 rounds (on length)  our deaths=354 theirs=320
+[WIN ] schooltime       as B seed 1017: 500 rounds (on length)  our deaths=404 theirs=429
+[LOSS] schooltime       as A seed 1017: 500 rounds (on length)  our deaths=365 theirs=318
+[LOSS] schooltime       as A seed 1000: 500 rounds (on length)  our deaths=311 theirs=383
+========================================================================
+ladder/team_subs/b9195 vs baselines/v7_12: 17W 23L 0D of 40  (42% wins)  in 211s
+our death causes: {'hit another dragon': 422, 'hit itself': 3306, 'lost a head-to-head': 2552, 'hit a wall': 3800, 'no valid action': 735}   our peak points/turn: 58.4M

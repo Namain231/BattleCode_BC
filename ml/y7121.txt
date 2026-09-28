@@ -1,0 +1,24 @@
+building D:\battlecode\BattleCode_BC\yv7_12_1 to wasm with judge clang
+[LOSS] slithery_fight   as A seed 1000: 500 rounds (on length)  our deaths=667 theirs=624
+[WIN ] slithery_fight   as B seed 1000: 500 rounds (on length)  our deaths=623 theirs=718
+[LOSS] slithery_fight   as B seed 1051: 500 rounds (on length)  our deaths=610 theirs=688
+[LOSS] slithery_fight   as A seed 1051: 500 rounds (on length)  our deaths=672 theirs=635
+[WIN ] slithery_fight   as A seed 1034: 500 rounds (on length)  our deaths=558 theirs=770
+[LOSS] slithery_fight   as B seed 1017: 500 rounds (on length)  our deaths=703 theirs=641
+[WIN ] slithery_fight   as A seed 1068: 500 rounds (on length)  our deaths=708 theirs=716
+[WIN ] slithery_fight   as A seed 1017: 500 rounds (on length)  our deaths=623 theirs=722
+[LOSS] slithery_fight   as B seed 1068: 500 rounds (on length)  our deaths=713 theirs=699
+[ERR ] slithery_fight   as B seed 1034: 500 rounds (TIMEOUT)  our deaths=0 theirs=0
+[ERR ] slithery_fight   as A seed 1085: 500 rounds (TIMEOUT)  our deaths=0 theirs=0
+[ERR ] slithery_fight   as B seed 1085: 500 rounds (TIMEOUT)  our deaths=0 theirs=0
+[ERR ] slithery_fight   as A seed 1102: 500 rounds (TIMEOUT)  our deaths=0 theirs=0
+[ERR ] slithery_fight   as B seed 1102: 500 rounds (TIMEOUT)  our deaths=0 theirs=0
+[ERR ] slithery_fight   as A seed 1119: 500 rounds (TIMEOUT)  our deaths=0 theirs=0
+[ERR ] slithery_fight   as B seed 1119: 500 rounds (TIMEOUT)  our deaths=0 theirs=0
+[ERR ] slithery_fight   as A seed 1136: 500 rounds (TIMEOUT)  our deaths=0 theirs=0
+[ERR ] slithery_fight   as B seed 1136: 500 rounds (TIMEOUT)  our deaths=0 theirs=0
+[ERR ] slithery_fight   as A seed 1153: 500 rounds (TIMEOUT)  our deaths=0 theirs=0
+[ERR ] slithery_fight   as B seed 1153: 500 rounds (TIMEOUT)  our deaths=0 theirs=0
+========================================================================
+yv7_12_1 vs baselines/v7_12: 4W 5L 11D of 20  (20% wins)  in 480s
+our death causes: {'hit itself': 2221, 'hit a wall': 2582, 'lost a head-to-head': 710, 'hit another dragon': 100, 'no valid action': 264}   our peak points/turn: 47.9M

@@ -1,0 +1,61 @@
+building D:\battlecode\BattleCode_BC\yv_pgossip to wasm with judge clang
+[WIN ] trophy           as A seed 1000: 205 rounds (by elimination)  our deaths=53 theirs=36
+[WIN ] trophy           as B seed 1034: 219 rounds (by elimination)  our deaths=71 theirs=35
+[WIN ] queen_of_spades  as B seed 1000: 500 rounds (on length)  our deaths=50 theirs=158
+[WIN ] queen_of_spades  as A seed 1017: 500 rounds (on length)  our deaths=120 theirs=85
+[LOSS] trophy           as B seed 1017: 232 rounds (by elimination)  our deaths=21 theirs=60
+[LOSS] queen_of_spades  as A seed 1000: 500 rounds (on length)  our deaths=14 theirs=187
+[LOSS] trophy           as B seed 1000: 309 rounds (by elimination)  our deaths=108 theirs=90
+[WIN ] trophy           as A seed 1017: 270 rounds (by elimination)  our deaths=88 theirs=15
+[WIN ] queen_of_spades  as B seed 1017: 500 rounds (on length)  our deaths=147 theirs=39
+[LOSS] trophy           as A seed 1034: 398 rounds (by elimination)  our deaths=62 theirs=159
+[WIN ] queen_of_spades  as A seed 1034: 500 rounds (on length)  our deaths=177 theirs=33
+[WIN ] queen_of_spades  as B seed 1034: 500 rounds (on length)  our deaths=142 theirs=59
+[LOSS] dilemma          as B seed 1000: 382 rounds (by elimination)  our deaths=61 theirs=160
+[LOSS] default          as A seed 1000: 496 rounds (by elimination)  our deaths=50 theirs=184
+[WIN ] dilemma          as A seed 1000: 500 rounds (on length)  our deaths=184 theirs=91
+[WIN ] default          as B seed 1000: 500 rounds (on length)  our deaths=195 theirs=34
+[LOSS] default          as B seed 1017: 500 rounds (on length)  our deaths=62 theirs=176
+[WIN ] default          as A seed 1017: 500 rounds (on length)  our deaths=207 theirs=46
+[LOSS] dilemma          as A seed 1017: 472 rounds (by elimination)  our deaths=59 theirs=212
+[LOSS] default          as A seed 1034: 500 rounds (by elimination)  our deaths=82 theirs=192
+[LOSS] dilemma          as B seed 1017: 379 rounds (by elimination)  our deaths=53 theirs=160
+[WIN ] default          as B seed 1034: 500 rounds (on length)  our deaths=157 theirs=118
+[LOSS] dilemma          as A seed 1034: 444 rounds (by elimination)  our deaths=65 theirs=188
+[LOSS] dilemma          as B seed 1034: 500 rounds (on length)  our deaths=77 theirs=204
+[LOSS] devil            as A seed 1000: 297 rounds (by elimination)  our deaths=42 theirs=357
+[LOSS] autarky          as A seed 1017: 500 rounds (on length)  our deaths=170 theirs=174
+[WIN ] autarky          as B seed 1017: 500 rounds (on length)  our deaths=203 theirs=109
+[LOSS] autarky          as B seed 1000: 500 rounds (on length)  our deaths=191 theirs=159
+[WIN ] autarky          as A seed 1034: 500 rounds (on length)  our deaths=185 theirs=150
+[WIN ] autarky          as A seed 1000: 500 rounds (on length)  our deaths=228 theirs=138
+[WIN ] devil            as B seed 1000: 429 rounds (by elimination)  our deaths=455 theirs=113
+[WIN ] autarky          as B seed 1034: 500 rounds (on length)  our deaths=203 theirs=100
+[WIN ] devil            as A seed 1017: 500 rounds (on length)  our deaths=492 theirs=167
+[WIN ] devil            as B seed 1017: 397 rounds (by elimination)  our deaths=369 theirs=113
+[LOSS] devil            as B seed 1034: 428 rounds (by elimination)  our deaths=111 theirs=467
+[LOSS] trauma           as B seed 1000: 500 rounds (on length)  our deaths=85 theirs=139
+[WIN ] trauma           as A seed 1000: 500 rounds (on length)  our deaths=93 theirs=115
+[WIN ] devil            as A seed 1034: 500 rounds (on length)  our deaths=462 theirs=138
+[LOSS] trauma           as A seed 1017: 500 rounds (on length)  our deaths=92 theirs=153
+[LOSS] trauma           as B seed 1017: 500 rounds (on length)  our deaths=91 theirs=142
+[WIN ] trauma           as A seed 1034: 500 rounds (on length)  our deaths=120 theirs=117
+[WIN ] trauma           as B seed 1034: 500 rounds (on length)  our deaths=117 theirs=99
+========================================================================
+yv_pgossip vs baselines/y7_12_nn1: 23W 19L 0D of 42  (55% wins)  in 287s
+our death causes: {'hit another dragon': 233, 'lost a head-to-head': 2057, 'hit a wall': 2023, 'hit itself': 1368, 'no valid action': 333}   our peak points/turn: 45.6M
+[WIN ] portals          as A seed 1000: 500 rounds (on length)  our deaths=231 theirs=370
+[WIN ] portals          as B seed 1000: 500 rounds (on length)  our deaths=356 theirs=329
+[LOSS] portals          as A seed 1017: 500 rounds (on length)  our deaths=386 theirs=378
+[WIN ] portals          as B seed 1017: 500 rounds (on length)  our deaths=411 theirs=374
+[WIN ] schooltime       as A seed 1000: 500 rounds (on length)  our deaths=290 theirs=309
+[LOSS] slithery_fight   as B seed 1000: 500 rounds (on length)  our deaths=610 theirs=612
+[WIN ] slithery_fight   as A seed 1000: 500 rounds (on length)  our deaths=665 theirs=623
+[LOSS] slithery_fight   as A seed 1017: 500 rounds (on length)  our deaths=670 theirs=657
+[WIN ] slithery_fight   as B seed 1017: 500 rounds (on length)  our deaths=675 theirs=716
+[WIN ] schooltime       as B seed 1017: 500 rounds (on length)  our deaths=387 theirs=331
+[WIN ] schooltime       as B seed 1000: 500 rounds (on length)  our deaths=380 theirs=302
+[LOSS] schooltime       as A seed 1017: 500 rounds (on length)  our deaths=309 theirs=376
+========================================================================
+yv_pgossip vs baselines/y7_12_nn1: 8W 4L 0D of 12  (67% wins)  in 131s
+our death causes: {'hit itself': 1516, 'lost a head-to-head': 1353, 'hit another dragon': 235, 'hit a wall': 1817, 'no valid action': 449}   our peak points/turn: 57.9M

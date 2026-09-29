@@ -33,6 +33,7 @@ def series(cand, opp, seeds, j):
             seed = 1000 + 17 * s
             jobs.append((m, "A", cand, opp, seed))
             jobs.append((m, "B", opp, cand, seed))
+    jobs.sort(key=lambda j: tourney.HEAVY.index(j[0]) if j[0] in tourney.HEAVY else len(tourney.HEAVY))
     res = collections.defaultdict(lambda: [0, 0])  # map -> [wins, games]
     wins = games = 0
     with cf.ThreadPoolExecutor(j) as ex:

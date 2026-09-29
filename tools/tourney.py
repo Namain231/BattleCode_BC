@@ -1,10 +1,16 @@
 """Round-robin matches between two bots in the judge's sandbox, in parallel.
 
     python tools/tourney.py viper_v7 baselines/v7_5 [--maps a,b] [--seeds 2] [-j 10] [--one-side]
+                            [--timeout SECONDS] [--max-points 65] [--replays DIR]
 
 Each map is played with the first bot as team A and again as team B (turn
 order depends on dragon ids, so sides matter). C/C++ bots are built to wasm
 once up front so the parallel runs do not race to compile them.
+
+The sandbox prices every dragon-turn in CPU points exactly as the judge does, and the judge has no
+limit on a whole game. So by default a game may take as long as it needs in wall time (--timeout 0);
+a build is flagged when a turn's points exceed --max-points (millions), well under the judge's 100M.
+Heavy maps are started first so they do not all end up competing for the cores at the end.
 """
 import argparse
 import concurrent.futures as cf
@@ -22,6 +28,9 @@ RESULT = re.compile(r"team (A|B) wins after (\d+) rounds \((.*?)\)")
 DRAW = re.compile(r"draw after (\d+) rounds")
 DEATH = re.compile(r"round (\d+): bot (\d+) \(team (A|B)\) died: (.*)")
 POINTS = re.compile(r"team (A|B) points per turn: .*max ([\d.]+)M")
+# most dragon-turns first (big economies keep both swarms near the unit cap)
+HEAVY = ["slithery_fight", "schooltime", "portals", "devil", "big_empty", "trauma", "autarky", "stronghold"]
+GAME_TIMEOUT = 0  # seconds of wall time per game; 0 = no limit (set from --timeout)
 
 
 def prepare(bot: str) -> str:
@@ -32,16 +41,25 @@ def prepare(bot: str) -> str:
     return str(clangtool.build(path))
 
 
+<<<<<<< HEAD
 def play(map_name, a, b, seed):
     # a bare name is a live map (maps/<name>.map); a path like maps_gen/gen_007 or maps_gen/gen_007.map works too
     mp = pathlib.Path(map_name if map_name.endswith(".map") else f"{map_name}.map")
     mp = mp if "/" in map_name or "\\" in map_name else ROOT / "maps" / mp
     cmd = ["unswbc", "run", str(ROOT / mp if not mp.is_absolute() else mp), a, b, "--sandbox", "--no-replay",
            "--seed", str(seed)]
+=======
+def play(map_name, a, b, seed, save=None):
+    cmd = ["unswbc", "run", str(ROOT / "maps" / f"{map_name}.map"), a, b, "--sandbox", "--seed", str(seed)]
+    cmd += ["-o", str(save) + ".replay"] if save else ["--no-replay"]
+>>>>>>> 7afafbe (wip: viper_v8, unseen maps, tourney/gate tweaks)
     try:
-        out = subprocess.run(cmd, capture_output=True, text=True, errors="replace", timeout=240).stdout
+        out = subprocess.run(cmd, capture_output=True, text=True, errors="replace",
+                             timeout=GAME_TIMEOUT or None).stdout
     except subprocess.TimeoutExpired:
         return None, 500, "TIMEOUT", {"A": [], "B": []}, {}
+    if save:
+        pathlib.Path(str(save) + ".log").write_text(out, encoding="utf-8")
     winner, rounds, how = None, 500, "?"
     m = RESULT.search(out)
     if m:
@@ -67,7 +85,18 @@ def main():
     ap.add_argument("--seeds", type=int, default=1)
     ap.add_argument("-j", type=int, default=10)
     ap.add_argument("--one-side", action="store_true")
+    ap.add_argument("--timeout", type=int, default=0, help="wall seconds per game, 0 = none")
+    ap.add_argument("--max-points", type=float, default=65.0, help="flag turns above this many million points")
+    ap.add_argument("--replays", help="folder for each game's replay and text log (default: none kept)")
     args = ap.parse_args()
+    global GAME_TIMEOUT
+    GAME_TIMEOUT = args.timeout
+    out_dir = None
+    if args.replays:
+        out_dir = pathlib.Path(args.replays).resolve()
+        out_dir.mkdir(parents=True, exist_ok=True)
+    tag_a = pathlib.Path(args.bot).name
+    tag_b = pathlib.Path(args.opponent).name
 
     a_path, b_path = prepare(args.bot), prepare(args.opponent)
     jobs = []
@@ -77,18 +106,24 @@ def main():
             jobs.append((m, "A", a_path, b_path, seed))
             if not args.one_side:
                 jobs.append((m, "B", b_path, a_path, seed))
+    jobs.sort(key=lambda j: HEAVY.index(j[0]) if j[0] in HEAVY else len(HEAVY))
 
     start = time.time()
     wins = losses = draws = 0
     rows = []
     death_tally = {}
     peak_ms = 0.0
+    over_budget = []
     with cf.ThreadPoolExecutor(args.j) as ex:
-        futs = {ex.submit(play, m, x, y, s): (m, side, s) for m, side, x, y, s in jobs}
+        futs = {ex.submit(play, m, x, y, s,
+                          out_dir / f"{tag_a}-vs-{tag_b}-{m}-{tag_a}_as_{side}-seed{s}" if out_dir else None):
+                (m, side, s) for m, side, x, y, s in jobs}
         for f in cf.as_completed(futs):
             m, side, s = futs[f]
             winner, rounds, how, deaths, peak = f.result()
             peak_ms = max(peak_ms, peak.get(side, 0.0))
+            if peak.get(side, 0.0) > args.max_points:
+                over_budget.append(f"{m} as {side} seed {s}: {peak[side]:.1f}M")
             for why in deaths[side]:
                 death_tally[why] = death_tally.get(why, 0) + 1
             if winner is None:
@@ -109,6 +144,8 @@ def main():
     print(f"{args.bot} vs {args.opponent}: {wins}W {losses}L {draws}D of {total}"
           f"  ({100.0 * wins / max(1, total):.0f}% wins)  in {time.time() - start:.0f}s")
     print(f"our death causes: {death_tally}   our peak points/turn: {peak_ms:.1f}M")
+    if over_budget:
+        print(f"CPU WARNING: turns above {args.max_points:.0f}M points (judge limit 100M): " + "; ".join(over_budget))
 
 
 if __name__ == "__main__":

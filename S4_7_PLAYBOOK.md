@@ -80,19 +80,29 @@ whose proper flood-fill safety check before every move structurally avoids that 
 
 ## 5. Open problems, ranked by evidence strength
 
-1. **Slithery Fight: catastrophic, map-specific runaway split-death spiral.** Real ladder losses to
-   3 different 1700+ opponents show 600-1000+ of our own deaths *per game* on this one map (vs <60 on
-   most others), overwhelmingly hit-wall/hit-self. Reproduced locally: our side spawned **1300+
-   dragons in a single 500-round game** (bot id reached 1391+), taking 5x longer to simulate than a
-   normal map. **New finding (bceval, see §6)**: 4 independently-sampled losses on this map all
-   collapse at almost exactly **round 360-410** — suspiciously close to `Params::feedRound=400`.
-   Working hypothesis: the feed-phase convergence interacts badly with this map's geometry, likely
-   producing repeated "no safe move" states that keep re-triggering the new emergency-split fix in
-   an unstable loop. **An isolation test (emergency-split forced off on this map) is the direct next
-   check** — not yet resolved as of this writing, check `ladder/losses/noemergency_slithery_test.txt`.
-   Slithery Fight (and Schooltime, see below) were **never part of the local 6-map validation panel**
-   used for most of this rewrite — a real process gap, now fixed (`tools/tourney.py`'s `CORE_PANEL`
-   is the 8-map list that should be used from here on).
+1. **Slithery Fight: catastrophic, map-wide runaway split-death spiral — confirmed NOT caused by
+   emergency-split.** Real ladder losses to 3 different 1700+ opponents show 600-1000+ of our own
+   deaths *per game* on this one map (vs <60 on most others), overwhelmingly hit-wall/hit-self.
+   Reproduced locally: our side spawned **1300+ dragons in a single 500-round game** (bot id reached
+   1391+), taking 5x longer to simulate than a normal map. `bceval` dated 4 independent losses on
+   this map to a collapse at almost exactly **round 360-410**, close to `feedRound=400` — but an
+   isolation test (emergency-split forced off, direct `unswbc run --sandbox` to bypass
+   `tourney.py`'s 240s timeout, same seed 1000) came back **virtually identical to the baseline**
+   (5m23s vs 5m15s, 26113 vs 26170 dragon-turns, bot id still 1386+) — **emergency-split is ruled
+   out.** (Correction: an earlier pass here claimed the map has no interior walls, based on
+   misreading `TILE` lines as terrain — those are actually pearl-spawn directives. Properly checked
+   via `EDGE` data: the map has 514 kelp edges, which block movement like a wall, plus 4 portals,
+   among 3402 edges on 1701 cells — real, fairly dense wall/kelp structure, not an open arena.) Both
+   sides (including unmodified `viper_v7.12`, which has no emergency-split feature) show the
+   identical pathology, so the cause is something both bots' ordinary swarm-splitting logic hits on
+   this map's layout, independent of the emergency-split mechanism. **Leading hypothesis** (untested):
+   the articulation-point/chamber-trap failure mode from §7 — a bud landing in a pocket that looks
+   open by cell-count but is reached through a kelp-bounded corridor that can seal shut. **Recommended
+   next step**: a direct `BC_DEBUG` trace of the round-360-410 collapse window to see the actual board
+   layout and death pattern before guessing further. Slithery Fight
+   (and Schooltime) were **never part of the local 6-map validation panel** used for most of this
+   rewrite — a real process gap, now fixed (`tools/tourney.py`'s `CORE_PANEL` is the 8-map list that
+   should be used from here on).
 2. **Trophy: near-instant collapse, not a slow bleed.** `bceval` shows all 3 sampled ladder losses on
    Trophy crash from ~50% to ~88-90% *against* us by round 39-40 and never recover — a sharp, early
    failure, not a gradual one. Matches the known "opponent claims the pearl-dense region and
@@ -138,8 +148,9 @@ core problem: grid pathing, space-claiming, no-return-into-own-body):
   to lead to the *largest* remaining connected chamber among the options. This is a real upgrade over
   the current `bareExit`/`hasRoomyMove` checks, which count reachable cells but don't detect "this
   looks big enough but the only way in is a corridor that could seal shut" — the exact failure shape
-  behind the reverted `trySplit` rescue-mode experiment and a plausible contributor to the Slithery
-  Fight spiral (§5.1). **Best-scoped concrete next implementation.**
+  behind the reverted `trySplit` rescue-mode experiment on Trauma's maze layout, and (pending a direct
+  trace) the leading hypothesis for the Slithery Fight spiral too — that map has real, fairly dense
+  kelp/wall structure (§5.1), not the open arena an earlier pass here mistakenly claimed.
 - **"Fewest edges removed" tie-break**: when two moves lead to similarly-sized open areas, prefer the
   more wall-adjacent (less central) one — a cheap heuristic for efficient space-filling without a
   full chamber analysis every turn.

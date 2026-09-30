@@ -1,0 +1,3 @@
+[submodule "tools/battlecode-eval"]
+	path = tools/battlecode-eval
+	url = https://github.com/xCirno1/battlecode-eval.git

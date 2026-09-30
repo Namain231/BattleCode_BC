@@ -1,0 +1,18 @@
+name = "viper_vS4.3"
+version = "S4.3"
+author = "Sohan"
+description = "Brawler Miners"
+
+[strategic]
+budAt = 4
+minerGamma = 0.80
+pessimistic_dfs = true
+enable_sonar_pack = true
+
+[combat]
+reach_depth = 3
+attack_scan = 4
+
+[tuning]
+corridor_risk_penalty = 100
+greedy_override_threshold = 2 # safeClass requirement to unlock v8 scoring

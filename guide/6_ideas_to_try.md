@@ -33,5 +33,5 @@ result.
 8. **Look ahead 2–3 moves in close fights**, using the network to predict what the enemy will do (the Hungry
    Geese winners did this). CPU cost only applies near enemies.
 
-Before starting, check `ml/results.md` (technique ledger) and guide 4, so you don't redo something already
+Before starting, check `AGENTS.md` (section 4, what has been tried) and guide 4, so you don't redo something already
 measured.

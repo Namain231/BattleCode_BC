@@ -61,5 +61,5 @@ regularly). So 5 games tell you nothing.
 
 - Make sure the champion (9285) is active again. Autoscrims run every 2 hours on even UTC hours (5:30, 7:30…
   IST) with whatever is active.
-- Write one line in `AGENTS.md` (the name table) and in `INSIGHTS_AND_PLAYBOOK.md`: what you tried and the
+- Write one line in `AGENTS.md` (the name table and section 4, "What has been tried"): what you tried and the
   result, even if it failed. A failed idea written down saves someone a day.

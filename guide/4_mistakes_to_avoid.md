@@ -46,4 +46,4 @@ Each of these is a good **single** change to test on top of `viper_nn/`, followi
 ## Things that were neutral (don't redo them expecting a gain)
 
 Lane sonar, pearl gossip, hunting giants, soft opening safety, sonar "jamming", a bigger or more-data network,
-network ensembles, copying one top team's style. See `ml/results.md` for the numbers.
+network ensembles, copying one top team's style. See `AGENTS.md` (section 4) for the numbers.

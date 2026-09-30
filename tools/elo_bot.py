@@ -4,11 +4,12 @@
 
 Loop (every --poll seconds):
   1. Read our recent battles; record finished tests and ranked series (ladder/elo_log.txt, ladder/elo_state.json).
-  2. A finished unranked test whose score beats the Elo-expected score by --margin (e.g. 2/5 is enough vs a team
-     ~240 above us, 3/5 vs one ~20 above) is queued for a ranked challenge on the maps we won, topped up with the
-     open maps.
+  2. Ranked battles play 5 random maps of all 10 (the server refuses map picks since 29 Sept), so tests do too:
+     5 random maps. A first test with >= 3/5 earns a second test; a ranked challenge needs >= 7/10 over both AND
+     the Elo-expected score + --margin. (Old rule "3/5 on our 5 best maps" won 70% in tests but 54% in ranked:
+     other maps + regression to the mean of one noisy 5-game test.)
      A team that lost us a ranked series is not challenged again until it is re-tested.
-  3. Send the next challenge: ranked first, then tests (maze maps), at most --max-live series in flight.
+  3. Send the next challenge: ranked first, then tests, at most --max-live series in flight and one send per --gap s.
      A quota error just means "try again next poll".
   4. When nothing is left to test, refresh candidates: teams --min-above..--max-above above us, highest first.
 Every test and ranked challenge re-checks that the target is still >= --min-above above us when it is sent.
@@ -20,16 +21,18 @@ import datetime
 import json
 import os
 import pathlib
+import random
 import re
 import subprocess
 import sys
 import time
 
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # team names are not ASCII; Windows consoles are cp1252
 BASE = "https://game.battlecode.au/api/v1"
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 STATE = ROOT / "ladder" / "elo_state.json"
 LOG = ROOT / "ladder" / "elo_log.txt"
-TEST_MAPS = [11, 4, 19, 13, 15]          # Trophy, Default, Autarky, Devil, Trauma
+ALL_MAPS = [20, 21, 9, 11, 7, 4, 17, 19, 13, 15]   # ranked draws 5 of these at random, so tests do the same
 OPEN_MAPS = [20, 21, 9]                  # Portals, Slithery, Schooltime: we usually win these
 if "UNSWBC_KEY" not in os.environ and (ROOT / "secrets.env").exists():   # the key file of the private repo
     for _line in (ROOT / "secrets.env").read_text().splitlines():
@@ -85,7 +88,8 @@ def main():
     ap.add_argument("--queue", default="", help="team ids to test first, comma separated")
     ap.add_argument("--margin", type=float, default=0.2,
                     help="challenge when the test score beats the Elo-expected score by this much")
-    ap.add_argument("--max-live", type=int, default=2)
+    ap.add_argument("--max-live", type=int, default=1)
+    ap.add_argument("--gap", type=int, default=300, help="seconds between two challenges we send")
     ap.add_argument("--max-above", type=int, default=120)
     ap.add_argument("--min-above", type=int, default=20, help="only test/challenge teams at least this far above us")
     ap.add_argument("--poll", type=int, default=60)
@@ -100,7 +104,8 @@ def main():
         try:
             tick(a, st)
         except Exception as e:  # network hiccups etc.
-            log(f"error: {e!r}")
+            import traceback
+            log(f"error: {e!r} at line {traceback.extract_tb(e.__traceback__)[-1].lineno}")
         save_state(st)
         time.sleep(a.poll)
 
@@ -142,16 +147,22 @@ def tick(a, st):
         if not b or b.get("outcome") in ("live", "queued") or info.get("seen"):
             continue
         info["seen"] = True
-        won = [m for m, r in zip(info["maps"], b["results"]) if r == "win"]
         te = team_elo(info["team"])
-        log(f"test vs {b['opponent']} ({te}): {b['wins']}/{len(b['results'])} won maps {won}")
-        st["done"][str(info["team"])] = {"name": b["opponent"], "test": f"{b['wins']}/{len(b['results'])}", "won": won}
+        key = str(info["team"])
+        prev = st["done"].get(key) if info.get("second") else None
+        w = b["wins"] + (prev["w"] if prev else 0); n = len(b["results"]) + (prev["n"] if prev else 0)
+        log(f"test{' 2' if prev else ''} vs {b['opponent']} ({te}): {b['wins']}/{len(b['results'])}"
+            f"{f' (total {w}/{n})' if prev else ''}")
+        st["done"][key] = {"name": b["opponent"], "test": f"{w}/{n}", "w": w, "n": n}
         expected = 1 / (1 + 10 ** ((te - ours) / 400))
-        # 5 games are noisy: 2/5 unranked vs forgot to mention turned into 0/5 ranked, so demand both
-        if b["wins"] >= 3 and b["wins"] / len(b["results"]) >= expected + a.margin and te >= ours + a.min_above:
-            maps = (won + [m for m in OPEN_MAPS if m not in won])[:5]
-            st["ranked_queue"].append({"team": info["team"], "name": b["opponent"], "maps": maps})
-            log(f"  -> ranked queued vs {b['opponent']} on {maps}")
+        if te < ours + a.min_above:
+            continue
+        if not prev and b["wins"] >= 3:
+            st["queue"].insert(0, info["team"]); st.setdefault("second", []).append(info["team"])
+            log(f"  -> second test vs {b['opponent']}")
+        elif prev and w >= 7 and w / n >= expected + a.margin:
+            st["ranked_queue"].append({"team": info["team"], "name": b["opponent"]})
+            log(f"  -> ranked queued vs {b['opponent']} ({w}/{n}, expected {expected:.2f})")
     for bid, info in list(st["ranked"].items()):
         b = by_id.get(bid)
         if not b or b.get("outcome") in ("live", "queued") or info.get("seen"):
@@ -160,7 +171,7 @@ def tick(a, st):
         log(f"RANKED vs {b['opponent']} ({b['opponentElo']}): {b['wins']}/{len(b['results'])} elo {b['eloChange'] or 0:+d}; now ~{ours}")
         # one more ranked go if we clearly won and they are still eligible; after a loss, retest first
         if b["wins"] >= 4 and team_elo(info["team"]) >= ours + a.min_above and info.get("round", 1) < 2:
-            st["ranked_queue"].append({"team": info["team"], "name": b["opponent"], "maps": info["maps"], "round": 2})
+            st["ranked_queue"].append({"team": info["team"], "name": b["opponent"], "round": 2})
 
     # every finished battle with a lost game (tests, ranked, autoscrims, incoming) gets a loss report
     for b in battles:
@@ -177,7 +188,7 @@ def tick(a, st):
                     f"elo {b.get('eloChange') or 0:+d}\n{r.stdout}{r.stderr[-300:]}\n")
     st["analysed"] = st["analysed"][-300:]
 
-    if live >= a.max_live:
+    if live >= a.max_live or time.time() - st.get("last_send", 0) < a.gap:
         return
     # 3. send the next challenge
     if st["ranked_queue"]:
@@ -186,11 +197,11 @@ def tick(a, st):
             log(f"  {r['name']} no longer above us, ranked dropped")
             st["ranked_queue"].pop(0)
             return
-        res = api("/battles", {"teamId": r["team"], "ranked": True, "mapIds": r["maps"]})
+        res = api("/battles", {"teamId": r["team"], "ranked": True})
         if "ids" in res:
-            st["ranked_queue"].pop(0)
-            st["ranked"][str(res["ids"][0])] = {"team": r["team"], "maps": r["maps"], "round": r.get("round", 1)}
-            log(f"sent RANKED vs {r['name']} maps {r['maps']}")
+            st["ranked_queue"].pop(0); st["last_send"] = time.time()
+            st["ranked"][str(res["ids"][0])] = {"team": r["team"], "round": r.get("round", 1)}
+            log(f"sent RANKED vs {r['name']}")
         elif "free up" not in str(res.get("error", "")):
             log(f"ranked vs {r['name']} refused: {res.get('error')}; dropped")
             st["ranked_queue"].pop(0)
@@ -204,11 +215,16 @@ def tick(a, st):
             e = t.get("elo") or 0
             if not (ours + a.min_above <= e <= ours + a.max_above) or not (t.get("settings") or {}).get("ranked"):
                 continue
-            if str(t["id"]) in st["done"]:
+            if str(t["id"]) in st["done"] or t["id"] in st["queue"]:
                 continue
             hist = (t.get("history") or [])[-12:]
             drop = (max(h["elo"] for h in hist) - e) if hist else 0
             cands.append((drop, e, t["id"]))
+        if not cands and st["done"]:
+            # every eligible team has been tested once; they change bots all the time, so start the round again
+            log(f"all {len(st['done'])} tested teams exhausted: clearing the list to re-test")
+            st["done"] = {}
+            return
         cands.sort(key=lambda c: -c[1])  # highest-rated first: wins there are worth the most
         st["queue"] = [tid for _, _, tid in cands[:8]]
         log(f"refilled queue: {st['queue']}")
@@ -219,11 +235,15 @@ def tick(a, st):
         log(f"team {tid} no longer above us, test skipped")
         st["queue"].pop(0)
         return
-    res = api("/battles", {"teamId": tid, "ranked": False, "mapIds": TEST_MAPS})
+    maps = random.sample(ALL_MAPS, 5)
+    res = api("/battles", {"teamId": tid, "ranked": False, "mapIds": maps})
     if "ids" in res:
-        st["queue"].pop(0)
-        st["tests"][str(res["ids"][0])] = {"team": tid, "maps": TEST_MAPS}
-        log(f"sent test vs team {tid}")
+        st["queue"].pop(0); st["last_send"] = time.time()
+        second = tid in st.get("second", [])
+        if second:
+            st["second"].remove(tid)
+        st["tests"][str(res["ids"][0])] = {"team": tid, "maps": maps, "second": second}
+        log(f"sent test{' 2' if second else ''} vs team {tid}")
     elif "free up" not in str(res.get("error", "")):
         log(f"test vs {tid} refused: {res.get('error')}; skipped")
         st["queue"].pop(0)

@@ -1,4 +1,4 @@
-"""Round-robin matches between two bots in the judge's sandbox, in parallel.
+﻿"""Round-robin matches between two bots in the judge's sandbox, in parallel.
 
     python tools/tourney.py viper_v7 baselines/v7_5 [--maps a,b] [--seeds 2] [-j 10] [--one-side]
 
@@ -32,14 +32,18 @@ def prepare(bot: str) -> str:
     return str(clangtool.build(path))
 
 
-def play(map_name, a, b, seed):
+REPLAYS = None   # --replays DIR: keep a replay per game (<dir>/<map>_<side>_<seed>.replay; side = our side)
+
+
+def play(map_name, a, b, seed, side="A"):
     # a bare name is a live map (maps/<name>.map); a path like maps_gen/gen_007 or maps_gen/gen_007.map works too
     mp = pathlib.Path(map_name if map_name.endswith(".map") else f"{map_name}.map")
     mp = mp if "/" in map_name or "\\" in map_name else ROOT / "maps" / mp
-    cmd = ["unswbc", "run", str(ROOT / mp if not mp.is_absolute() else mp), a, b, "--sandbox", "--no-replay",
+    keep = ["-o", str(REPLAYS / f"{pathlib.Path(map_name).stem}_{side}_{seed}.replay")] if REPLAYS else ["--no-replay"]
+    cmd = ["unswbc", "run", str(ROOT / mp if not mp.is_absolute() else mp), a, b, "--sandbox", *keep,
            "--seed", str(seed)]
     try:
-        out = subprocess.run(cmd, capture_output=True, text=True, errors="replace", timeout=240).stdout
+        out = subprocess.run(cmd, capture_output=True, text=True, errors="replace", timeout=900).stdout
     except subprocess.TimeoutExpired:
         return None, 500, "TIMEOUT", {"A": [], "B": []}, {}
     winner, rounds, how = None, 500, "?"
@@ -67,7 +71,11 @@ def main():
     ap.add_argument("--seeds", type=int, default=1)
     ap.add_argument("-j", type=int, default=10)
     ap.add_argument("--one-side", action="store_true")
+    ap.add_argument("--replays", default="", help="keep replays in this folder (for tools/loss_digest.py)")
     args = ap.parse_args()
+    global REPLAYS
+    if args.replays:
+        REPLAYS = pathlib.Path(args.replays); REPLAYS.mkdir(parents=True, exist_ok=True)
 
     a_path, b_path = prepare(args.bot), prepare(args.opponent)
     jobs = []
@@ -84,7 +92,7 @@ def main():
     death_tally = {}
     peak_ms = 0.0
     with cf.ThreadPoolExecutor(args.j) as ex:
-        futs = {ex.submit(play, m, x, y, s): (m, side, s) for m, side, x, y, s in jobs}
+        futs = {ex.submit(play, m, x, y, s, side): (m, side, s) for m, side, x, y, s in jobs}
         for f in cf.as_completed(futs):
             m, side, s = futs[f]
             winner, rounds, how, deaths, peak = f.result()

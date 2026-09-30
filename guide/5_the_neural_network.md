@@ -31,7 +31,7 @@ sample input.
 The forward pass costs about 18M of the 100M points per dragon-turn. Keep the network this size or check
 `max` in the `unswbc run --sandbox` output stays below about 65M.
 
-## What we tried and learned (details in `ml/results.md`)
+## What we tried and learned (details in `AGENTS.md`, section 4)
 
 - More data, bigger networks, ensembles, distillation: at most +1% prediction accuracy, **no gain in play**.
 - Prediction accuracy is not the goal. What counts is winning games.

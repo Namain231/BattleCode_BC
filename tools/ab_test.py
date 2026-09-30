@@ -1,7 +1,7 @@
-"""Same-time ladder A/B test: two builds vs the same teams on the same maps, sent back to back.
+"""Same-time ladder A/B test: two or more builds vs the same teams on the same maps, sent back to back.
 
-    UNSWBC_KEY=... python tools/ab_test.py <sub A> <sub B> --champion <sub> --teams 91,507,206 [--maps 11,4,19,13,15]
-        [--out ladder/ab_<A>_<B>]
+    UNSWBC_KEY=... python tools/ab_test.py <sub A> <sub B> [<sub C> ...] --champion <sub> --teams 91,507,206
+        [--maps 11,4,19,13,15] [--out ladder/ab_results.jsonl]
 
 Battles bind the build that is active when they are requested, so each challenge activates its build just before
 sending, and the champion is re-activated at the end. Opponents change bots all the time: only a comparison made in
@@ -33,17 +33,18 @@ def api(path, body=None, method=None):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("a", type=int); ap.add_argument("b", type=int)
+    ap.add_argument("subs", type=int, nargs="+")
     ap.add_argument("--champion", type=int, required=True)
     ap.add_argument("--teams", required=True)
     ap.add_argument("--maps", default="11,4,19,13,15")
+    ap.add_argument("--out", default="ladder/ab_results.jsonl", help="one JSON line per battle is appended here")
     a = ap.parse_args()
     teams = [int(t) for t in a.teams.split(",")]
     maps = [int(m) for m in a.maps.split(",")]
     sent = {}   # battle id -> (build, team)
     try:
         for t in teams:
-            for sub in (a.a, a.b):
+            for sub in a.subs:
                 while True:
                     api(f"/submissions/{sub}/activate", method="POST")
                     r = api("/battles", {"teamId": t, "ranked": False, "mapIds": maps})
@@ -67,10 +68,13 @@ def main():
                 res[b["id"]] = b
         if len(res) < len(sent):
             time.sleep(30)
-    tot = {a.a: [0, 0], a.b: [0, 0]}
+    tot = {s: [0, 0] for s in a.subs}
     for bid, (sub, t) in sorted(sent.items(), key=lambda x: (x[1][1], x[1][0])):
         b = res[bid]
         tot[sub][0] += b["wins"]; tot[sub][1] += len(b["results"])
+        with open(a.out, "a", encoding="utf-8") as f:
+            f.write(json.dumps({"battle": bid, "sub": sub, "team": t, "opponent": b["opponent"], "opponentElo": b["opponentElo"],
+                                "maps": maps, "results": b["results"], "at": b.get("at")}, ensure_ascii=False) + chr(10))
         print(f"  {b['opponent'][:20]:20s} ({b['opponentElo']})  build {sub}: {b['wins']}/{len(b['results'])} {''.join(r[0].upper() for r in b['results'])}")
     for sub, (w, n) in tot.items():
         print(f"TOTAL build {sub}: {w}/{n}")

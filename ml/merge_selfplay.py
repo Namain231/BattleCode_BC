@@ -20,12 +20,13 @@ def main():
     ap.add_argument("srcs", nargs="+")
     ap.add_argument("--out", required=True)
     ap.add_argument("--maze-only", action="store_true")
+    ap.add_argument("--id-base", type=int, default=2 * 10 ** 9, help="first new game id (keep folders disjoint)")
     a = ap.parse_args()
     out = pathlib.Path(a.out); out.mkdir(parents=True, exist_ok=True)
     ix_path = out / "index.json"
     index = json.load(open(ix_path)) if ix_path.exists() else []
     have = {g.get("source") for g in index}
-    nid = 2 * 10 ** 9 + len(index)
+    nid = a.id_base + len(index)
     for src in a.srcs:
         src = pathlib.Path(src)
         entries = json.load(open(src / "index.json"))

@@ -35,9 +35,11 @@ def main():
     ap.add_argument("a"); ap.add_argument("b")
     ap.add_argument("--games", type=int, default=40)
     ap.add_argument("--workers", type=int, default=5)
+    ap.add_argument("--maps", default="", help="comma-separated map names (default: all 10); maze = the 7 non-open maps")
     a = ap.parse_args()
     sa, sb = as_rl_state(a.a), as_rl_state(a.b)
-    maps = rl_train.MAPS
+    maze = "trophy,queen_of_spades,default,dilemma,autarky,devil,trauma"
+    maps = (maze if a.maps == "maze" else a.maps).split(",") if a.maps else rl_train.MAPS
     jobs = []
     for k in range(a.games // 2):
         m, seed = maps[k % len(maps)], 1000 + k

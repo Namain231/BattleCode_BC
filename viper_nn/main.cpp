@@ -1,4 +1,4 @@
-// weights v1
+// Y.8m (Y.8a-n4, fixes on maze maps only): n3 network (top wins + upset winners + winners vs us); p2Drone 0.15; minerGamma 0.90; blind portal step 2.0
 // nn forward: padded convolutions (build 2)
 // Viper V6 "Leviathan" -- C++ rewrite.
 //
@@ -43,7 +43,7 @@ struct Params {
     // competition discounts
     double enemyCloser = 0.55, enemyTie = 0.8, friendCloser = 0.08;
     // danger (probability an enemy head at distance d attacks)
-    double p1 = 0.85, p2 = 0.15, p3 = 0.03, p2Drone = 0.40, p3Drone = 0.10;
+    double p1 = 0.85, p2 = 0.15, p3 = 0.03, p2Drone = 0.15, p3Drone = 0.10;
     // death penalty on top of our own length
     double deathExtra = 30.0;
     double spaceBonus = 0.6;
@@ -55,7 +55,7 @@ struct Params {
     double wProgress = 0.8;     // per step of progress towards the committed goal
     int budAt = 4;              // swarm: split a length-2 child off at this length
     int mineUntil = 300;
-    double minerGamma = 0.80;   // miners judge targets on a short horizon: eat what is near
+    double minerGamma = 0.90;   // miners judge targets on a short horizon: eat what is near
     double minerFarmCap = 1.5;        // greedy mining only while the swarm is still expanding
     int budUntil = 300;         // stop budding late so the dragons grow for the tiebreak
     int feedFrom = 350;
@@ -310,6 +310,7 @@ static void activateMap(int idx, vector<int8_t>&& k, vector<int>&& p) {
         // measured on the ladder and in v7.2 vs v7.3: feeding wins Portals, Slithery Fight, Schooltime
         bigFeed = nm == "portals" || nm == "slithery_fight" || nm == "schooltime";
         if (bigFeed) P.budUntil = 330;
+    if (bigFeed) { P.p2Drone = 0.40; P.minerGamma = 0.80; }   // open maps: keep the old champion's values (fixes are for maze maps)
         else P.protectFrom = 340;  // maze maps: grow one queen for the longest-dragon tiebreak
         farSight = nm == "dilemma";
     }
@@ -1018,7 +1019,7 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
         // on a known map we know what is behind a portal except for dragons: a modest risk,
         // unless we remember a body on the far side
         bool remembered = !s.cells.empty() && memExpire[s.cells.back()] > ROUND;
-        if (KM && !remembered) score -= 0.8 + 0.03 * L;
+        if (KM && !remembered) score -= (bigFeed ? 0.8 : 2.0) + 0.03 * L;
         else { score -= 3.0 + 0.12 * (L + P.deathExtra); e.safeClass = 0; }
     }
     e.corridor = miner ? 0.0 : corridorRisk(B);

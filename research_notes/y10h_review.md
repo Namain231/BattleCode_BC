@@ -1,0 +1,17 @@
+1. `cand_y10h/main.cpp:1384`
+   - **What goes wrong**: Feeders dying where the queen cannot eat the pearls. `torusDist(sink, body[0]) <= 2` checks the Manhattan distance, which ignores walls. A feeder might be at Manhattan distance 2 from the queen but separated by a wall (e.g., kelp or a complex maze). It will execute `SPLIT 1` and die, dropping pearls on the other side of the wall where the queen cannot reach them.
+   - **Minimal fix**: Move the `tryFeed()` call inside `think()` to *after* the `evaluate(here, false)` call, and change the condition to use the wall-aware BFS distance `distA[sink] > 2` instead of `torusDist(sink, body[0]) > 2`.
+
+2. `cand_y10h/main.cpp:1517`
+   - **What goes wrong**: Homing never activating. The `evaluate(here, false)` function computes the `distA` BFS field before `feeding` is evaluated. Since `feeding` is false during this call, `depthCap` is limited to `max(P.fieldCap, 2 * L + 12)` (around 90 cells). If the queen is further away than this, `distA[queen.cell]` will be `-1`. The homing logic checks `if (qd > 0)`, which fails, preventing homing from ever activating for distant queens.
+   - **Minimal fix**: Move the evaluation of `feeding` (and the `mazeSink` call) to before the `evaluate(here, false)` call in `think()`. In `evaluate()`, change the `depthCap` calculation to explore the whole map if feeding is active: `int depthCap = feeding ? N : max(P.fieldCap, 2 * L + 12);`.
+
+3. `cand_y10h/main.cpp:1385`
+   - **What goes wrong**: Dragons feed while the queen is dead. `mazeSink` accepts a gossiped queen that is up to 60 rounds stale. If the queen died, the feeder will walk to her last known cell, and upon reaching `torusDist <= 2`, it will blindly execute `SPLIT 1` and die, wasting its pearls since the queen is not there to eat them.
+   - **Minimal fix**: Before executing `SPLIT 1` in `tryFeed()`, check if the sink dragon is actually visible in the area. For example: `bool visible = false; for (auto& dr : others) if (dr.id == sid && dr.headCell >= 0) visible = true; if (!visible) return false;`.
+
+4. **No issue found**: The queen record being corrupted (queen = saved restore). The save and restore mechanism in `think()` correctly preserves the global `queen` state, and no other functions called in between corrupt it.
+5. **No issue found**: A sink that is ourselves. `mazeSink()` explicitly selects candidates from `others` (which excludes `MY_ID`), and checks `queen.id != MY_ID`, so a dragon never selects itself as a sink.
+6. **No issue found**: The queen herself feeding. `mazeSink()` explicitly returns `-1` if `iAmQueen()` is true, and for protected queens `MY_LEN` would be `>= queen.len` which prevents finding any valid sink `> MY_LEN + 3`, preventing the queen from feeding.
+7. **No issue found**: Integer or wrap-around mistakes in the Chebyshev distance. The calculation `max(min(dx, W - dx), min(dy, H - dy))` correctly computes the Chebyshev distance on a torus grid without wrap-around issues, as `dx` and `dy` are derived from bounded coordinates and correctly handled by `min` and `max`.
+8. **No issue found**: Interaction with protectedQueen()/budding. `swarmSplit()` stopping at round 300 when units >= 20 matches the intended S.4.7.5 macro strategy. Feeder dragons losing length via budding before round 400 is intended behavior for low unit counts, and protected queens correctly bypass feeding due to their length.

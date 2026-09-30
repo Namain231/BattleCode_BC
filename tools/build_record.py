@@ -49,6 +49,7 @@ def main():
     subs = subs.get("submissions", subs) if isinstance(subs, dict) else subs
     name = {str(s["id"]): s["name"] for s in subs}
     agg = collections.defaultdict(collections.Counter)
+    permap = collections.defaultdict(collections.Counter)
     for b in battles:
         if b.get("outcome") in ("live", "queued"):
             continue
@@ -72,6 +73,8 @@ def main():
             for rk in ("ranked" if b["ranked"] else "unranked", "all"):
                 agg[(sub, kind, rk)]["n"] += 1
                 agg[(sub, kind, rk)]["w"] += won
+            permap[(sub, g.get("mapName"))]["n"] += 1
+            permap[(sub, g.get("mapName"))]["w"] += won
         time.sleep(0.3)
 
     def cell(sub, kind, rk):
@@ -82,6 +85,16 @@ def main():
     for sub in sorted({k[0] for k in agg}, key=lambda s: -sum(agg[(s, k, 'all')]['n'] for k in ('open', 'maze'))):
         print(f"{(sub + ' ' + name.get(sub, ''))[:32]:32s} {cell(sub, 'open', 'all'):>13s} {cell(sub, 'maze', 'all'):>13s}"
               f" {cell(sub, 'open', 'ranked'):>13s} {cell(sub, 'maze', 'ranked'):>13s}")
+    # per build x map (all battles), also written as CSV for joining with ladder/params_table.csv
+    maps = sorted({k[1] for k in permap if k[1]})
+    with open(ROOT / "ladder" / "build_permap.csv", "w", encoding="utf-8") as f:
+        f.write("sub,name,map,wins,games\n")
+        for (sub, m), c in sorted(permap.items(), key=lambda x: (str(x[0][0]), str(x[0][1]))):
+            f.write(f"{sub},{name.get(sub, '')},{m},{c['w']},{c['n']}\n")
+    print("\nper map (wins/games):  " + "  ".join(m[:8] for m in maps))
+    for sub in sorted({k[0] for k in permap}, key=lambda s: -sum(permap[(s, m)]['n'] for m in maps)):
+        row = [f"{permap[(sub, m)]['w']}/{permap[(sub, m)]['n']}" if permap[(sub, m)]['n'] else "-" for m in maps]
+        print(f"{(sub + ' ' + name.get(sub, ''))[:28]:28s} " + "  ".join(f"{r:>8s}" for r in row))
 
 
 if __name__ == "__main__":

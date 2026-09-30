@@ -18,3 +18,15 @@ ml/models/
 maps_gen/
 # local training/eval logs
 ml/*.log
+# local candidate builds
+cand_*/
+# credentials: never commit (was tracked since the first commit; untracked 1 Oct 2026)
+secrets.env
+# large local research data (cloned competitor repos, datasets)
+research_notes/external/
+# local experiment builds and artifacts
+spsa_minus/
+spsa_plus/
+ml/champion.wasm
+ml/*_chain.txt
+ml/*_eval.txt

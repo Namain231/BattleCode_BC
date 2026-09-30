@@ -9,6 +9,7 @@ The network is sized for the judge: ~125k weights, ~2.3M multiply-adds per decis
 """
 import argparse
 import glob
+import json
 import os
 import time
 
@@ -85,6 +86,7 @@ def main():
     ap.add_argument("--max-round", type=int, default=500, help="train/validate only on decisions before this round")
     ap.add_argument("--awr-beta", type=float, default=0.0,
                     help="advantage weighting: weight = clip(exp(beta * future_score / std), 0.3, 3); 0 = plain imitation")
+    ap.add_argument("--game-weights", default="", help="JSON {game id: weight}; samples of other games weigh 1")
     a = ap.parse_args()
     dev = "cuda" if torch.cuda.is_available() else "cpu"
     parts = [load_shards(d, a.max_samples) for d in a.data]
@@ -100,8 +102,13 @@ def main():
         import json as _json
         g2t = {}
         for ix in glob.glob("ladder/*/index.json") + glob.glob("ladder/latest_index*.json"):
-            for g in _json.load(open(ix, encoding="utf-8")):
-                g2t[int(g["game"])] = int(g["teamId"])
+            try:
+                entries = _json.load(open(ix, encoding="utf-8"))
+            except Exception:
+                continue
+            for g in entries if isinstance(entries, list) else []:
+                if isinstance(g, dict) and g.get("teamId") and g.get("game") is not None:
+                    g2t[int(g["game"])] = int(g["teamId"])
         T = np.array([g2t.get(int(g), -1) for g in G])
         if a.only_teams:
             keep_t = [int(t) for t in a.only_teams.split(",")]
@@ -122,6 +129,10 @@ def main():
         fut = M[:, 4].astype(np.float32)
         wts = np.clip(np.exp(a.awr_beta * fut / max(1e-6, fut.std())), 0.3, 3.0).astype(np.float32)
         print(f"advantage weights: mean {wts.mean():.2f}, share <1: {(wts < 1).mean():.2f}")
+    if a.game_weights:
+        gw = {int(k): float(v) for k, v in json.load(open(a.game_weights)).items()}
+        wts *= np.array([gw.get(int(g), 1.0) for g in G], np.float32)
+        print(f"game weights: mean {wts.mean():.2f}, min {wts.min():.2f}, max {wts.max():.2f}")
     games = np.unique(G)
     rng = np.random.default_rng(0)
     val_games = set(rng.choice(games, max(1, int(len(games) * a.val_frac)), replace=False).tolist())
@@ -170,6 +181,8 @@ def main():
             flip = torch.rand(len(ix), device=dev) < 0.5
             if flip.any():
                 x[flip] = x[flip][:, mirror_p].flip(-1)
+                if s.shape[1] >= 6:   # previous turn right/left (scalars 4, 5) swap in the mirror too
+                    s = s.clone(); s[flip, 4], s[flip, 5] = s[flip, 5].clone(), s[flip, 4].clone()
                 y = torch.where(flip, mirror_y[y], y)
             wb = Wt[ix].to(dev)
             loss = (F.cross_entropy(model(x, s), y, label_smoothing=0.05, reduction="none") * wb).sum() / wb.sum()

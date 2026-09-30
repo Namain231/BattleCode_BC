@@ -32,7 +32,7 @@
 5. [guide/5_the_neural_network.md](guide/5_the_neural_network.md): how the network was made and how to retrain it.
 6. [guide/6_ideas_to_try.md](guide/6_ideas_to_try.md): good next projects, each with how to test it.
 
-For deeper detail: `AGENTS.md` (full process, all tools) and `INSIGHTS_AND_PLAYBOOK.md` (everything we know about the game).
+For deeper detail: `AGENTS.md` (current state, everything measured, the full process and all tools).
 
 ## Three rules
 

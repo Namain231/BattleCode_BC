@@ -52,4 +52,4 @@ the experiments folder has a version that signs them (`experiments/signed_sonar`
 
 ## Want more detail?
 
-`INSIGHTS_AND_PLAYBOOK.md` has the verified game mechanics, what the top teams do, and why each rule exists.
+`AGENTS.md` has the verified game mechanics, what the top teams do, and why each rule exists.

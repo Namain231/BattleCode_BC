@@ -1,0 +1,4 @@
+# viper_vB13
+[project]
+language = "c++"
+include = [ "*.cpp", "*.hpp" ]

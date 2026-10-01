@@ -489,3 +489,15 @@ Final results of the last experiments (Kaggle/Colab, vs nick_farm + nick_arch4, 
   (`python tools/kaggle_panel.py fetch --batch kp1002_0036`). MINE2 local evidence: Autarky r0-150 intake ~90 -> ~155,
   vs vB.19 on 5 maze maps 4/10 vs 3/10.
 - Stopped: tools/our_games.py and tools/slope_collect.py collectors, all local games. Active ladder build: 14270.
+
+## 2 Oct 01:50 IST (Claude) final sample analysis of MINE2 (paired local games vs vB.19, same seed; cand_rs = MINE2 hybrid, cand_rx = without)
+- Autarky B: MINE2 keeps 20 units r50-r150 (vs 15) while their swarm is 19-25; our r0-150 deaths become 33 DOOMED pocket
+  deaths (vs 9) = the vB.19 economy (cheap L2 stubs recycle into pearls). Both lost (MINE2: on total length 28 v 100 at
+  r500; without: eliminated r466) -> mechanism works, result not converted.
+- Dilemma A: both stagnate at ~6-10 units / mass 14-23 for 200 rounds (vB.19 also only ~20-30): low-pearl map; both lost
+  on longest (7 v 2, 8 v 2).
+- Trophy A: identical to r50, then MINE2 lost its units faster (r175: 2 v 11) and was eliminated earlier (r200 v r275);
+  both lose the r50-150 head-on war (their 20 -> 51 units).
+- Decision: NOT submitted. MINE2 improves the opening economy where pockets pay (Autarky), but no sample converted it into
+  a win, and QFEED is neutral in the sandbox. Active stays 14270. Kaggle kp1002_0036 (cand_r MINE2, 120 games) was still
+  running at the end.

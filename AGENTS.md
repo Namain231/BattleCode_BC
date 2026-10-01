@@ -14,6 +14,15 @@ Read this first. Current state and working rules only; historical experiments ar
 - Two simultaneous tracks; abandon neither. (1) Pure rules (`bots/newrules_rules/`): judge every rule idea here first. (2) Hybrid rules + network (`bots/newrules_q9/`, `bots/newrules_q9n/`; n4, nr1, n4nr): port every rule change here too and evaluate the hybrid effect. Active ladder build: `bots/newrules_q9/` Y.7.12.49, sub 14198; `bots/newrules_q9n/` Y.7.12.50 uses nr1; pure rules is Y.7.12.51, sub 14227.
 - New-rules top-10 queens survive r500 in about 5% of games; most games still end by elimination or longest-dragon tiebreak. Keep recording queen fate and opening economy.
 
+## Status at wrap-up (2 Oct 2026, 01:10 IST)
+- Active ladder build: 14270 (Y.7.12.54, hybrid). Latest code: `bots/newrules_rules` (pure rules) and
+  `bots/newrules_hybrid` (same + n4): queen safety (QSAFE/QFLEE/CROWD/QPOS), QFEED (feed the true queen from r370),
+  MINE2 (L2 drones mine, except Devil: closes most of vB.19's opening economy gap), ROWLATE, SWAPFIX, MAPFIX.
+  MINE2/ROWLATE/QFEED are NOT yet verified on Kaggle/ladder (panels were running: see research_notes/LAB.md, last section).
+- Biggest open gaps: maze opening economy (Devil), late longest/queen growth vs teams that feed their queen, and a
+  look-ahead search (team calc's writeup, research_notes/external_writeups/calc_writeup.md).
+- Sparring opponents: opponents/vb19 (teammates' vB.19 = vB.19.1 code), nick_farm, nick_arch4.
+
 ## Test and review process
 
 - Start with a small, single-change candidate copied from the current pure-rules base. Review every loss and changed decision; mechanism metrics are diagnostic, not proof of wins. Tune rather than discard on one noisy batch.

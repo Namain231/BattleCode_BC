@@ -385,3 +385,107 @@ the enemy start (mirror of ours under the detected symmetry) than ours.
 - q9 (14198) = q8 + FLOOR (no feeding at <= 10 units). ACTIVE. Rating 1769, rank 22 (20:10 IST).
 - nr1 (from-scratch net on 969 new-rules top games, Kaggle): val acc 0.707 (n4 trained 0.66-0.67 on old data);
   held-out new-rules set built (D:/battlecode/tmp/data_nr_ho, 565 games); log-loss compare needs torch (Kaggle).
+
+## 1 Oct 21:20 IST (Claude) pure rules vs hybrids on the ladder (top 4: teams 20, 206, 314, 801; same maps, interleaved)
+- pure rules (14227, wNN 0) 6/20 (open 2/7, maze 4/13); rules+n4 (14198) 5/20 (0/7, 5/13); rules+nr1 (14226) 4/20
+  (1/7, 3/13). Equal within noise, although the sandbox vs nick bots said 7/28 vs 20/28 (the sandbox overstates the network).
+- Trauma is our best map vs top teams (pure rules 4/4, n4 3/4, nr1 3/4); Devil/QoS/Schooltime/Dilemma/Trophy 0 for all.
+- Networks on 416 held-out new-rules top games: n4 NLL 0.666 acc 70.5%, nr1 0.652 / 71.3%, n4nr (n4 fine-tuned) 0.651 / 71.4%.
+- Decision (user: main model pure rule-based; two tracks): ACTIVE = pure rules 14227. Rating 1800, rank 19.
+
+## 1 Oct (opencode) friendly head-on tool
+- tools/friendly_h2h.py: per replay, counts OUR head-on deaths; classifies each MOVER's death step as crossing a PORTAL edge, OPEN edge, or other; pairs victims (a head-on kills two dragons in the same round).
+- Queen id assumption already correct in codebase: queen_report.py uses min(i for i in team if team[i]==t); replay.py reads queen from result struct.
+- Cycle restarted to pick up friendly_h2h fix; cand_dev re-queued.
+
+## 1 Oct 22:00 IST (Claude) SWAPFIX + QSAFE from ladder losses (Quaker, Peanut Butter)
+- SWAPFIX (bug, also in every earlier build): own-body lookup at r0 matched KM->spawns by TEAM; on ladder maps with
+  swapped DRAGON order it found nothing -> body "unknown" beyond the 7x7 view -> doomedSplit refused ("DOOMED unknown
+  body"): our L14 Autarky / L11 Dilemma queen died at r3-5 WITHOUT shedding (lost 12-14 mass at r0; Peanut Butter split 4x
+  at r0-1). Fix: match by head cell; MAP_TEAM recorded; compass start side fixed too. Verified on maps_swap/: queen sheds
+  3x (SHED 2, ESCAPE-SPLIT 11) like on unswapped maps.
+- QSAFE: queen greed x0.2 after r100, danger x3, blind portal step -120, portal-adjacent cells -40 (2 away -20).
+  Losses it targets: Devil vs Quaker (queen alive to r426, theirs dead r19: chased pearls into heads), Trauma vs Quaker
+  (r362 portal step -> DOOMED), Trauma vs Peanut Butter (queen alive r450, theirs dead r41: friend 303 stepped through a
+  portal onto her at r452).
+- Builds: cand_r (pure rules, main line) and cand_rh = same + network (Y.7.12.52, sub 14255, ACTIVE).
+- Delegated: Codex = true-queen position gossip so friends avoid portal landings near her (QPOS); opencode =
+  tools/ladder_digest.py (thrown wins + killer, eat curves, numbers gap, feeding collapse); Kaggle = cand_r vs
+  bots/newrules_rules panel (kp1001_2143, cloud engine now unswbc 1.2.3).
+
+## 1 Oct (opencode) ladder_digest
+- tools/ladder_digest.py: per-game analysis of our replays (result/how, THROWN WIN flag + killer, economy windows, numbers gap, endgame longest/units, feeding collapse).
+- Reuses queen_report.analyse for queen fates, friendly_h2h mover/edge logic for killer identification, eatsrc.py pattern for pearl eating attribution.
+- Test: pb/ 5 games (1 thrown win: trauma_B_824701, killer dragon 303 at r452), quaker/ 5 games (3 thrown wins: devil_B_824602 killer 714, schooltime_B_824603 killer 0, trauma_B_824606 by hit self).
+- Key finding: thrown wins are common in losses (3/5 quaker, 1/5 pb) - our queen dies late after theirs is already dead, converting a would-be win into a loss.
+
+## 1 Oct (opencode) ladder_digest
+- tools/ladder_digest.py: per-game analysis (result/how, THROWN WIN + killer, economy windows, living/mass/longest, numbers gap, feeding collapse) + loss 'why' classification.
+- Fixed: 'units rN' was mass sum; now 'living rN' = count of living dragons at START of round N (alive set: map DRAGON + dragonSplit children - dragonDeath ids).
+- Fixed: numbers-gap now first round r>=10 where their living >= 1.5x ours (and >= ours+4); was r0 due to mass bug.
+- Added: mass rN (sum of lengths) and longest rN at r100/200/300/400/450 per side.
+- Test cmm/ (5 games): 1 thrown win (schooltime_B_822526, queen died r426 by hit other body); loss whys: devil OTHER, portals ENDGAME, schooltime THROWN WIN, slithery ECONOMY.
+- Test pb/ (5 games): 1 thrown win (trauma_B_824701, killer dragon 303 their team, open edge, r452); loss whys: autarky/default/prisoners OTHER, schooltime ECONOMY, trauma THROWN WIN.
+- Test quaker/ (5 games): 3 thrown wins (devil_B_824602 killer 714 our team, schooltime_B_824603 killer 0 their team, trauma_B_824606 by hit self); loss whys: devil THROWN WIN, slithery ECONOMY, trauma THROWN WIN.
+- Key finding: thrown wins are common in losses (5/15 games) - our queen dies late after theirs is already dead, converting a would-be win into a loss.
+
+## 1 Oct (opencode) ladder_digest fixes
+- Fixed team mapping: killer team now compared with ours (0 for A, 1 for B) instead of hardcoded 0; default_B_826557 dragon 304 now correctly shown as 'their team'.
+- Fixed numbers-gap: now requires r>=20 and both counts >= 4 (was r>=10 with u>0, giving false r10 gaps).
+- q2/ (5 games): 1 thrown win (default_B_826557, killer dragon 304 their team, open edge, r408); loss whys: default THROWN WIN, queen_of_spades OTHER, trophy OTHER; numbers-gap [20].
+- cmm/ (5 games): 1 thrown win (schooltime_B_822526, queen died r422 by hit other body); loss whys: devil OTHER, portals ENDGAME, schooltime THROWN WIN, slithery ECONOMY; numbers-gap [20, 20].
+
+## 1 Oct 23:50 IST (Claude) QHAVEN no gain; Dilemma loop-farming insight
+- Kaggle kp1001_2306 (paired seeds with kp1001_2213): cand_r+QHAVEN 28/80, queen alive 18/80 vs cand_r 30/80, 19/80 ->
+  QHAVEN reverted (patch kept: ladder/cosci/patches/cx_qhaven_1.patch). Pure rules vs nick: queen alive ~19/80; most
+  queen deaths are enemy head-ons while our army is being eliminated (elimination 30-32/80 games).
+- vs 中国必须人能飞 (1-4): Default = thrown win again (queen alive to r286, theirs dead r35); maze economy r0-150:
+  Autarky 51 v 193, Dilemma 27 v 162, Trauma 43 v 114.
+- DILEMMA anatomy (r35 full frame): the 1-wide columns x=14 and x=17 hold pearl tiles in the top/bottom "shafts", and they
+  CONNECT through the vertical wrap (row 15 -> row 0): a closed vertical loop. Their L11 dragon (x0) circulates column 14
+  eating every pass; they split an L10 off it. We send many L2s at the same shaft pearls (3 of ours targeting T17,13, 2
+  T17,2) and 7 of our 9 deaths r4-58 are DOOMED L2-3 in those columns (enemy bodies fill the loop). Idea "LOOPFARM":
+  detect closed 1-wide loops with pearl tiles on known maps; send ONE dragon long enough to circulate (and only it) and
+  keep L2s out.
+
+## 2 Oct 00:05 IST (Claude) QFEED: the meta is turning to queen length
+- Ladder Trauma vs No Idea (1517): BOTH queens alive at r500; they fed THEIR queen 2 -> 13 -> 16 from r350 (units 23 -> 2)
+  and won 'by queen' (ours L3, hiding). Portals: their queen grew to 11 at r400. Teams are adapting.
+- QFEED (cand_r/cand_rh): from r370 the true queen (position from QPOS gossip) is the feeding/homing sink, any queen
+  is "worthy", and she eats again (greed back to 1). Sandbox vs nick_farm Trauma/Default/QoS: 6/6, our queen L53 on Default B.
+  Uploaded Y.7.12.55 (sub 14295), ACTIVE. Kaggle panel kp1001_2359 (cand_r vs cand_rh, both QFEED).
+- Pending: kp1001_2347 (free-sprint on/off A/B), Codex LOOPFARM.
+
+## 2 Oct 01:00 IST (Claude) cycle: free sprint neutral; vB.19 economy edge = L2 mining
+- Kaggle kp1001_2347 (paired): cand_r (FSPRINT 2-3 step free options) 25/80 vs cand_rnf (off) 24/80 -> neutral, kept.
+- Teammates' vB.19 (sub 14297, opponents/vb19) beats cand_rh 13-7 (sandbox, 20 games). Codex diff
+  (ladder/cosci/vb19_diff.md): same code family; budding window differences are inactive before r150 (games identical
+  r0-150 with the port: no gain). Autarky timeline vs vB.19: identical to r10, then they eat 3x per round r20-80 with MORE
+  deaths (25 v 13 by r80): their miner rule allows L2 drones (except Devil) and excludes only the TRUE queen. MINE2 (port of
+  that rule): Autarky r0-150 intake 98/85 -> 144/164 (vB.19 194/181), Dilemma A 35 -> 104; vs vB.19 on 5 maze maps 4/10 vs
+  base 3/10. ROWLATE (give-way only after r150): small effect (4/10). Both merged into cand_r/cand_rh.
+- team calc's writeup (rank 2) parked in PARKED.md: their edge is a 3-5 round simulation search over net-played rollouts.
+
+## 2 Oct 01:00 IST (Claude) PAUSED by the user ("take a break, let my teammates work")
+State at pause:
+- Active ladder build: 14270 (Y.7.12.54, hybrid; queen safety + QFLEE). Uploaded but idle: 14295 (Y.7.12.55 = + QFEED).
+- Local working copies: cand_r (pure rules: + QFEED + MINE2 + ROWLATE, not uploaded), cand_rh (same + network),
+  cand_rl (LOOPFARM), cand_rx/rv/rs (vB.19 experiments). Opponents added: opponents/vb19 (= vB.19.1, identical code).
+- Kaggle panels still running (fetch with tools/kaggle_panel.py fetch --batch <b>): kp1001_2359 (QFEED r vs rh),
+  kp1002_0017 (cand_rl LOOPFARM vs nick+vb19), kp1002_0036 (cand_r MINE2+ROWLATE vs nick+vb19); Colab kp1002_0023.
+- Next when resumed: judge those panels; if MINE2 line beats 14270-equivalent, upload cand_rh; Devil economy gap vs vB.19.
+- Still running (passive, read-only): tools/slope_collect.py (new-rules top games), tools/our_games.py (our ladder games).
+
+## 2 Oct 01:15 IST (Claude) experiments ended (user: wrap up)
+Final results of the last experiments (Kaggle/Colab, vs nick_farm + nick_arch4, 80 games, paired seeds on Kaggle):
+- QFEED (feed the true queen from r370): pure rules cand_r 22/80 (pre-QFEED same seeds: 25/80 in kp1001_2347,
+  30/80 in kp1001_2213 -> no gain, possibly -3..-8 = within noise); hybrid cand_rh 45/80 (56%). Kept in code because the
+  ladder meta is turning to queen length (No Idea fed their queen 2 -> 16 and won 'by queen'), but NOT proven.
+- Hybrid vs pure rules on identical code: 45/80 vs 22/80 (Kaggle) and 44/80 vs 17-22/80 (Colab, other seeds): the
+  network still carries maze maps (Devil/Autarky/Dilemma). On the ladder vs the top 4 they were level (5/20 v 6/20).
+- Free multi-step sprint: neutral (25 v 24 / 80). QHAVEN: neutral (reverted). GROW (protect sink from r200): worse.
+- UNFINISHED when stopped (Kaggle kernels keep running; fetch later): kp1002_0017 = cand_rl (LOOPFARM) and
+  kp1002_0036 = cand_r with MINE2+ROWLATE, both vs nick_farm, nick_arch4 and vb19
+  (`python tools/kaggle_panel.py fetch --batch kp1002_0036`). MINE2 local evidence: Autarky r0-150 intake ~90 -> ~155,
+  vs vB.19 on 5 maze maps 4/10 vs 3/10.
+- Stopped: tools/our_games.py and tools/slope_collect.py collectors, all local games. Active ladder build: 14270.

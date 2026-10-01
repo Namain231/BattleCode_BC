@@ -30,7 +30,7 @@ KUSER = "kumaryash1134"
 DATASET = f"{KUSER}/vtest01"
 DRIVE = pathlib.Path("G:/My Drive/viper_ml")
 BATCHES = ROOT / "ladder" / "cloud_tests"
-PIP = "unswbc==1.1.0 wasmtime==49.0.0"
+PIP = "unswbc==1.2.3"  # new queen rules (1 Oct); pin wasmtime only if 1.2.3 needs it
 
 
 def kaggle(*args, retries=8, cwd=None):

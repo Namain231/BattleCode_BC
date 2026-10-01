@@ -74,6 +74,7 @@ struct Params {
     // move-imitation network (top teams' replays): score += wNN * log p(move) while ROUND < nnUntil
     double wNN = 0;             // RULES-ONLY main line (user, 1 Oct): the network is a separate experimental track
     int nnUntil = 500;
+    int qfeedFrom = 370;        // QFEED: from here feed the TRUE queen (queen length decides at r500)
     int compassUntil = 150; // COMPASS: early rich-region scouting window.
     double wCompass = 0.8; // COMPASS: score per step toward the selected region.
 };
@@ -89,10 +90,12 @@ static inline int opp(int d) { return d ^ 2; }
 
 static int W, H, N, MY_ID, UNIT_LIMIT, MY_TEAM;  // team 0 = A, 1 = B
 static int ROUND, MY_DIR, MY_LEN, UNITS;
+static int MAP_TEAM = -1;  // SWAPFIX: our team's index in the map file's DRAGON lines (ladder maps may swap A/B)
 static inline bool isTrueQueen() { return MY_ID <= 1; }  // QID: queens are ids 0 and 1, but WHICH team owns id 0 depends on the map (ladder maps swap)  // NEWRULES
 static inline bool isQueenId(int id) { return id >= 0 && id <= 1; }
 static int probeDir = -1, probeCell = -1, probeRound = -10;  // PPROBE: last turn's ray through a portal next to the head
 static int ECHO[5];  // kelp, ally, ally head, enemy, enemy head (from last turn's sonar)
+static int trueQueenCell = -1, trueQueenRound = -1000;  // QPOS: latest reported true-queen location
 
 static inline int stepRaw(int c, int d) {
     int x = c % W + DX[d], y = c / W + DY[d];
@@ -284,6 +287,7 @@ static double regionRate[MAXN]; // COMPASS: radius-3 production estimate from ma
 static int compassDist[MAXN], compassOurStartDist[MAXN], compassEnemyStartDist[MAXN]; // COMPASS
 static bool regionRateReady = false, compassStartReady = false;
 static bool compassMap = false, compassActive = false;
+static int compassTeamUsed = -1;  // SWAPFIX
 static int maxEnemyId = -1;   // enemies that split constantly run into high ids
 static bool swarm = false;
 static int radarExpire[MAXN]; // an enemy was echoed somewhere on a ray through this unseen cell
@@ -350,7 +354,9 @@ static void precomputeCompass() {
         }
         return qt > 0;
     };
-    compassStartReady = spawnDistances(MY_TEAM, compassOurStartDist) && spawnDistances(1 - MY_TEAM, compassEnemyStartDist);
+    int mt = MAP_TEAM >= 0 ? MAP_TEAM : MY_TEAM;  // SWAPFIX
+    compassStartReady = spawnDistances(mt, compassOurStartDist) && spawnDistances(1 - mt, compassEnemyStartDist);
+    compassTeamUsed = mt;  // SWAPFIX
 } // COMPASS
 
 static bool bigFeed = false;  // aggressive (v7.2-style) consolidation on this map
@@ -639,8 +645,10 @@ static void buildDragons() {
         const int* s = KM->spawns;
         for (int k = 0, pos = 0; k < KM->n_spawn; k++) {
             int team = s[pos], cnt = s[pos + 1];
-            if (team == MY_TEAM && !chain.empty() && s[pos + 2] == chain[0])
+            if (!chain.empty() && s[pos + 2] == chain[0]) {  // SWAPFIX: match by head cell, not team (ladder swaps)
+                MAP_TEAM = team;
                 for (int j = 0; j < cnt; j++) pred.push_back(s[pos + 2 + j]);
+            }
             pos += 2 + cnt;
         }
     }
@@ -1064,6 +1072,9 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
 
     double growth = s.len - MY_LEN;
     double greed = endgame() ? 0.35 : 1.0;
+    // QSAFE: ladder Devil vs Quaker r415-426: our queen (theirs dead since r19 = a sure win) chased pearls T26,15 into
+    // enemy heads (dg 14-42) and died. Her length only matters vs a living enemy queen: after r100 she barely forages.
+    if (isTrueQueen() && ROUND >= 100 && ROUND < P.qfeedFrom) greed *= 0.2;  // QFEED: she eats the feed late
     if (L > capLen && !endgame()) { greed *= 0.3; if (growth > 0) growth *= -0.3; }
     double score = 0;
     score += growth * (endgame() ? 1.5 : 1.0);
@@ -1079,14 +1090,17 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
         s.cells.size() <= 1 && e.pDeath <= 0.25 && body[0] >= 0 && head >= 0 &&
         compassDist[body[0]] >= 0 && compassDist[head] >= 0)
         score += P.wCompass * (compassDist[body[0]] - compassDist[head]);
-    score -= danger;
+    score -= isTrueQueen() ? 3.0 * danger : danger;  // QSAFE
     // in a big swarm a small drone is cheap: its death costs little more than its length
     bool cheap = UNITS >= 4 && L <= 4 && queen.id != MY_ID;
     // greedy miner (what every top team does): a small drone dives into dead-end pockets for
     // pearls; it may die there, but it buds a child out first and the swarm grows 2x faster
     // SHAFT: a 2-long drone that enters a dead end can't bud out of it (Devil vs Adrak: 7 of 10 deaths r60-80 were
     // L2-3 drones DOOMED in 1-wide shafts); the miner excuse needs L >= 3 so one pearl lets it bud a child out the back
-    bool miner = UNITS >= 3 && L >= 3 && L <= 4 && queen.id != MY_ID && ROUND < P.mineUntil;
+    // MINE2 (from vB.19, which out-eats us 2x on Autarky with more but cheap L2 deaths): L2 drones mine too, except on
+    // Devil (the SHAFT evidence); the true queen never mines; the elected sink may.
+    bool isDevilMap = KM && string(KM->name) == "devil";
+    bool miner = UNITS >= 3 && (isDevilMap ? (L >= 3 && L <= 4) : (L <= 4)) && !isTrueQueen() && ROUND < P.mineUntil;
     score -= e.pDeath * (L + (isTrueQueen() ? 250.0 : miner ? 1.0 : cheap ? 3.0 : P.deathExtra));  // NEWRULES
     if (!miner) score -= P.wPocket * e.pocket * (2.0 + L / 4.0);
     score += P.spaceBonus * min(1.0, space / (double)(2 * L + 20));
@@ -1097,7 +1111,7 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
         if (KM && !remembered) score -= (bigFeed ? 0.8 : 2.0) + 0.03 * L;
         else { score -= 3.0 + 0.12 * (L + P.deathExtra); e.safeClass = 0; }
     }
-    if (isTrueQueen() && s.outside) score -= 40.0;  // NEWRULES
+    if (isTrueQueen() && s.outside) score -= 120.0;  // NEWRULES + QSAFE (Trauma vs Quaker r362: portal step -> DOOMED)
     // QHIDE: enemy queens die by r50 in nearly every ladder game, so a queen that merely survives wins at r500. Ours died
     // walking into pockets after pearls (hit self/wall) and next to enemy heads: she stays in fully open space, away from heads.
     if (isTrueQueen()) {
@@ -1106,12 +1120,22 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
         if (!s.cells.empty()) {
             int ed = enemyDist[s.cells.back()];
             if (ed <= 3) score -= 12.0 * (4 - ed);
+            // QFLEE: Default vs Quaker r408: an L5 enemy 2 cells away sprinted EE (free) into her; she had moved toward
+            // pearls in a crowded zone. Prefer cells far from every enemy head (up to 8), on top of the danger term.
+            score += 1.5 * min(ed, 8);
+            // CROWD: friendly bodies around her head are walls too: prefer thin neighbourhoods
+            { int crowd = 0, hx = s.cells.back() % W, hy = s.cells.back() / W;
+              for (int dy = -2; dy <= 2; dy++) for (int dx = -2; dx <= 2; dx++) {
+                  if (abs(dx) + abs(dy) > 2) continue;
+                  int c = ((hy + dy + H) % H) * W + (hx + dx + W) % W;
+                  if (occId[c] && occId[c] != MY_ID + 1) crowd++; }
+              score -= 1.0 * crowd; }
             // friends pop out of portals blind: don't loop beside a portal (Trauma r365: boxed in by a friend from P)
             int hc = s.cells.back(); double pp = 0;
             for (int d = 0; d < 4; d++) {
-                if (effK(hc, d) == 3) pp = max(pp, 10.0);
+                if (effK(hc, d) == 3) pp = max(pp, 40.0);  // QSAFE: Trauma vs Peanut Butter r452: a friend came out of a portal onto her head (their queen dead since r41)
                 int n = stepRaw(hc, d);
-                for (int d2 = 0; d2 < 4; d2++) if (effK(n, d2) == 3) pp = max(pp, 5.0);
+                for (int d2 = 0; d2 < 4; d2++) if (effK(n, d2) == 3) pp = max(pp, 20.0);
             }
             score -= pp;
         }
@@ -1120,11 +1144,12 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
     if (!isTrueQueen() && s.outside && !s.cells.empty() && isQueenId(queen.id) && queen.cell >= 0 && ROUND - queen.round <= 4
         && torusDist(s.cells.back(), queen.cell) <= 2 + (ROUND - queen.round)) score -= 30.0;
     // NEWRULES ROW: the queen acts first each round; friends that end next to her head can wall her in. Give way.
-    if (!isTrueQueen()) {
+    if (!isTrueQueen() && ROUND >= 150) {  // ROWLATE: early the queen is inside our swarm
         for (auto& dr : others)
             if (dr.team == MY_TEAM && isQueenId(dr.id) && dr.headCell >= 0) {
-                for (int c : s.cells) if (torusDist(c, dr.headCell) <= 1) { score -= 6.0; break; }
-                if (!s.cells.empty() && torusDist(s.cells.back(), dr.headCell) <= 2) score -= 2.0;
+                // CROWD: Portals sandbox r355-364 / r262-271: our own swarm boxed the L2 queen in (room 24 -> 3) -> DOOMED
+                for (int c : s.cells) if (torusDist(c, dr.headCell) <= 1) { score -= 15.0; break; }
+                if (!s.cells.empty()) { int qd = torusDist(s.cells.back(), dr.headCell); if (qd <= 3) score -= 2.0 * (4 - qd); }
             }
     }
     e.corridor = miner ? 0.0 : corridorRisk(B);
@@ -1372,6 +1397,29 @@ static bool unpackQueen(uint64_t v, QueenInfo& q) {
     q.cell = y * W + x; q.len = (v >> 24) & 4095; q.round = (v >> 12) & 4095; q.id = v & 4095;
     return q.round <= ROUND;
 }
+static const uint64_t QPOSMAGIC = 0x5155ULL;  // QPOS: true queen position packet
+static uint64_t packTrueQueenPos(int cell, int round) {
+    return (QPOSMAGIC << 48) | ((uint64_t)(cell % W) << 42) |
+           ((uint64_t)(cell / W) << 36) | (uint64_t)(round & 4095);
+}
+static bool unpackTrueQueenPos(uint64_t v, int& cell, int& round) {
+    if ((v >> 48) != QPOSMAGIC) return false;
+    int x = (v >> 42) & 63, y = (v >> 36) & 63;
+    if (x >= W || y >= H) return false;
+    round = v & 4095;
+    if (round > ROUND) return false;
+    cell = y * W + x;
+    return true;
+}
+static void updateTrueQueenPos() {
+    for (uint64_t v : V.msgs) {
+        int cell, round;
+        if (unpackTrueQueenPos(v, cell, round) && round >= trueQueenRound)
+            trueQueenCell = cell, trueQueenRound = round;
+    }
+    if (isTrueQueen() && !body.empty() && body[0] >= 0)
+        trueQueenCell = body[0], trueQueenRound = ROUND;
+}
 static void considerQueen(const QueenInfo& q) {
     if (q.cell < 0) return;
     bool stale = ROUND - queen.round > 40;
@@ -1406,8 +1454,9 @@ static bool tryFeed() {
     if (queen.cell < 0 || torusDist(queen.cell, body[0]) > P.feedRadius) return false;
     for (auto& dr : others) {
         // only a clearly longer dragon we can see is worth dying for; it must be able to eat us
-        bool worthy = bigFeed ? (dr.id == queen.id || dr.estLen >= MY_LEN + 3)
-                              : (dr.estLen >= max(10, 2 * MY_LEN) || (lateFeed() && dr.id == queen.id && dr.estLen >= MY_LEN + 2));
+        bool worthy = (ROUND >= P.qfeedFrom && isQueenId(dr.id)) ||  // QFEED: our true queen is always worth it
+                      (bigFeed ? (dr.id == queen.id || dr.estLen >= MY_LEN + 3)
+                              : (dr.estLen >= max(10, 2 * MY_LEN) || (lateFeed() && dr.id == queen.id && dr.estLen >= MY_LEN + 2)));
         if (dr.team != MY_TEAM || dr.headCell < 0 || !worthy) continue;
         if (torusDist(dr.headCell, body[0]) <= 3) {
             printf("SPLIT 1\n");  // illegal on purpose: we die and crystallise into pearls
@@ -1486,11 +1535,26 @@ static void think() {
     buildReaches();
     computeCap();
     updateQueen();
+    updateTrueQueenPos();  // QPOS
+    // QFEED: ladder Trauma vs No Idea: both queens alive, they fed THEIR queen 2 -> 16 from r350 and won 'by queen' (ours 3).
+    // From qfeedFrom on, our true queen is the feeding/homing sink whenever her position is fresh.
+    if (ROUND >= P.qfeedFrom && trueQueenCell >= 0 && ROUND - trueQueenRound <= 6) {
+        queen.cell = trueQueenCell; queen.len = 999; queen.round = ROUND; queen.id = isTrueQueen() ? MY_ID : -2;
+    }
     if (tryFeed()) return;
     dumpState();
     chosenCells.clear();
 
     // COMPASS: choose one rich, reachable region on only the three tested maps.
+    {   // SWAPFIX: make 'our start side' the side we really spawned on (ladder maps swap A/B; a child guesses by distance)
+        static bool sideFixed = false;
+        if (!sideFixed && compassStartReady && !body.empty() && body[0] >= 0) {
+            sideFixed = true;
+            bool wrong = MAP_TEAM >= 0 ? compassTeamUsed != MAP_TEAM
+                                       : (compassEnemyStartDist[body[0]] >= 0 && compassEnemyStartDist[body[0]] < compassOurStartDist[body[0]]);
+            if (wrong) for (int c = 0; c < N; c++) swap(compassOurStartDist[c], compassEnemyStartDist[c]);
+        }
+    }
     int compassTarget = -1;
     bool compassPrepared = false;
     if (KM && compassMap && regionRateReady && compassStartReady && ROUND < P.compassUntil && !isTrueQueen() && !iAmQueen() &&
@@ -1573,6 +1637,14 @@ static void think() {
         } // FSPRINT
     } // FSPRINT
     for (auto& o : opts) o.ev = evaluate(o.sim, true);
+    // QPOS: widen the landing-cell buffer as reports age; portal paths can be blind to allies.
+    if (!isTrueQueen() && trueQueenCell >= 0 && ROUND - trueQueenRound <= 6) {
+        int age = ROUND - trueQueenRound;
+        for (auto& o : opts) if (o.sim.outside && !o.sim.cells.empty() &&
+            torusDist(o.sim.cells.back(), trueQueenCell) <= 2 + age) {
+            o.ev.score -= 60.0; o.ev.safeClass = 0;
+        }
+    }
     // PPROBE: last turn we cast our only ray through the portal beside this head; the first dragon part it met lies
     // just beyond the portal (or further). A head there kills us on a blind step (friends on the far side are unseen).
     if (probeRound == ROUND - 1 && probeCell == body[0] && probeDir >= 0 && effK(body[0], probeDir) == 3)
@@ -1688,18 +1760,32 @@ static void think() {
 // forward sonar: next turn's echo tells us whether an enemy sits somewhere down this line
 static void castRadar() {
     lastRay.clear();
-    if (ROUND >= P.gossipFrom) {
-        uint64_t v = packQueen(queen);
+    int head = -1, dir = MY_DIR;
+    if (!body.empty() && body[0] >= 0) {
+        head = body[0];
+        if (!chosenCells.empty()) {
+            head = chosenCells.back();
+            int prev = chosenCells.size() >= 2 ? chosenCells[chosenCells.size() - 2] : body[0];
+            for (int d = 0; d < 4; d++) if (nbr[prev * 4 + d] == head) dir = d;
+        }
+    }
+    // QPOS: true queen uses all four rays after r200; other dragons keep sink gossip flowing.
+    if (isTrueQueen() && ROUND >= 200 && head >= 0) {
+        uint64_t v = packTrueQueenPos(head, ROUND);
+        trueQueenCell = head; trueQueenRound = ROUND;
         for (int d = 0; d < 4; d++) printf("SONAR %c %llu\n", DCH[d], (unsigned long long)v);
         return;
     }
-    if (body.empty() || body[0] < 0) return;
-    int head = body[0], dir = MY_DIR;
-    if (!chosenCells.empty()) {
-        head = chosenCells.back();
-        int prev = chosenCells.size() >= 2 ? chosenCells[chosenCells.size() - 2] : body[0];
-        for (int d = 0; d < 4; d++) if (nbr[prev * 4 + d] == head) dir = d;
+    if (ROUND >= P.gossipFrom) {
+        uint64_t v = packQueen(queen);
+        bool relay = !isTrueQueen() && trueQueenCell >= 0 && ROUND - trueQueenRound <= 6;
+        int relayDir = (MY_ID + ROUND) & 3;
+        for (int d = 0; d < 4; d++)
+            printf("SONAR %c %llu\n", DCH[d], (unsigned long long)(relay && d == relayDir ?
+                   packTrueQueenPos(trueQueenCell, trueQueenRound) : v));
+        return;
     }
+    if (head < 0) return;
     // PPROBE: a head next to a portal edge sends its ray through that portal (the radar still reads enemy echoes)
     probeDir = -1;
     for (int d = 0; d < 4; d++) if (effK(head, d) == 3 && d != opp(dir)) { probeDir = d; if (d == dir) break; }

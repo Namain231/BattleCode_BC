@@ -29,3 +29,15 @@ Two simultaneous tracks; abandon neither: test every rule idea first on `bots/ne
 - Candidate swing wins can come from conversion after r100, even when the intended metric did not move. Inspect flipped games and opponent intake/splits.
 - Wreck share and feeding volume often follow the winner; mechanism counts alone do not establish causality.
 - Old MAPFIX and queen patches changed the rules landscape. Retest only with the new engine and perturbed `maps_ll/` tables.
+
+## From team calc's writeup (rank 2, ~1994; research_notes/external_writeups/calc_writeup.md; written for the OLD rules)
+| Idea | Our status | Next step |
+|---|---|---|
+| Short simulation search: each candidate first move, then 3 rounds (5 in opening) with EVERY dragon (both teams) played by the policy, scored by our total length - theirs; spare CPU -> UCB1 extra playouts | we only have 1-ply own-move lookahead with static enemies (cand_look1: neutral) | biggest structural gap; needs a fast in-bot engine copy + cheap policy for all dragons; Codex project, CPU-measured |
+| Keeper (longest) agreed over sonar + feeders end themselves next to its head | we have it (sink election + tryFeed; QFEED feeds the true queen from r370) | - |
+| Far dragons HUNT the enemy's longest instead of feeding | we hunt the enemy queen only | under new rules: when enemy queen dead, far dragons ram the enemy LONGEST late (r400+) |
+| Symmetry inference + mirrored memory; portal exploration reported over sonar | known maps only via KM; unknown maps weak | matters for the NEW maps (coming): mirror memory on unknown maps |
+| Hidden food behind kelp (net blind beyond 7x7) | our BFS pearl field over memory covers it | - |
+| Encrypted + signed sonar | queen gossip had a SipHash tag variant (CLA3s) | our QPOS/sink gossip is plain: opponents can read our queen position from replays -> sign/encrypt before teams adapt |
+| Evaluation: paired games, ~128-game screen, generated maps reported separately; +5% local ~ +1.5-2% ladder | we do paired Kaggle panels (80 games) | add maps_gen to panels for the coming new maps |
+| Didn't help for them: camping spawners, centre rush, deeper search, bigger nets, value function, PPO after cloning | matches our compass/fountain mixed results | keep compass gated; don't expand it |

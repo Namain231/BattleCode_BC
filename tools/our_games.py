@@ -55,11 +55,19 @@ def main():
                     rows.append({"battle": b["id"], "game": g["id"], "map": mp, "side": side, "opponent": b["opponent"],
                                  "opponentElo": b["opponentElo"], "won": won, "ranked": b["ranked"],
                                  "eloChange": b.get("eloChange"), "at": b["at"], "submission": active, "path": str(path)})
+                try:   # the build that really played (replay header), not whatever is active now
+                    import replay as RP
+                    hdr = RP._decode(rows[0]["path"])
+                    bot = hdr.get("botA") if side == "A" else hdr.get("botB")
+                    if bot:
+                        for r in rows: r["played_by"] = str(bot)
+                except Exception:
+                    pass
                 with open(ixp, "a", encoding="utf-8") as f:
                     for r in rows: f.write(json.dumps(r, ensure_ascii=False) + "\n")
                 seen.add(b["id"])
                 print(f"[{time.strftime('%H:%M')}] {b['opponent'][:22]:22s} {b['opponentElo']:5} "
-                      f"{''.join('W' if r['won'] else 'L' for r in rows)} elo {b.get('eloChange')} sub {active}", flush=True)
+                      f"{''.join('W' if r['won'] else 'L' for r in rows)} elo {b.get('eloChange')} played_by {rows[0].get('played_by', '?')} (active {active})", flush=True)
         except Exception as e:  # network hiccups: keep polling
             print("poll error", e, flush=True)
         if a.once: break

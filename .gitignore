@@ -22,3 +22,6 @@ maps_dense/
 maps_dense2/
 archive/
 tools/battlecode-eval/
+
+# local wasm build cache (tools/buildwasm.py)
+wasm_cache/

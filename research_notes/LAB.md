@@ -1,5 +1,10 @@
 # LAB (Claude, Codex, Gemini: co-scientists). Keep this file SHORT: facts <= 15 lines, entries <= 12 lines each.
 
+## 1 Oct (opencode) queen display
+- pair_diff.py: window lines now show `Q ours/theirs <len>/<len>` (queen = dragon id 0 for A, 1 for B; 0 once dead); BASE/CAND header shows each queen's death round and cause (or "alive").
+- viz.py: frame header now includes `Q ours/theirs <len>/<len>` alongside units/mass/longest.
+- Tested on devsmoke/autarky_A_1000.replay: both queens die r6 (hit wall), Q 14/14 at r0 → 0/0 from r50.
+
 Game: UNSW Battlecode 2026. Dragons = snakes on a wrapping grid; eat pearls to grow; head-ons kill both; an illegal
 action kills a dragon and drops ceil(L/2) pearls ("feeding"); a pearl spawns only on an EMPTY tile; 7x7 vision (not
 through portals); <=64 units; round 500: longest living dragon wins (a wiped-out team loses earlier).
@@ -238,3 +243,145 @@ the enemy start (mirror of ours under the detected symmetry) than ours.
   compass2/3 (Devil 4-6 units in 3 games v champion 25-37): herding, as audit 3 predicted. compass4 removes most
   collapses (Devil 24-34) but still doesn't beat the champion. Parked: needs real coordination (gossip how many are
   already bound to a region), not an independent pull.
+
+## 1 Oct 02:30 IST: feeding ladder result, continuous cycle, sprint finding
+- Ladder (interleaved, maze pool, teams 221,147,529,45,133,311, seed 934): FEEDVOL 13/30, CHAMP4 10/30, PANTRY 9/30.
+  First candidate ahead on the ladder (+3, within noise). Sandbox: longest +2, total mass halved, wins 26 v 26/48.
+  Now in the continuous cycle (tools/cycle.py, 80 paired games with replays) before a larger ladder confirmation.
+- Continuous cycle running (tools/cycle.py; review gate ladder/cycle/approved.txt). Split by mechanic (user): Claude =
+  feeding + sprinting; Codex = turn order + scavenging (cand_cx_*). First Codex candidate cand_cx_order_1 (equal-
+  distance pearl races: no tie discount when our dragon acts before the nearest enemy; ids act in ascending order)
+  reviewed: correct, approved.
+- Sprinting (40 maze ladder games, each dragon's last sprint): ours: attacks 29%, "no enemy within 3" 50% (38% of those
+  die within 10 rounds anyway); theirs: attacks 63%, no-enemy 8%. Our no-enemy sprints are the last-resort escape
+  (pDeath >= 0.9 -> 2-3 step sprints shedding tail): a symptom of cornering ourselves, not wasteful travel.
+- Zig judge built in WSL (Ubuntu imported to D:\WSL\Ubuntu; judge /root/zig_judge/zig-out/bin/loong-judge; engine =
+  Windows unswbc 1.1.0 wasm). Identical results to the sandbox on our bots, but NOT faster for us (30 s v 31 s per game):
+  the time is our bots' own wasm compute, not judge overhead. tools/tourney.py: BC_ZIG_JUDGE / BC_ZIG_ENGINE /
+  BC_WSL_DISTRO env vars, --seed-base. cycle.py: judge auto-select, two-stage screen (40 then 80 games only if
+  promising), Kaggle offload with replays (cloud_tourney --replays --tourney-seeds; kaggle_panel --replays).
+- cand_feedvol cycle (80 paired): 36 v 41 wins, flips +1/-6; final longest 15 v 13, final mass 52 v 67.5, feeds 19.5 v
+  13; LEN+MASS losses 5 -> 2 (fixed) but WIN-LEN 21 -> 15 (burns mass when already ahead); QoS 4 v 7.
+  -> cand_feedvol2: early feeding (r360) only when a recently seen enemy is >= our queen, else champion schedule.
+- cand_cx_order_1 (Codex, turn order) cycle 80 paired: wins 43 v 41, flips +3/-1; target eat100 unchanged (110 v 110);
+  h2h_ours 71 v 77, WIN-ELIM 23 v 20; per map small (+1 Autarky, QoS, Schooltime; -1 Trauma). Passes the screen -> next
+  ladder batch. Gain not via the intended mechanism. Codex iterating.
+- cycle.py: per-replay metrics cache (analysis was ~10+ min per candidate, re-decoding base games every time).
+- cand_sprint1 (mine, sprint/trade: even head-on trades for L <= 4 drones from 8 units, local heads mine >= theirs) cycle 80
+  paired (stage 1 from Kaggle replays: offload works, 40/40 pair with base names): wins 43 v 41, flips +5/-3, WIN-ELIM 25
+  v 20; Devil 7 v 5, Dilemma 6 v 5, Autarky 7 v 6; QoS 6 v 7, Trauma 0 v 1. Median attack sprints unchanged.
+  Passes the screen.
+- Stack: cand_stack1 = cand_cx_order_1 + cand_sprint1 (independent code paths) queued in the cycle. Ladder batch 1
+  (interleaved: ORDER1, SPRINT1, CHAMP5; teams 219,859,733,15,72,64 = ranks ~56-61, all maps, seed 940) running.
+- cand_feedvol2 stage 1 (40): 18 v 21, flips 0/-3. Why: "enemy seen >= our queen" is true most of the mid-game (our queen
+  L6-7), so early feeding fired anyway (5.2 feeds before r440 v 0.9); mass 55 v 79.5, longest unchanged; lost QoS A (mass
+  70 -> 12), QoS B (wiped), Autarky A. Per-dragon local signals can't tell "behind on length". FEEDING LINE PARKED
+  (pantry/feedvol/feedvol2/budstop all trade mass for length).
+- cand_cx_scav_1 (Codex): 35 v 41, flips +4/-10, final_mass down: REJECT; scavenging parked (3 negatives).
+- Why cand_stack1 didn't add up (80 paired games, 4 builds): 64/80 games have the same outcome for base, order_1, sprint1
+  and stack (35 WWWW, 29 LLLL); only 16 swing. Within those, wins don't add (3 stack-only wins, 3 stack-only losses): each
+  change alters the trajectory early. Systematic part: Queen of Spades base 7, order_1 8, sprint1 6, stack 4 (stack's QoS
+  losses end with mass 9-15 v 36-68): sprint1's UNITS >= 8 trade threshold makes small QoS armies (8-11 units at r100)
+  trade themselves away; bigger armies (Devil 7 v 5, Dilemma stack 8 v 5) profit.
+  -> cand_sprint2 = keep the 12-unit threshold, L <= 4 and mine >= theirs; cand_stack2 = order_1 + sprint2. cycle.py: a
+  third seed (120 games) for cand_stack* when still promising.
+- cand_cx_order_3 (Codex; compile error fixed by Claude): 44 v 41, flips +11/-8, hit_other_body 7 v 6.5 (target not
+  moved), final_longest 11.5 v 13, mass 59 v 67.5; Autarky +2, Devil +2, Schooltime +2, Trophy -2. Passes, but costly
+  late and noisy. Review gap: approvals now include a compile check; cycle.py builds before fighting.
+
+## 1 Oct 05:40 IST: "start strong, maintain, then throw" (user's observation, confirmed)
+- Unexplained winner order_3: its flipped wins are CONVERSIONS (both builds dominate by r100, order_3 eliminates; enemy
+  splits r100-200 8 v 35). Pearl denial REJECTED: across all 80 games enemy intake r100-300 is not lower (163.5 v 143.5);
+  in flipped games the enemy eats little because it is already dying. order_3's +11/-8 looks like churn.
+- Champion, 120 sandbox games: led >= 2:1 in units at r100 in 31; LOST 10 of those, all on length. (a) Schooltime x7: we
+  hit the 64 cap by r100-200 and stall (61 v 27 -> 59 v 62) while they regrow, then lose the late length race. (b) mazes
+  (Devil x2, Autarky): 31 v 5 / 43 v 6 at r200-300, never eliminate; their survivors build one long dragon.
+  -> cand_press: with 40+ units, L <= 4 drones take any even trade and hunt equal-sized heads. cycle.py metric "throws"
+  (led 2:1 at r100 and lost) as its target.
+- cand_stack2 (order_1 + sprint2), 120 paired (3 seeds): 58 v 54, flips +11/-7, h2h_ours 69 v 74. Best so far.
+- cand_sprint2: 43 v 41, flips +4/-2.
+
+## 1 Oct 06:20 IST: friendly head-ons, swing-game reading, one dev line
+- pair_diff.py (round-by-round paired diff + decision tags from the replays' dragonIndicator events: sandbox replays carry
+  each dragon's tag DOOMED/ESCAPE-SPLIT/BUD/ATK/FEED; our tools had ignored them).
+- stack2 swing win (Autarky B 1017): champion led 37-45 v 4-6 units r150-400 and LOST on length (138 mass, L12 v 19 mass,
+  L13): few ATK tags, ~10 DOOMED/25 rounds (Autarky pocket), enemy survivors kept splitting; survivors were WITHIN 3 cells
+  of our heads (r400: 5/5) but the hunt term only targets enemies >= L+2 and our L3 drones can't reach 3 cells.
+  stack2 converted (enemy splits 3,3,2,0). -> cand_press2 (30+ units hunt/trade ANY enemy head) + cand_stack3 = stack2 + press2.
+- stack2 swing loss (Schooltime A 1000): dominant 62 v 10 at r150, capped at 64 while the enemy regrew to 62; our
+  head-on deaths 40 v their 22 in r250-300 = friendly head-ons.
+- Friendly head-on pairs/game (champion, 120 games): Portals 65, Schooltime 32, Default 21, Slithery 15, QoS 14, others ~0.
+  Movers are ordinary pearl-seekers stepping blind through portals onto farming friends. cand_portal (blind step 2.0 on
+  open maps): pairs -30% but Portals wins 2 -> 0/8 (stopped using portals). cand_portal2 (don't park on exits): no effect.
+  -> Codex: portal probe via sonar (rays pass portals; echo ally_head) as a patch on cand_dev.
+- One development line: cand_dev (= stack2), edited in place; 131 old cand_* archived to ladder/archive/cands/.
+- cand_press2 (30+ units hunt/trade ANY enemy head): 44 v 41, flips +6/-3, THROWS 10 -> 6 (mechanism works): maze throws
+  converted (Autarky, Devil, Trauma wins mostly by elimination). All 6 remaining throws are Schooltime. Side effect:
+  final_longest 13 -> 10.5, final_mass 67.5 -> 75. (cand_press at 40+: throws 10 -> 9 only.)
+- Schooltime throw anatomy (press2, A 1017 v arch4): capped at 64 units with LONGEST 4 for 200 rounds (BUD 27-54, ATK
+  8-19, DOOMED 11-30 per 25 rounds: churn), our mass flat ~140-150 while theirs 61 -> 223 and their longest 6 -> 16; r325-
+  400 our feeding collapses 63 -> 8 units (mass 151 -> 79); they end L45-64 v our L20-49. cand_cap (grow to 8 before
+  budding at 50+ units): longest r200 7-8 (v 3-21), mass r200 +20-30, but outcome 0/4 = champion 0/4: not the lever.
+  Schooltime = open-map growth/consolidation race (parked with this trace).
+- tools from the analysis-tools agent: mech_board.py (all mechanics, cand v base, swing-only column, paired direction),
+  replay_cache.py (decode once), swing_report.py, pair_frames.py, metric_selftest.py (AGENTS.md section 9). Our path-based
+  eat counter is +-20% per game but unbiased (median ratio 1.00).
+- mech_board press2 v champion: attack share of sprints 24 -> 31%; our head-on deaths THEY initiated 19.7 -> 12.3 (4/41
+  games); DOOMED deaths 136.5 -> 126.5; wins by elimination 25% -> 36% (9/0); dominant-but-lost 12% -> 7%; final longest
+  15.8 -> 14.1; feeds r300+ 15.6 -> 12.4.
+- press2 new loss (Trophy B 1017 farm): press fired at 29-30 units with only a 1.5:1 lead (29 v 19): ATK 12 v 4 per 25
+  rounds, 1-for-1 trades, and the enemy REGREW faster from the wreckage (splits 16-19 v 6-12): 25 v 15 at r250, while the
+  champion farmed to 40 v 6 and won. Refinement for cand_dev: press when (30+ units AND local heads mine >= theirs + 2) or
+  40+ units.
+- cand_stack3 (stack2 + press2), 120 paired (3 seeds): 59 v 54, flips +13/-8, throws 10 -> 6. Best so far.
+- cand_dev v1 = stack3 + gated press (pressOn(): 40+ units, or 30+ and visible heads mine >= theirs + 2). In the cycle
+  (3 seeds). Working folders: viper_nn, cand_dev, cand_stack2 (kept for its pending ladder confirmation).
+- Ladder batch 1 (teams 219,859,733,15,72,64; some requests refused, ~20 games per build), unattributed tallies:
+  SPRINT1 8/20, ORDER1 5/20, CHAMP5 3/20. Final attributed RESULT pending.
+
+## 1 Oct ~18:00 IST (Claude) NEW RULES: first measurements
+- Tools: replay.py decodes result queen length (team struct i32 @12); tools/queen_report.py (queen fates, how decided);
+  cycle.py queen metrics + METRICS_VERSION=3 cache keys (fixes stale friendly_h2h KeyError); mechanics.py sprint cost
+  with ceil(L/4) free steps; opencode added queen columns to pair_diff/viz (reviewed: OK).
+- Champion on engine 1.2.3 vs nick_farm/nick_arch4 (40 games): OUR queen alive at end 0/40 (median death r36), theirs 1/40.
+  Decided: longest 25, elimination 13, queen 1, total 1.
+- **Legacy maps doom the queen at spawn**: on Autarky, Dilemma and Slithery dragon 0/1 starts at the head of a 1-wide dead-end
+  corridor (2-4 cells ahead, pearl-lined). Splits keep the FRONT as the parent (= queen id) and the child is the reversed
+  rear, so the queen can't turn back: both queens die by r5-r10 on every game there -> queen tie 0/0, longest decides.
+  QFIT (Codex, applied in cand_dev) can't help there. Queen rules matter on Trophy/QoS/Default/Devil/Trauma/Schooltime/
+  Portals and on the coming new maps.
+- cand_dev (old stack + NEWRULES + QFIT): queen alive 4/40, median death r101 (vs r36), wins 19/40 vs champion 23/40.
+  Clean test running: cand_q = champion + NEWRULES only (no stack, no QFIT) -> ladder/newrules_q1_*.txt.
+
+## 1 Oct 18:00-19:15 IST (Claude) new-rules ladder: findings from our own losses (continuous autoscrims)
+- QUEEN IDENTITY BUG: queens are ids 0/1 but on ladder maps id 0 can be team B's (DRAGON lines swapped). Verified from
+  results (e.g. trauma_B_815767: A's queen = id 1). Bot used MY_ID==MY_TEAM -> fixed (isTrueQueen = MY_ID<=1, enemy
+  queen = any enemy id<=1). Tools fixed (queen = team's first dragon). Subs: 14061 (bug) -> 14101 (fix).
+- Enemy queens on the ladder die early in ~100% of our games (0/15, 0/15): a queen that SURVIVES wins at r500.
+  QHIDE (cand_q5): queen stays in fully open space (room penalty), >= 4 from enemy heads, not beside portals (Trauma
+  vs code matters: our L2 queen circled a 2x2 loop for 200 rounds, then a friend came out of the adjacent portal and
+  boxed her in, r366). Sandbox queen alive 4/24 -> 8-9/24.
+- SINK: the feeding sink election was locked to the true queen (L2, hiding) -> nobody fed anyone -> longest-tiebreak
+  throws (Trauma: 31 units/88 mass vs 17/62, longest 8 vs 33). Reverted to the longest-dragon sink.
+- MAP RECOGNITION FAILS ON THE LADDER: on QoS/Devil/Dilemma/Slithery/Schooltime about half the ladder games never get
+  the known-map flag K (QoS vs Adrak: K in 2/702 indicator turns; our 2 dragons ate nothing for 70 rounds). Our
+  viewAgrees() rejects the map when a pearl countdown contradicts the stored table (sandbox always agrees). MAPFIX:
+  identify by kelp/portals only; learn pearl gaps from observation. (cand_q6 = q5 + Codex free-sprint 2/3-step options
+  + MAPFIX; sub 14132.) The champion probably suffered the same on the old ladder: check old ladder replays' K share.
+- Cutlery deliberately kills stub dragons in dead-end pockets (SPLIT 1 at the pocket end, rear child escapes):
+  264 such deaths on Portals; same as our ESCAPE-SPLIT/DOOMED economically (all deaths drop ceil(L/2) pearls).
+- Portal friendly head-ons (~55 pairs/game on Portals) unchanged by a probe ray (cast after the move from the new
+  head + warning message): the victim usually arrived after the probe. Open problem.
+
+## 1 Oct 19:30-20:10 IST (Claude) Adrak vali chai A/Bs (unranked, interleaved, same maps)
+- q6 (14132) 1/5, q7 (14167, SHAFT: no miner excuse for L2) 1/5 [Schooltime W both]; q7 vs q6 economy on maze maps
+  clearly better (Devil r0-150 eaten 76 v 30, Autarky units r150 13 v 8) but still crushed (Adrak 27-36 units by r125).
+- q8 (14185) = q7 + COMPASS (Codex port of compass4, gated to Schooltime/Trophy/Devil, 1/3 of miners, r<150; Claude
+  re-applied the failed activation hunk + C<x,y> indicator). vs Adrak: q7 1/5, q8 1/5 (both won QoS only).
+  Schooltime: q8 farms the bottom fountain (C30,36 621 turns): eaten r0-150 447 v 404 (q7: 254 v 483), units r100 55 v 47
+  (q7 29 v 50) = opening economy FIXED there; then attrition r150-300 (55 -> 30 units vs their 62) and at r350-360
+  feeding took us from 22 to 6 units; the lone L36 sink died at ~r405 -> lost by ELIMINATION.
+  Trophy: compass fired 70 turns, eaten 28 v 126 (q7 99 v 165): compass on Trophy looks harmful (1 game).
+- q9 (14198) = q8 + FLOOR (no feeding at <= 10 units). ACTIVE. Rating 1769, rank 22 (20:10 IST).
+- nr1 (from-scratch net on 969 new-rules top games, Kaggle): val acc 0.707 (n4 trained 0.66-0.67 on old data);
+  held-out new-rules set built (D:/battlecode/tmp/data_nr_ho, 565 games); log-loss compare needs torch (Kaggle).

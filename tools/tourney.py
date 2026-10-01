@@ -45,8 +45,11 @@ POINTS = re.compile(r"team (A|B) points per turn: .*max ([\d.]+)M")
 # a real heavy matchup (viper_vS4.7 vs viper_v7.12, trophy: 58.9s vs 142.7s, identical winner/
 # rounds/turns/points down to the exact number). Paths are this machine's WSL2 setup, not portable:
 # built per s4_7_v4_and_beyond.md's WSL2 setup steps if this ever needs rebuilding elsewhere.
-ZIG_JUDGE_WSL = "/home/sohan/toolchains/zig-judge-out/bin/loong-judge"
-ZIG_ENGINE_WSL = "/home/sohan/venv/lib/python3.14/site-packages/unswbc/unswbc_engine.wasm"
+import os as _os
+# Configurable per machine (env vars); defaults are the teammate's WSL2 setup.
+ZIG_JUDGE_WSL = _os.environ.get("BC_ZIG_JUDGE", "/home/sohan/toolchains/zig-judge-out/bin/loong-judge")
+ZIG_ENGINE_WSL = _os.environ.get("BC_ZIG_ENGINE", "/home/sohan/venv/lib/python3.14/site-packages/unswbc/unswbc_engine.wasm")
+WSL_DISTRO = _os.environ.get("BC_WSL_DISTRO", "Ubuntu")
 # Doc comment in the judge's main.zig / game.zig, verified against a real run's output.
 ZIG_DEATH_REASONS = ["hit a wall", "hit itself", "hit another dragon", "lost a head-to-head", "no valid action"]
 ZIG_END_REASONS = ["by elimination", "on length"]
@@ -124,7 +127,7 @@ def play_zig(map_name, a, b, seed, replay_path=None, debug=False):
     mp = mp if mp.is_absolute() else ROOT / mp
 
     cmd = [
-        "wsl", "-d", "Ubuntu", "--", ZIG_JUDGE_WSL,
+        "wsl", "-d", WSL_DISTRO, "--", ZIG_JUDGE_WSL,
         "--engine", ZIG_ENGINE_WSL,
         "--map", to_wsl_path(mp),
         "--a", to_wsl_path(a),
@@ -524,6 +527,7 @@ def main():
     ap.add_argument("--seeds", type=int, default=1)
     ap.add_argument("-j", type=int, default=10)
     ap.add_argument("--one-side", action="store_true")
+    ap.add_argument("--seed-base", type=int, default=0, help="first seed index (seed = 1000 + 17 * index)")
     ap.add_argument(
         "--judge",
         choices=["sandbox", "zig"],
@@ -570,7 +574,7 @@ def main():
     jobs = []
 
     for m in args.maps.split(","):
-        for s in range(args.seeds):
+        for s in range(args.seed_base, args.seed_base + args.seeds):
             seed = 1000 + 17 * s
 
             jobs.append((m, "A", a_path, b_path, seed))

@@ -85,7 +85,8 @@ def analyse(path, side):
             if e.get("act") == "move" and len(e.get("dirs", "")) > 1:
                 d = e["dirs"]; ph = "r0-100" if rnd < 100 else "r100-300" if rnd < 300 else "r300+"
                 purpose = "COMBAT" if near else "TRAVEL"
-                c["sprints"] += 1; c[f"sprint@{ph}"] += 1; c["segs"] += len(d) - 1; lens.append(len(body[i]))
+                c["sprints"] += 1; c[f"sprint@{ph}"] += 1; lens.append(len(body[i]))
+                c["segs"] += max(0, len(d) - max(1, -(-len(body[i]) // 4)))   # engine >= 1.2.3: ceil(L/4) free steps per turn
                 x, y = hd; ate = 0
                 for ch in d:
                     dx, dy = DXY.get(ch, (0, 0)); x, y = (x + dx) % W, (y + dy) % H

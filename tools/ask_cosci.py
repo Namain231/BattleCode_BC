@@ -22,6 +22,24 @@ AGY = pathlib.Path(os.environ["LOCALAPPDATA"]) / "agy" / "bin" / "agy.exe"
 def main():
     who, msg_file = sys.argv[1], pathlib.Path(sys.argv[2])
     DIR.mkdir(parents=True, exist_ok=True)
+    # one message at a time per helper: a second concurrent resume of the same session fails ("active writer")
+    import time
+    lock = DIR / f"{who}.lock"
+    while True:
+        try:
+            fd = os.open(str(lock), os.O_CREAT | os.O_EXCL | os.O_WRONLY); os.close(fd); break
+        except FileExistsError:
+            if time.time() - lock.stat().st_mtime > 40 * 60:   # stale (crashed request): take it over
+                lock.unlink(missing_ok=True); continue
+            time.sleep(15)
+    try:
+        run(who, msg_file)
+    finally:
+        lock.unlink(missing_ok=True)
+
+
+def run(who, msg_file):
+    DIR.mkdir(parents=True, exist_ok=True)
     sess = json.loads((DIR / "sessions.json").read_text()) if (DIR / "sessions.json").exists() else {}
     msg = msg_file.read_text(encoding="utf-8")
     n = len(list(DIR.glob(f"{who}_*.md"))) + 1

@@ -31,11 +31,16 @@ LLR_WIN, LLR_LOSS = math.log(0.6 / 0.5), math.log(0.4 / 0.5)
 BOUND = math.log(0.9 / 0.1)
 
 
+REPLAY_DIR = None   # --replays: keep <map>_<a_side>_<seed>.replay (a_side = the candidate's side), tarred at the end
+
+
 def play(job):
     a, b, map_path, seed, a_side = job
     first, second = (a, b) if a_side == "A" else (b, a)
+    keep = (["--replay", str(pathlib.Path(REPLAY_DIR) / f"{pathlib.Path(map_path).stem}_{a_side}_{seed}.replay")]
+            if REPLAY_DIR else ["--no-replay"])
     try:
-        r = subprocess.run(["unswbc", "run", map_path, first, second, "--sandbox", "--no-replay", "--seed", str(seed)],
+        r = subprocess.run(["unswbc", "run", map_path, first, second, "--sandbox", *keep, "--seed", str(seed)],
                            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=900)
         out = r.stdout + r.stderr
         m = RESULT.search(out)
@@ -60,7 +65,12 @@ def main():
     ap.add_argument("--seed-base", type=int, default=0, help="first seed index (new games instead of replaying 0..)")
     ap.add_argument("--workers", type=int, default=os.cpu_count())
     ap.add_argument("--no-sprt", action="store_true")
+    ap.add_argument("--replays", default="", help="keep replays in this dir, tar them into <out>/replays.tgz at the end")
+    ap.add_argument("--tourney-seeds", action="store_true", help="seed = 1000 + 17 * i (tools/tourney.py), for pairing")
     a = ap.parse_args()
+    global REPLAY_DIR
+    if a.replays:
+        REPLAY_DIR = a.replays; pathlib.Path(REPLAY_DIR).mkdir(parents=True, exist_ok=True)
     out = pathlib.Path(a.out); out.mkdir(parents=True, exist_ok=True)
     names = LIVE if a.maps == "all" else MAZE if a.maps == "maze" else a.maps.split(",")
     maps = [str(ROOT / "maps" / f"{m}.map") for m in names]
@@ -71,7 +81,7 @@ def main():
     jobs = []
     for s in range(a.seed_base, a.seed_base + a.seeds):             # round-robin order: every prefix of the list covers many maps
         for m in maps:
-            seed = 1000 + 7919 * s + sum(pathlib.Path(m).stem.encode()) % 997   # stable across runs
+            seed = (1000 + 17 * s) if a.tourney_seeds else 1000 + 7919 * s + sum(pathlib.Path(m).stem.encode()) % 997
             jobs += [(wa, wb, m, seed, "A"), (wa, wb, m, seed, "B")]
     wins = n = 0; llr = 0.0; t0 = time.time(); verdict = "no decision (all games played)"
     per = {}
@@ -92,6 +102,11 @@ def main():
     summary = {"a": a.a, "b": a.b, "games": n, "wins": wins, "rate": wins / n if n else None, "llr": llr,
                "verdict": verdict, "per_map": per, "seconds": round(time.time() - t0)}
     json.dump(summary, open(out / "summary.json", "w"), indent=1)
+    if REPLAY_DIR:
+        import tarfile
+        with tarfile.open(out / "replays.tgz", "w:gz") as t:
+            for p in pathlib.Path(REPLAY_DIR).glob("*.replay"):
+                t.add(p, arcname=p.name)
     print(json.dumps(summary), flush=True)
 
 

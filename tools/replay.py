@@ -220,7 +220,8 @@ def _decode(path):
         teams = []
         for i in (0, 1):
             t = res.struct(i)
-            teams.append({"count": t.i32(0), "longest": t.i32(4), "total": t.i32(8)} if t else None)
+            # queen = length of the team's queen (dragon id 0 for A, 1 for B) at the end; 0 if dead (engine >= 1.2.3 rules)
+            teams.append({"count": t.i32(0), "longest": t.i32(4), "total": t.i32(8), "queen": t.i32(12)} if t else None)
         rep["result"] = {"endReason": res.u16(2), "winner": res.u16(6) if res.u16(4) else None, "A": teams[0], "B": teams[1]}
     return rep
 

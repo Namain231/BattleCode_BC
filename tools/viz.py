@@ -100,7 +100,11 @@ class Game:
         xs = range(W) if full else [(cx + d) % W for d in range(-R, R + 1)]
         ys = range(H) if full else [(cy + d) % H for d in range(-R, R + 1)]
         ours, theirs = self.stats(st)
-        lines = [f"--- r{rnd}  ours units/mass/longest {ours}  theirs {theirs}"]
+        queen_ours = min(i for i in self.team if self.team[i] == self.ours)      # first dragon of each team (map order)
+        queen_theirs = min(i for i in self.team if self.team[i] != self.ours)
+        qo = len(st["body"].get(queen_ours, []))
+        qt = len(st["body"].get(queen_theirs, []))
+        lines = [f"--- r{rnd}  ours units/mass/longest {ours}  theirs {theirs}  Q ours/theirs {qo}/{qt}"]
         for (txt, cell) in st["events"]:
             if cell is None or full or (min(abs(cell[0] - cx), W - abs(cell[0] - cx)) <= R and
                                         min(abs(cell[1] - cy), H - abs(cell[1] - cy)) <= R):

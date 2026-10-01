@@ -51,6 +51,7 @@ def main():
     ap.add_argument("--drop", type=int, default=50)
     ap.add_argument("--out", default="ladder/slope")
     ap.add_argument("--once", action="store_true")
+    ap.add_argument("--since", default="", help="ISO time: ignore battles before it (new rules: 2026-10-01T05:30)")
     a = ap.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
     out = pathlib.Path(a.out); out.mkdir(parents=True, exist_ok=True)
@@ -65,7 +66,7 @@ def main():
         for t in rows:
             tid, name = t["id"], t["name"]
             prof = get(f"/teams/{tid}")
-            t0 = slope_start(prof.get("history", []), a.drop)
+            t0 = max(slope_start(prof.get("history", []), a.drop), a.since)
             slopes[tid] = {"team": name, "rank": t.get("rank"), "elo": t.get("elo"), "slopeStart": t0}
             for b in prof.get("recent", []):
                 if b["id"] in seen_battles or b["at"] < t0:

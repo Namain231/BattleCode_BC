@@ -101,13 +101,31 @@ def launch(a):
             f"for o in {opps!r}:\n"
             f"    subprocess.run([sys.executable, '-u', 'cloud_tourney.py', '--a', 'wasm/{name}.wasm', '--b', f'wasm/{{o}}.wasm',\n"
             f"                    '--out', f'/kaggle/working/{{o}}', '--maps', '{a.maps}', '--gen', '0', '--seeds', '{a.seeds}',\n"
-            f"                    '--no-sprt', '--seed-base', '{a.seed_base}'], cwd='/tmp/pkg', check=True)\n")
+            f"                    '--no-sprt', '--seed-base', '{a.seed_base}'"
+            + (", '--tourney-seeds', '--replays', f'/tmp/rep_{o}'" if a.replays else "")
+            + "], cwd='/tmp/pkg', check=True)\n")
         msg = kaggle("kernels", "push", "-p", kd.name, cwd=bdir).strip().splitlines()[-1]
         print(name, msg)
         rec["where"][name] = {"kaggle": f"{KUSER}/{slug}", "dir": kd.name, "pushed": "error" not in msg.lower()}
     (bdir / "batch.json").write_text(json.dumps(rec, indent=1))
     (BATCHES / "last_kpanel.json").write_text(json.dumps(rec, indent=1))
     print(f"batch {batch}; fetch with: python tools/kaggle_panel.py fetch")
+
+
+def fetch_replays(kernel, dest):
+    """Download a kernel's replays.tgz files and unpack them into dest/<opp>/ (tools/cycle.py layout). True if found."""
+    import subprocess, tarfile, tempfile
+    tmp = pathlib.Path(tempfile.mkdtemp(dir="D:/battlecode/tmp"))
+    subprocess.run([sys.executable, "-m", "kaggle", "kernels", "output", kernel, "-p", str(tmp), "--file-pattern", "replays"],
+                   capture_output=True)
+    found = False
+    for tgz in tmp.rglob("replays.tgz"):
+        od = pathlib.Path(dest) / tgz.parent.name
+        od.mkdir(parents=True, exist_ok=True)
+        with tarfile.open(tgz) as t:
+            t.extractall(od)
+        found = True
+    return found
 
 
 def fetch(a):
@@ -147,6 +165,7 @@ def main():
     l.add_argument("--panel", default="", help="opponents (default: the frozen panel)"); l.add_argument("--maps", default="all")
     l.add_argument("--tag", default="", help="suffix for kernel names, so one candidate can run in several batches")
     l.add_argument("--where", default="kaggle", choices=["kaggle", "colab"])
+    l.add_argument("--replays", action="store_true", help="keep replays (tourney.py seeds) as <opp>/replays.tgz for tools/cycle.py")
     f = sub.add_parser("fetch"); f.add_argument("--batch", default="")
     a = ap.parse_args()
     {"launch": launch, "fetch": fetch}[a.cmd](a)

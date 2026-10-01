@@ -1,0 +1,35 @@
+# Learned rule: death
+
+101444 opportunities, 642 positives, 22 games.
+
+| model | held-out AUC (grouped by game) |
+|---|---|
+| logistic_l1 | 0.921 |
+| tree_d3 | 0.925 |
+| gbm_ceiling | 0.965 |
+
+Picked: **tree_d3**, threshold 0.976: fires on 0.00% of opportunities (the team: 0.63%), precision 0.25, recall 0.08. Ceiling gap +0.040 -- consider the GBM as a score term.
+
+Per-map AUC: Autarky 0.94, Devil 0.99, Portals 0.95, Queen Of Spades 0.78, Schooltime 0.94, Slithery Fight 0.91, Trauma 0.91
+
+```
+if room <= 0.500:
+  if top_ally_approach <= 0.500:
+    if mem_top_dist <= 3.500:
+      -> p=0.925 (n=1200)
+    else:
+      -> p=0.835 (n=1152)
+  else:
+    -> p=0.976 (n=1182)
+else:
+  if top_ally_vlen <= 4.500:
+    if top_ally_dist <= 1.500:
+      -> p=0.447 (n=5459)
+    else:
+      -> p=0.080 (n=85029)
+  else:
+    if top_ally_dist <= 3.500:
+      -> p=0.928 (n=2068)
+    else:
+      -> p=0.554 (n=5354)
+```

@@ -3,6 +3,9 @@
 A reference for building a bot. Distilled from the full docs (overview, structure, movement, splitting, sonar,
 vision, pearls, kelp/portals, death, execution-order, map-info, protocol).
 
+**Rules changed on 2026-10-01** (after the sprint tournament): queens decide the game, and sprints have
+ceil(L/4) free steps. This summary is updated for both; `docs/CHANGES_2026-10-01.md` lists every change.
+
 ## 1. Setup
 
 - Two teams, each controlling up to **64 dragons** ("units"), snake-like creatures on a grid.
@@ -11,8 +14,12 @@ vision, pearls, kelp/portals, death, execution-order, map-info, protocol).
 - A game lasts at most **500 rounds**. Each round, every living dragon takes one **turn**, in **ascending dragon
   ID order**. A dragon created by a split this round is appended and acts later in the same round; a dragon that
   died earlier this round is skipped.
-- Goal: survive and grow the longest dragon by eating pearls. At game end (elimination or round 500), the winner
-  is decided by: (1) longest living dragon, (2) greatest total length across all your dragons, (3) draw.
+- Goal: grow the longest **queen** by eating pearls. Each team's queen is its initial dragon with id 0 or id 1
+  (maps alternate teams line by line, so dragons 0 and 1 are on different teams). After round 500 the winner is
+  decided by: (1) longer queen (a dead queen has length 0), (2) longest living dragon, (3) greatest total length
+  across all your dragons, (4) draw. Ids are visible: `ID` in the init block, and every `DRAGON_BODIES` line in
+  vision carries the dragon's id, so a bot knows whether it is the queen and can recognise the enemy queen on
+  sight. A queen that splits keeps its id (the child gets a new id).
 - A team is eliminated when all its dragons die. Game ends immediately if either team is eliminated (draw if both
   in the same round).
 
@@ -59,8 +66,10 @@ Both live on **edges between tiles**, not on tiles (including edges along the ma
 
 - Standard move: one tile in a cardinal direction (`ct.make_move(Direction)`); head moves, body follows.
 - **Facing**: direction from your first body segment to your head (defined similarly per-segment down the body).
-- **Sprinting**: multiple moves in one turn, e.g. `ct.make_moves([N, N, E])`. Each **extra** step costs 1 body
-  segment (moving x steps removes x−1 segments). Collision/pearl-eating is checked **at every intermediate
+- **Sprinting**: multiple moves in one turn, e.g. `ct.make_moves([N, N, E])`. The first ceil(L/4) steps are
+  free, with L the length when the move starts; each step after them costs 1 body segment (moving x steps
+  removes max(0, x − ceil(L/4)) segments: 5 steps cost a length-4 dragon 4 segments, a length-12 dragon 2).
+  Before 2026-10-01 only the first step was free. Collision/pearl-eating is checked **at every intermediate
   step**, so the specific path matters, not just the destination (e.g. `NNE` might die where `ENN` to the same
   square survives).
 - If you request more steps than you can pay for, the move is **not truncated** — you take as many steps as you
@@ -70,14 +79,15 @@ Both live on **edges between tiles**, not on tiles (including edges along the ma
 
 ### Collision resolution per step (order matters)
 
-1. If not the first step of a sprint, check you can pay for it (min length 2) — else die, "no valid action".
+1. If not one of the first ceil(L/4) steps (L = length when the move starts), check you can pay for it (min
+   length 2) — else die, "no valid action".
 2. Facing is set to the step's direction; destination = tile across that edge (kelp → death; portal → exits
    partner edge; else the adjacent, wrapped tile).
 3. Destination is checked against **your own body first** (including your tail — checked *before* the tail
    advances, so your own tail tile is blocked for that step), **then** other dragons. Stepping onto another
    dragon's head kills **both** of you; onto any other segment kills only you.
 4. Head moves onto destination; a pearl there is eaten. Tail advances unless a pearl was eaten. If this wasn't
-   the first step, one more tail segment is removed (sprint cost).
+   one of the free steps, one more tail segment is removed (sprint cost).
 5. On a multi-step move, step 2 is checked against the body **as step 1 left it** — a tile fatal as a first step
    may be safe as a second.
 6. A death on any step discards remaining steps and that turn's sonar; steps already taken stand.

@@ -33,11 +33,21 @@ def main():
     ap.add_argument("--from-rank", type=int, default=1, help="skip teams ranked above this")
     ap.add_argument("--per-team", type=int, default=10)
     ap.add_argument("--out", default="ladder/scout")
+    ap.add_argument("--team-ids", default=None,
+                    help="comma list of team ids to scout instead of the leaderboard top (e.g. our own "
+                         "team, for a like-for-like baseline against the top teams)")
     a = ap.parse_args()
     out = pathlib.Path(a.out); out.mkdir(parents=True, exist_ok=True)
-    board = get("/leaderboard")
-    rows = board.get("teams", board) if isinstance(board, dict) else board
-    rows = sorted(rows, key=lambda t: t.get("rank") or 1e9)[a.from_rank - 1:a.top]
+    if a.team_ids:
+        rows = []
+        for tid in a.team_ids.split(","):
+            p = get(f"/teams/{tid}")
+            t = p.get("team", p)
+            rows.append({"id": int(tid), "name": t.get("name"), "rank": t.get("rank"), "elo": t.get("elo")})
+    else:
+        board = get("/leaderboard")
+        rows = board.get("teams", board) if isinstance(board, dict) else board
+        rows = sorted(rows, key=lambda t: t.get("rank") or 1e9)[a.from_rank - 1:a.top]
     index = []
     for t in rows:
         tid, name = t["id"], t["name"]

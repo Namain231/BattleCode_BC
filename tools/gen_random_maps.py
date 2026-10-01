@@ -70,10 +70,10 @@ class Board:
         return comp, sizes
 
 
-def make_map(rng, idx):
+def make_map(rng, idx, dense=False):
     W, H = rng.randint(20, 64), rng.randint(14, 40)
     b = Board(W, H)
-    density = rng.uniform(0.04, 0.30)
+    density = rng.uniform(0.10, 0.30) if dense else rng.uniform(0.04, 0.30)
     target = int(density * 2 * W * H)
     placed = 0
     while placed < target:                          # wall segments: corridors, rooms, dead ends
@@ -99,7 +99,7 @@ def make_map(rng, idx):
         return None
     # dragons: straight length-4 bodies in the big component, mirrored for team B
     occ = set(); dragons = []
-    for _ in range(rng.randint(1, 7)):
+    for _ in range(rng.randint(2, 7) if dense else rng.randint(1, 7)):
         for _try in range(50):
             x, y, d = rng.randrange(W), rng.randrange(H), rng.randrange(4)
             dx, dy = ((0, -1), (1, 0), (0, 1), (-1, 0))[d]
@@ -114,9 +114,28 @@ def make_map(rng, idx):
                 occ.update(allc); dragons.append((cells, mir)); break
     if not dragons:
         return None
-    lines = [f"MAP {W} {H}", "SYMMETRY xy", f"MAP_NAME Gen{idx}", f"TILE_COUNT {W * H}"]
+    lines = [f"MAP {W} {H}", "SYMMETRY xy", f"MAP_NAME {'Dense' if dense else 'Gen'}{idx}", f"TILE_COUNT {W * H}"]
     slow, fast = rng.uniform(0.06, 0.14), rng.uniform(0.0, 0.012)
     rate = {}
+    if dense:
+        # the live maps' bed layers: a slow background field (often every tile), medium-gap patches and
+        # fast fountains in clusters (default: 1..3849 everywhere; trophy 1..1000 + 1..100 + 5..30;
+        # devil 1..600/1..300 + 1..1; portals 1..10 patches; slithery 1..2559 + 1..5/1..10)
+        bg = rng.choice([0.0, 0.0, 0.3, 0.6, 1.0])
+        bgv = (1, rng.choice([600, 1000, 2559, 3849]))
+        for y in range(H):
+            for x in range(W):
+                if (x, y) not in rate:
+                    v = bgv if rng.random() < bg else (0, 0)
+                    rate[(x, y)] = v; rate[((W - 1 - x) % W, (H - 1 - y) % H)] = v
+        for frac, gaps in ((rng.uniform(0.04, 0.15), [30, 50, 100, 300]), (rng.uniform(0.01, 0.08), [1, 5, 10])):
+            target, got = frac * W * H, 0
+            while got < target:
+                g = rng.choice(gaps); cx, cy = rng.randrange(W), rng.randrange(H)
+                for dy in range(rng.randint(1, 4)):
+                    for dx in range(rng.randint(1, 4)):
+                        x, y = (cx + dx) % W, (cy + dy) % H
+                        rate[(x, y)] = (1, g); rate[((W - 1 - x) % W, (H - 1 - y) % H)] = (1, g); got += 2
     for y in range(H):
         for x in range(W):
             if (x, y) in rate:
@@ -160,19 +179,20 @@ def main():
     ap.add_argument("--n", type=int, default=200)
     ap.add_argument("--out", default="maps_gen")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--dense", action="store_true", help="live-map-like bed layers (slow field, medium patches, fast fountains) and kelp 10-30%%")
     a = ap.parse_args()
     rng = random.Random(a.seed)
     out = ROOT / a.out; out.mkdir(exist_ok=True)
     made = tries = 0
     while made < a.n and tries < 20 * a.n:
         tries += 1
-        text = make_map(rng, made)
+        text = make_map(rng, made, a.dense)
         if text is None:
             continue
         ok, err = engine_ok(text)
         if not ok:
             print("engine rejected:", err); continue
-        (out / f"gen_{made:03d}.map").write_text(text)
+        (out / f"{'dense' if a.dense else 'gen'}_{made:03d}.map").write_text(text)
         made += 1
     print(f"{made} maps in {out} ({tries} tries)")
 

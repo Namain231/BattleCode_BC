@@ -1,0 +1,6 @@
+48 team-games to extract (death)
+  10/48 games, 7607 rows
+  20/48 games, 38153 rows
+  30/48 games, 67602 rows
+  40/48 games, 97232 rows
+wrote 165039 rows to rulemine_data/death_top.csv (0 replays skipped)

@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-Process | Where-Object { $_.ProcessName -match \"python|uv\" } | Select-Object Id, ProcessName, CPU)"
+    ]
+  }
+}

@@ -18,3 +18,7 @@ ml/models/
 maps_gen/
 # local training/eval logs
 ml/*.log
+maps_dense/
+maps_dense2/
+archive/
+tools/battlecode-eval/

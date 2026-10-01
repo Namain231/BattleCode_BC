@@ -23,13 +23,41 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 MAPS = [
     "arena", "Colosseum", "default_small", "trophy", "devil", "dilemma",
     "queen_of_spades", "default", "autarky", "stronghold", "trauma",
-    "schooltime", "big_empty"
+    "schooltime", "big_empty", "slithery_fight", "portals"
+]
+
+# Core panel for quick validation batches: every map a real S.4.7.6 ladder loss
+# was traced to, so slithery_fight/schooltime (found 2026-09-30 to be
+# catastrophic blind spots never covered by the old 6-map panel) are never
+# excluded again. Use `--maps ,`.join(CORE_PANEL)` for fast iteration.
+CORE_PANEL = [
+    "trauma", "autarky", "trophy", "default", "dilemma", "devil",
+    "slithery_fight", "schooltime",
 ]
 
 RESULT = re.compile(r"team (A|B) wins after (\d+) rounds \((.*?)\)")
 DRAW = re.compile(r"draw after (\d+) rounds")
 DEATH = re.compile(r"round (\d+): bot (\d+) \(team (A|B)\) died: (.*)")
 POINTS = re.compile(r"team (A|B) points per turn: .*max ([\d.]+)M")
+
+# --judge zig: over-yonder.tech/games/loong's from-scratch Zig+wasmtime judge, built and verified
+# byte-identical to `unswbc run --sandbox` in WSL2 (2026-09-30, see insights.md) -- ~2.4x faster on
+# a real heavy matchup (viper_vS4.7 vs viper_v7.12, trophy: 58.9s vs 142.7s, identical winner/
+# rounds/turns/points down to the exact number). Paths are this machine's WSL2 setup, not portable:
+# built per s4_7_v4_and_beyond.md's WSL2 setup steps if this ever needs rebuilding elsewhere.
+ZIG_JUDGE_WSL = "/home/sohan/toolchains/zig-judge-out/bin/loong-judge"
+ZIG_ENGINE_WSL = "/home/sohan/venv/lib/python3.14/site-packages/unswbc/unswbc_engine.wasm"
+# Doc comment in the judge's main.zig / game.zig, verified against a real run's output.
+ZIG_DEATH_REASONS = ["hit a wall", "hit itself", "hit another dragon", "lost a head-to-head", "no valid action"]
+ZIG_END_REASONS = ["by elimination", "on length"]
+ZIG_DRAW_REASONS = ["both teams eliminated", "equal length"]
+
+
+def to_wsl_path(p) -> str:
+    p = pathlib.Path(p).resolve()
+    drive = p.drive[0].lower()
+    rest = str(p)[len(p.drive) + 1:].replace("\\", "/")
+    return f"/mnt/{drive}/{rest}"
 
 
 def prepare(bot: str) -> str:
@@ -41,19 +69,24 @@ def prepare(bot: str) -> str:
     return str(clangtool.build(path))
 
 
-def play(map_name, a, b, seed):
+def play(map_name, a, b, seed, replay_path=None):
     # a bare name is a live map (maps/<name>.map); a path like maps_gen/gen_007 or maps_gen/gen_007.map works too
     mp = pathlib.Path(map_name if map_name.endswith(".map") else f"{map_name}.map")
     mp = mp if "/" in map_name or "\\" in map_name else ROOT / "maps" / mp
-    cmd = ["unswbc", "run", str(ROOT / mp if not mp.is_absolute() else mp), a, b, "--sandbox", "--no-replay",
+    cmd = ["unswbc", "run", str(ROOT / mp if not mp.is_absolute() else mp), a, b, "--sandbox",
            "--seed", str(seed)]
+    if replay_path:
+        cmd += ["--replay", str(replay_path)]
+    else:
+        cmd.append("--no-replay")
     try:
         out = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             errors="replace",
-            timeout=240,
+            timeout=420,  # Slithery Fight alone can legitimately take ~5m15s solo; 240s produced
+                          # false TIMEOUTs there even with no other contention (2026-09-30).
         ).stdout
     except subprocess.TimeoutExpired:
         return None, 500, "TIMEOUT", {"A": [], "B": []}, {}
@@ -80,6 +113,69 @@ def play(map_name, a, b, seed):
     return winner, rounds, how, deaths, peak
 
 
+def play_zig(map_name, a, b, seed, replay_path=None, debug=False):
+    # debug=True: --debug 3 (DEBUG_LOGS|DEBUG_INDICATOR) records dragonLog/dragonIndicator events
+    # into the replay, matching `unswbc run --sandbox`'s default -- off by default here since the
+    # judge omits them with no flag at all (verified 2026-09-30: 0 events either way vs 1450/6501
+    # with --debug 3 on an identical game). Needed for any BC_DEBUG root-cause trace; leave off for
+    # ordinary win/loss batches, where the extra log volume just adds overhead for no benefit.
+    mp = pathlib.Path(map_name if map_name.endswith(".map") else f"{map_name}.map")
+    mp = mp if "/" in map_name or "\\" in map_name else ROOT / "maps" / mp
+    mp = mp if mp.is_absolute() else ROOT / mp
+
+    cmd = [
+        "wsl", "-d", "Ubuntu", "--", ZIG_JUDGE_WSL,
+        "--engine", ZIG_ENGINE_WSL,
+        "--map", to_wsl_path(mp),
+        "--a", to_wsl_path(a),
+        "--b", to_wsl_path(b),
+        "--seed", str(seed),
+    ]
+    if debug:
+        cmd += ["--debug", "3"]
+    if replay_path:
+        cmd += ["--replay", to_wsl_path(replay_path)]
+
+    try:
+        out = subprocess.run(
+            cmd, capture_output=True, text=True, errors="replace", timeout=420,
+        ).stdout
+    except subprocess.TimeoutExpired:
+        return None, 500, "TIMEOUT", {"A": [], "B": []}, {}
+
+    # One tab-separated figures line; see ZIG_* constants above for the field layout.
+    line = None
+    for candidate in out.splitlines():
+        if candidate.count("\t") >= 15:
+            line = candidate
+            break
+    if line is None:
+        return None, 500, "ERROR: " + out[-400:], {"A": [], "B": []}, {}
+
+    f = line.split("\t")
+    winner_c = f[0]
+    rounds = int(f[1]) if f[1] else 500
+    reason_code = int(f[2])
+    a_deaths = [int(x) for x in f[7].split(",")]
+    b_deaths = [int(x) for x in f[8].split(",")]
+    a_points = f[12].split("/")  # p50/mean/max
+    b_points = f[14].split("/")
+
+    if winner_c == "-":
+        winner, how = None, ZIG_DRAW_REASONS[reason_code] if 0 <= reason_code < len(ZIG_DRAW_REASONS) else "draw"
+    else:
+        winner = winner_c
+        how = ZIG_END_REASONS[reason_code] if 0 <= reason_code < len(ZIG_END_REASONS) else "?"
+
+    deaths = {
+        "A": [r for r, n in zip(ZIG_DEATH_REASONS, a_deaths) for _ in range(n)],
+        "B": [r for r, n in zip(ZIG_DEATH_REASONS, b_deaths) for _ in range(n)],
+    }
+    peak = {"A": int(a_points[2]) / 1e6, "B": int(b_points[2]) / 1e6}
+
+    return winner, rounds, how, deaths, peak
+
+
 def pct(x, y):
     return 100.0 * x / max(1, y)
 
@@ -95,11 +191,12 @@ def print_live_tracker(stats, total_jobs, start):
     remaining = total_jobs - completed
     eta = remaining / max(0.001, rate)
 
+    errors = stats["errors"]
     print()
     print(
         f"--- Progress: {completed}/{total_jobs} "
         f"({pct(completed, total_jobs):.0f}%) | "
-        f"W/L/D: {wins}/{losses}/{draws} | "
+        f"W/L/D/E: {wins}/{losses}/{draws}/{errors} | "
         f"win rate: {pct(wins, completed):.1f}% | "
         f"ETA: {eta:.0f}s ---"
     )
@@ -111,10 +208,10 @@ def print_live_tracker(stats, total_jobs, start):
 
         played = d["wins"] + d["losses"] + d["draws"]
 
-        if played:
+        if played or d["errors"]:
             print(
                 f"  {m:16s} "
-                f"{d['wins']:2d}W {d['losses']:2d}L {d['draws']:2d}D "
+                f"{d['wins']:2d}W {d['losses']:2d}L {d['draws']:2d}D {d['errors']:2d}E "
                 f"({pct(d['wins'], played):5.1f}% W)"
             )
 
@@ -126,11 +223,14 @@ def print_final_stats(stats, bot, opponent, elapsed):
     print("=" * 90)
 
     total = stats["wins"] + stats["losses"] + stats["draws"]
+    errors = stats["errors"]
 
     print(
         f"{bot} vs {opponent}: "
         f"{stats['wins']}W {stats['losses']}L {stats['draws']}D "
         f"of {total}"
+        + (f"  ({errors} infra error{'s' if errors != 1 else ''}/timeout"
+           f"{'s' if errors != 1 else ''}, excluded from the totals above)" if errors else "")
     )
 
     print(
@@ -187,7 +287,7 @@ def print_final_stats(stats, bot, opponent, elapsed):
     print("-" * 90)
 
     header = (
-        f"{'Map':16s} {'W':>4s} {'L':>4s} {'D':>4s} "
+        f"{'Map':16s} {'W':>4s} {'L':>4s} {'D':>4s} {'E':>3s} "
         f"{'Win%':>7s} {'Avg R':>8s} {'Our deaths':>11s} {'Their deaths':>12s}"
     )
     print(header)
@@ -199,23 +299,25 @@ def print_final_stats(stats, bot, opponent, elapsed):
         d = stats["maps"][m]
         played = d["wins"] + d["losses"] + d["draws"]
 
-        if not played:
+        if not played and not d["errors"]:
             continue
 
-        avg_rounds = d["rounds"] / played
+        avg_rounds = d["rounds"] / played if played else 0.0
 
         print(
             f"{m:16s} "
             f"{d['wins']:4d} "
             f"{d['losses']:4d} "
             f"{d['draws']:4d} "
+            f"{d['errors']:3d} "
             f"{pct(d['wins'], played):6.1f}% "
             f"{avg_rounds:8.1f} "
             f"{d['our_deaths']:11d} "
             f"{d['their_deaths']:12d}"
         )
 
-        map_records.append((m, d))
+        if played:
+            map_records.append((m, d))
 
     # ------------------------------------------------------------------
     # MAP TENDENCIES
@@ -423,12 +525,38 @@ def main():
     ap.add_argument("-j", type=int, default=10)
     ap.add_argument("--one-side", action="store_true")
     ap.add_argument(
+        "--judge",
+        choices=["sandbox", "zig"],
+        default="zig",
+        help="zig (default): over-yonder.tech's Zig judge via WSL2, ~2-2.5x faster, verified "
+             "identical results (see insights.md) -- this machine's WSL2 setup only, not portable. "
+             "sandbox: unswbc run --sandbox.",
+    )
+    ap.add_argument(
+        "--debug", action="store_true",
+        help="zig judge only: pass --debug 3 (records dragonLog/dragonIndicator events into the "
+             "replay, matching the sandbox's default). Needed for any BC_DEBUG trace; off by "
+             "default since ordinary win/loss batches don't need the extra log volume.",
+    )
+    ap.add_argument(
         "--progress-every",
         type=int,
         default=10,
         help="print aggregate progress every N completed battles",
     )
+    ap.add_argument(
+        "--keep-replays",
+        metavar="DIR",
+        default=None,
+        help="write each game's replay to DIR/<map>_<seed>_<side>.replay instead of discarding it "
+             "(enables tools/bceval_batch.py analysis of local games afterward)",
+    )
     args = ap.parse_args()
+
+    replay_dir = None
+    if args.keep_replays:
+        replay_dir = pathlib.Path(args.keep_replays)
+        replay_dir.mkdir(parents=True, exist_ok=True)
 
     a_path, b_path = prepare(args.bot), prepare(args.opponent)
 
@@ -443,6 +571,12 @@ def main():
             if not args.one_side:
                 jobs.append((m, "B", b_path, a_path, seed))
 
+    def replay_path_for(m, side, seed):
+        if replay_dir is None:
+            return None
+        safe_map = m.replace("/", "_").replace("\\", "_")
+        return replay_dir / f"{safe_map}_{seed}_{side}.replay"
+
     total_jobs = len(jobs)
     start = time.time()
 
@@ -451,6 +585,10 @@ def main():
         "wins": 0,
         "losses": 0,
         "draws": 0,
+        "errors": 0,  # timeouts/crashes: isolated from "draws" (see Result classification below) --
+                      # a bug this whole project hit repeatedly (Devil/Slithery Fight "draws" that
+                      # turned out to be TIMEOUT, per over-yonder.tech/games/loong's own harness
+                      # design, which keeps a separate error column for exactly this reason).
 
         "rounds": [],
         "rounds_total": 0,
@@ -482,6 +620,7 @@ def main():
             "wins": 0,
             "losses": 0,
             "draws": 0,
+            "errors": 0,
             "rounds": 0,
             "our_deaths": 0,
             "their_deaths": 0,
@@ -502,9 +641,15 @@ def main():
     print(f"Parallel workers: {args.j}")
     print("=" * 90)
 
+    import functools
+    if args.judge == "zig":
+        play_fn = functools.partial(play_zig, debug=args.debug)
+    else:
+        play_fn = play
+
     with cf.ThreadPoolExecutor(max_workers=args.j) as ex:
         futs = {
-            ex.submit(play, m, x, y, s): (m, side, s)
+            ex.submit(play_fn, m, x, y, s, replay_path_for(m, side, s)): (m, side, s)
             for m, side, x, y, s in jobs
         }
 
@@ -519,12 +664,20 @@ def main():
             # Result classification
             # ----------------------------------------------------------
 
-            if winner is None:
-                tag = "DRAW" if how == "draw" else "ERR "
+            if winner is None and how == "draw":
+                tag = "DRAW"
                 stats["draws"] += 1
                 d["draws"] += 1
                 stats["sides"][side]["draws"] += 1
                 d["sides"][side]["draws"] += 1
+
+            elif winner is None:
+                # TIMEOUT or ERROR: infra failure, not a real game outcome -- must NOT be counted
+                # as a draw (that conflation caused real confusion this session: "0 avg rounds, 0
+                # deaths" batches on Devil/Slithery Fight were misread as draws before this fix).
+                tag = "ERR "
+                stats["errors"] += 1
+                d["errors"] += 1
 
             elif winner == side:
                 tag = "WIN "

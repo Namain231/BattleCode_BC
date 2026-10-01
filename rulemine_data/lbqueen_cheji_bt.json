@@ -1,0 +1,72 @@
+{
+ "type": "clogit",
+ "features": [
+  "eat",
+  "straight",
+  "room_after",
+  "d_enemy",
+  "d_ally",
+  "toward_allies",
+  "enemy_reach"
+ ],
+ "weights": [
+  2.4218864630979984,
+  0.6665203915935376,
+  0.04726337391222435,
+  0.10913680265604551,
+  0.049678279064205036,
+  -0.02251171226953095,
+  -0.5364171705171976
+ ],
+ "useful": true,
+ "weights_standardised": [
+  0.686675544318421,
+  0.31800221367438597,
+  0.5479478617960316,
+  3.3759238688329596,
+  2.3734324565719898,
+  -0.02276066969585284,
+  -0.06131499561984949
+ ],
+ "decisions": 2535,
+ "games": 11,
+ "top1_heldout": 0.6390532544378699,
+ "chance": 0.41571334648257724,
+ "baselines": {
+  "argmax eat": 0.48796844181459564,
+  "argmax straight": 0.5543721236028928,
+  "argmax room_after": 0.4551610782380014,
+  "argmax d_enemy": 0.41827744904667985,
+  "argmax d_ally": 0.4203813280736358,
+  "argmax toward_allies": 0.3992110453648915,
+  "argmax enemy_reach": 0.41328073635765944
+ },
+ "model": {
+  "type": "clogit",
+  "features": [
+   "eat",
+   "straight",
+   "room_after",
+   "d_enemy",
+   "d_ally",
+   "toward_allies",
+   "enemy_reach"
+  ],
+  "weights": [
+   2.4218864630979984,
+   0.6665203915935376,
+   0.04726337391222435,
+   0.10913680265604551,
+   0.049678279064205036,
+   -0.02251171226953095,
+   -0.5364171705171976
+  ]
+ },
+ "decision": "queen_move",
+ "team": null,
+ "data": {
+  "path": "rulemine_data/lb_queen_by_team/cheji_bt.csv",
+  "sha256": "beb6b950f20c",
+  "rows": 6352
+ }
+}

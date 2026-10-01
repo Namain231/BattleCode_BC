@@ -1,17 +1,16 @@
 # Vision
 
-# Vision
+> Source: https://game.battlecode.au/docs/vision (fetched 2026-10-01, after the queen rule change)
 
-Every dragon can only see the7 by 7 square of tilescentred on its head; that is, all 49 tiles with
-    a Chebyshev distance no greater than 3. This vision square wraps around the map as well due to its topology.
+Every dragon can only see the **7 by 7 square of tiles** centred on its head; that is, all 49 tiles with a Chebyshev distance no greater than 3. This vision square wraps around the map as well due to its topology.
 
-Again, note that vision does not extend to the far side of a portal, which is visible only if it is within three
-    tiles of the head by ordinary distance.
+Again, note that vision does not extend to the far side of a portal, which is visible only if it is within three tiles of the head by ordinary distance.
+
+*Demo replay: A visualisation of a dragon's vision square as it moves. Note the interactions with portals and map borders.*
 
 ## Vision Information
 
-For each tile in view, the dragon receives its (absolute) coordinates, its contents (pearls and dragon parts), its
-    pearl countdown (seePearls) and its four edges (seeKelp and Portals).
+For each tile in view, the dragon receives its (absolute) coordinates, its contents (pearls and dragon parts), its pearl countdown (see [Pearls](/docs/pearls)) and its four edges (see [Kelp and Portals](/docs/kelp-and-portals)).
 
 ```
 tile = ct.get_tile(pos)             # None when pos is outside the window

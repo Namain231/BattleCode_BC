@@ -1,0 +1,72 @@
+{
+ "type": "clogit",
+ "features": [
+  "eat",
+  "straight",
+  "room_after",
+  "d_enemy",
+  "d_ally",
+  "toward_allies",
+  "enemy_reach"
+ ],
+ "weights": [
+  1.5567390884201693,
+  0.9124019503453654,
+  0.06409747004539147,
+  0.05803399906506536,
+  -0.08886925251717212,
+  -0.13869275708833131,
+  -0.6807195826588115
+ ],
+ "useful": true,
+ "weights_standardised": [
+  0.5243469155545929,
+  0.4402966398299851,
+  0.7701537723987918,
+  2.33933992227034,
+  -4.239441288388711,
+  -0.12632296891789918,
+  -0.1251595930363262
+ ],
+ "decisions": 4119,
+ "games": 20,
+ "top1_heldout": 0.6943432872056324,
+ "chance": 0.4267621591001051,
+ "baselines": {
+  "argmax eat": 0.4946184348952011,
+  "argmax straight": 0.6202961883952416,
+  "argmax room_after": 0.4794448490733996,
+  "argmax d_enemy": 0.4283806749210973,
+  "argmax d_ally": 0.42024763292061174,
+  "argmax toward_allies": 0.42522456907016265,
+  "argmax enemy_reach": 0.42210892611475276
+ },
+ "model": {
+  "type": "clogit",
+  "features": [
+   "eat",
+   "straight",
+   "room_after",
+   "d_enemy",
+   "d_ally",
+   "toward_allies",
+   "enemy_reach"
+  ],
+  "weights": [
+   1.5567390884201693,
+   0.9124019503453654,
+   0.06409747004539147,
+   0.05803399906506536,
+   -0.08886925251717212,
+   -0.13869275708833131,
+   -0.6807195826588115
+  ]
+ },
+ "decision": "queen_move",
+ "team": null,
+ "data": {
+  "path": "rulemine_data/lb_queen_by_team/Stockfish.csv",
+  "sha256": "98f5fbf76258",
+  "rows": 10048
+ }
+}

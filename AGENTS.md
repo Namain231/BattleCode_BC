@@ -1,6 +1,12 @@
 # AGENTS.md — working on this repo
 
-For any teammate or agent continuing the UNSW Battlecode work. **New here? Read `README.md` and `guide/` first** (plain-language setup, testing and mistakes to avoid). Then this, then `INSIGHTS_AND_PLAYBOOK.md`
+**The game's rules changed on 2026-10-01.** `insights.md` was restarted fresh that day — read its top banner
+first. Everything in this file's "Where we are" below (and anything in `baselines/`) was measured against the
+OLD rules and needs re-validation through the gate before being trusted again. The old insights history (all
+prior cycles) is archived at `archive/insights_pre_rules_change_2026-10-01.md`, useful for methodology, not for
+specific numbers. `archive/README.md` explains what else moved there in the same cleanup.
+
+For any teammate or agent continuing the UNSW Battlecode work. **New here? Read `README.md` and `guide/` first** (plain-language setup, testing and mistakes to avoid). Then this, then `insights.md`
 (what we know about the game and the ladder). **Keep both files current**: when you learn something, change
 the bot or submit, update them in the same commit.
 
@@ -17,6 +23,8 @@ the bot or submit, update them in the same commit.
 - V7.12 still loses to most 1690+ teams (Rogo, WCTW 2/5) and to 777 on Dilemma, Autarky and Devil.
   **New directions are welcome**: a different macro, a different language, a fresh bot. Anything is fair game
   as long as it passes the gate below.
+- **New-map events (sprint, final; from 2026-10-01):** the build for them is gP (`baselines/s2_gP`, S.2). Rule
+  mining for it is planned in `RULE_MINING_SPEC.md` and built in `rulemine/` (how-to: `README_RULEMINE.md`).
 
 **Submission names (from 2026-09-28):** neutral names only, `Y.7.12.<n>` in sequence, with a bland or empty
 description — never name what a build contains (other teams may see names; battles and replays are public).
@@ -39,6 +47,8 @@ Replays are public: indicator strings and sonar formats reveal our logic to anyo
 - API key: `secrets.env` (private repo only; if the repo is ever made public, delete it and rotate the key
   on the team page). `unswbc auth set <key>` for `unswbc submit`; export `UNSWBC_KEY` for the scripts in
   `tools/` (`export $(cat secrets.env | xargs)`).
+- Rule mining (`rulemine/`, `tests/`): also `pip install scikit-learn scipy pytest`, and `pycapnp` for the bceval
+  context. Two tests compile generated C++ with `clang++` and skip when it is absent.
 
 ## Repo layout
 
@@ -49,12 +59,18 @@ Replays are public: indicator strings and sonar formats reveal our logic to anyo
 | `guide/`, `README.md` | Plain-language guides for teammates: setup, how the bot works, testing, mistakes, the network, ideas. |
 | `experiments/` | Unproven builds kept for later: `signed_sonar`, `pearl_gossip`, `nn_generic` (network build with generic input sizes, used by `ml/`). |
 | `maps_gen/` | 300 random fair maps (`tools/gen_random_maps.py --n 300 --seed 1`, gitignored) for unseen-map tests: `tourney.py --maps maps_gen/gen_000,…`. |
-| `baselines/` | Exact submitted sources of kept builds: `y7_12_nn1` (champion), `v7_12`, `v7_5` (gate opponent). Older builds and experiments: `ladder/archive/old_builds_2026-09-28.zip` and git history. |
+| `baselines/` | Exact submitted sources of kept builds: `y7_12_nn1` (champion), `v7_12`, `v7_5` (gate opponent), `s2_gP` (pre-rules-change new-map build, S.2 — needs re-validation, see top of this file). Older builds and experiments: git history. |
+| `archive/` | Gitignored. Superseded build dirs and the pre-2026-10-01 `insights.md`, moved out during the 2026-10-01 cleanup. See `archive/README.md`. Nothing here is built or tested against. |
 | `swarm_bot/` | Python stand-in for a head-hunting swarm (slow in the sandbox). |
 | `maps/` | The live pool plus older bundled maps. `GET /maps` shows the pool in play. |
 | `docs/` | Game docs (mechanics, protocol, timeouts, API). |
 | `tools/` | Test, analysis and ladder scripts (below). |
 | `ladder/`, `replays/` | Local data, gitignored. |
+| `rulemine/`, `README_RULEMINE.md`, `RULE_MINING_SPEC.md` | Rule mining from top-team replays for gP: replay state with per-dragon memory, features (unknown-map knowledge only), decision extractors, contrast report, learners, C++ codegen, bceval context, paired screen. Tests in `tests/` (`python -m pytest -q tests`). |
+| `viper_s2_rules/` | gP (S.2) plus learned-rule hooks (`rm_hooks.hpp`, `rules_learned.hpp`) behind `Params::rmDeath` / `rmQueen` / `rmLog`, all off by default (then it plays exactly like gP). **Never submit with `rmLog = 1`**: it logs feature vectors into every replay. |
+| `farm/`, `.github/workflows/farm.yml` | Game-farm bundle (`pack.sh`, `make_jobs.py`, `run_shard.sh`, `summarize.py`, Kaggle script) for WSL, Kaggle or GitHub Actions. |
+| `maps_rm_dev/`, `maps_rm_test/` | 20 + 20 generated maps (all 7 Loong generator styles + dense random). `maps_rm_test` is held out: final checks only. |
+| `proto_rehaul/` | Throwaway from-scratch rule bot (2026-10-01): v7.12 parity, 28% vs the champion. A test opponent, not a candidate. |
 
 ## The promotion gate (mandatory)
 
@@ -80,6 +96,9 @@ Replays are public: indicator strings and sonar formats reveal our logic to anyo
 3. When a build passes, copy its exact source into `baselines/<name>/`, make it the champion here, and log
    what it changed in the playbook.
 
+Rule-mining candidates go through a cheaper screen first (`README_RULEMINE.md`, step 7: paired final-length margin
+vs gP on unseen maps). The screen decides what reaches this gate; it does not replace it.
+
 Autoscrims (ranked) run every 2 hours on the hour and use whatever is active at that moment.
 
 ## Tools
@@ -100,6 +119,14 @@ Autoscrims (ranked) run every 2 hours on the hour and use whatever is active at 
 | `loss_report.py <battle id…>` | Why we lost: downloads the lost games, classifies each (outnumbered by r100, mid-game war, late collapse, tiebreak…) with the timeline and the death causes of the decisive phase. `elo_bot.py` runs it on every finished battle with a loss → `ladder/loss_log.txt`. |
 | `strong_panel.py <cand> <champ> --teams … --deadline-utc HH:MM` | Unranked test of a candidate against a team list, then re-activates the champion (by the deadline at the latest). |
 | `gen_maps.py` | Regenerate `maps_data.hpp` after adding maps. |
+| `panel_zig.py BOT OPP OUT --set live/dev/test/setA/setB -j 10` | Local panel on the Zig judge (`LOONG_JUDGE`); replays named for `python -m rulemine.evalpair CAND_OUT CTRL_OUT`, the paired screen. |
+| `buildwasm.py BOT_DIR` | Build a bot to wasm with the judge's clang, rebuilding on header edits too. |
+| `gen_style_maps.py OUT SEED N` | Generated maps in every Loong generator style (needs a `the-loong-game` checkout via `LOONG_REPO`). |
+| `team_mechanics.py` / `sprint_purpose.py` | Per team: sprint and sonar use; what sprints are for, and deaths to enemy sprints vs steps. |
+| `python -m rulemine …` | `extract` / `contrast` / `learn` / `codegen`, plus `python -m rulemine.parity` and `python -m rulemine.evalpair`. See `README_RULEMINE.md`. |
+| `players_index.py SCOUT_DIR` | Builds `SCOUT_DIR/PLAYERS.md`: a per-player (not per-game) index of a `scout.py`-style directory — summary table plus every game with map/side/opponent/result. |
+| `mem_guard.sh MIN_MB` | Blocks until free physical memory clears `MIN_MB` (checks every 20s via PowerShell). Put before every memory-heavy stage of an unattended/background chain — see AGENTS.md "Running things safely on this machine". |
+| `split_by_team.py SRC_CSV OUT_DIR COLUMN` | Streams a large CSV once and writes one small CSV per distinct value of `COLUMN` into `OUT_DIR`. Use before fanning out parallel jobs that would otherwise each load the full file (the OOM cause below). |
 
 Unranked challenge: `curl -s $BASE/battles -H "Authorization: Bearer $UNSWBC_KEY" -H "Content-Type: application/json"
 -d '{"teamId": 590, "ranked": false, "mapIds": [20,21,9,11,7,4,17,19,13,15]}'` (map ids: Portals 20, Slithery 21,
@@ -117,8 +144,46 @@ redirects).
   output ≲ 65M. `elapsedMs()` guards exist in the code (1 ms ≈ 1M points).
 - The sandbox build cache (`unswbc run --sandbox`) is keyed on `main.cpp` only: after changing a header
   (e.g. `maps_data.hpp`, `viper_nn/policy_weights.hpp`), also touch `main.cpp` or you silently test the old build.
+  (`tools/buildwasm.py` keys on every source file and avoids this.)
 - Windows: Python `subprocess` needs `encoding="utf-8"` (team names are not ASCII). Writing C++ through a
   shell heredoc turns `\n` inside string literals into real newlines: edit with an editor or a patch file.
 - Indicator strings are visible to opponents in replays; strip them before the final tournament.
 - Debug builds: copy the bot to `dbg7/` and add `debug_cfg.hpp` with `#define DEBUG_FROM a` / `#define DEBUG_TO b`
   for board dumps and per-option evaluation logs in the replay.
+
+## Running things safely on this machine (learned 2026-10-01, see `insights.md` for the incidents)
+
+- **This machine has crashed from an OOM once already.** Cause: ~20 Python jobs in parallel each loading a full
+  multi-million-row CSV into memory (`list(csv.DictReader(fh))`, no streaming). Fix that held: pre-split any
+  large CSV by the group key you're about to fan out on (one streaming pass), so each parallel job only loads
+  its own small slice. Cap CSV-loading/learning fan-out at **4 concurrent**; cap `tourney.py` game-running at
+  **`-j 6`** whenever something else might be running at the same time (`-j 10` is fine solo). Use
+  `tools/mem_guard.sh MIN_MB` (polls `Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory` via
+  `powershell.exe`, blocks until clear) before every memory-heavy stage of any unattended/background chain —
+  if it's been deleted, it's ~15 lines, rewrite it before fanning out anything big again.
+- **The desktop's own apps and the WSL2 VM backing the Zig judge compete for the same RAM.** `vmmemWSL` alone
+  sits around 2.5-3GB resident even when idle; browser/Discord/IDE/antivirus add 2-3GB more. On a 16GB machine
+  that's real headroom lost before any of our own jobs start — don't size parallelism off the total RAM figure.
+- **Disk fills up silently from replay dumps.** A single `tourney.py --keep-replays` batch with `--debug` is
+  several hundred MB; `tools/local_index.py` and `replay.py`'s `.pkl` cache roughly double the footprint of
+  whatever you then analyse. Check `df -h /c` before and after any batch of 20+ games with `--keep-replays`,
+  and delete `*.replay`/`*.pkl` from a `ladder/` subdirectory as soon as its numbers are extracted and logged —
+  it's gitignored and disposable once the result is written down. This machine went from ~240GB to 197MB free
+  in one session of back-to-back candidate screens before anyone checked.
+- **`uv run --with X python ...` fails transiently under load**: `Failed to fetch: https://pypi.org/simple/...`
+  / `invalid peer certificate: UnknownIssuer`. Not a real cert problem — retrying immediately works. Any
+  unattended chain of `uv run` calls should grep its own output for "Failed to fetch" / "invalid peer
+  certificate" / "Request failed after" and retry 2-3 times before treating it as a real failure.
+- **Process management**: there's no reliable `pkill`/`ps` by pattern. Use
+  `powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like
+  '*pattern*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"`. A commandline-substring match can
+  also match the query shell itself (this harness runs Bash calls through a nested eval wrapper) — sanity-check
+  the returned PIDs/commandlines, and re-check after killing rather than trusting an empty result at face value.
+- A backgrounded orchestrator script must `mkdir -p` any directory before redirecting stdout into a file inside
+  it — bash sets up `>` redirection before the command runs, so a not-yet-created target directory fails the
+  whole command silently if its stderr is redirected the same way. This produced a false "finished instantly
+  with empty results" for an entire batch of candidate screens before being caught.
+- Prefer one backgrounded shell script (`nohup bash chain.sh &`) over many separate tool calls for a multi-stage
+  unattended chain — `sleep`-chaining across tool calls is blocked by the harness (use `run_in_background: true`
+  or a real `until <condition>; do sleep N; done` loop instead), and one script is far easier to make
+  memory-gated and resumable than re-deriving queue state across calls.

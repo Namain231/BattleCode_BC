@@ -1,0 +1,181 @@
+{
+ "features": [
+  "len",
+  "units",
+  "since_eat",
+  "n_ally_vis",
+  "n_enemy_vis",
+  "top_ally_vlen",
+  "top_ally_ratio",
+  "top_ally_dist",
+  "top_ally_approach",
+  "allies_near_top",
+  "mem_top_len",
+  "mem_top_age",
+  "mem_top_dist",
+  "i_am_top",
+  "enemy_threat",
+  "room",
+  "pearls_r3"
+ ],
+ "n": 100332,
+ "positives": 723,
+ "games": 25,
+ "auc": {
+  "logistic_l1": 0.8959956250516282,
+  "tree_d3": 0.9168973507993017,
+  "gbm_ceiling": 0.9570679100788925
+ },
+ "pick": "tree_d3",
+ "threshold": 0.9220170996409071,
+ "balanced_accuracy": 0.522887269305974,
+ "precision": 0.06434782608695652,
+ "recall": 0.051175656984785614,
+ "base_rate": 0.007206075828250209,
+ "fire_rate": 0.0,
+ "ceiling_gap": 0.04017055927959079,
+ "use_gbm_as_score_term": true,
+ "per_map_auc": {
+  "Autarky": 0.9460126450405277,
+  "Portals": 0.9310686204246125,
+  "Schooltime": 0.8962732101488162,
+  "Slithery Fight": 0.8947534533030954,
+  "Trauma": 0.9358995619524405
+ },
+ "unstable_maps": [],
+ "model": {
+  "type": "tree",
+  "features": [
+   "len",
+   "units",
+   "since_eat",
+   "n_ally_vis",
+   "n_enemy_vis",
+   "top_ally_vlen",
+   "top_ally_ratio",
+   "top_ally_dist",
+   "top_ally_approach",
+   "allies_near_top",
+   "mem_top_len",
+   "mem_top_age",
+   "mem_top_dist",
+   "i_am_top",
+   "enemy_threat",
+   "room",
+   "pearls_r3"
+  ],
+  "nodes": [
+   {
+    "left": 1,
+    "right": 6,
+    "feature": 5,
+    "threshold": 3.5,
+    "p": 0.49999999999966566,
+    "n": 100332
+   },
+   {
+    "left": 2,
+    "right": 3,
+    "feature": 15,
+    "threshold": 0.5,
+    "p": 0.23412097037498472,
+    "n": 70464
+   },
+   {
+    "left": -1,
+    "right": -1,
+    "feature": -2,
+    "threshold": -2.0,
+    "p": 0.922017099640907,
+    "n": 1493
+   },
+   {
+    "left": 4,
+    "right": 5,
+    "feature": 6,
+    "threshold": 1.25,
+    "p": 0.07058710848764065,
+    "n": 68971
+   },
+   {
+    "left": -1,
+    "right": -1,
+    "feature": -2,
+    "threshold": -2.0,
+    "p": 0.0,
+    "n": 30685
+   },
+   {
+    "left": -1,
+    "right": -1,
+    "feature": -2,
+    "threshold": -2.0,
+    "p": 0.12039850824678647,
+    "n": 38286
+   },
+   {
+    "left": 7,
+    "right": 10,
+    "feature": 7,
+    "threshold": 4.5,
+    "p": 0.7272234759734674,
+    "n": 29868
+   },
+   {
+    "left": 8,
+    "right": 9,
+    "feature": 1,
+    "threshold": 59.5,
+    "p": 0.87781379918254,
+    "n": 9463
+   },
+   {
+    "left": -1,
+    "right": -1,
+    "feature": -2,
+    "threshold": -2.0,
+    "p": 0.9160348090110703,
+    "n": 6051
+   },
+   {
+    "left": -1,
+    "right": -1,
+    "feature": -2,
+    "threshold": -2.0,
+    "p": 0.5041935393739736,
+    "n": 3412
+   },
+   {
+    "left": 11,
+    "right": 12,
+    "feature": 15,
+    "threshold": 0.5,
+    "p": 0.39935462974970254,
+    "n": 20405
+   },
+   {
+    "left": -1,
+    "right": -1,
+    "feature": -2,
+    "threshold": -2.0,
+    "p": 0.7623418771431719,
+    "n": 1758
+   },
+   {
+    "left": -1,
+    "right": -1,
+    "feature": -2,
+    "threshold": -2.0,
+    "p": 0.3006333555166101,
+    "n": 18647
+   }
+  ]
+ },
+ "decision": "death",
+ "team": null,
+ "data": {
+  "path": "rulemine_data/lb_death_by_team/WeHaveQuizzes.csv",
+  "sha256": "dce93fcf99a4",
+  "rows": 100332
+ }
+}

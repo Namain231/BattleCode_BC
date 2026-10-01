@@ -1,0 +1,5 @@
+30 team-games to extract (death)
+  10/30 games, 22141 rows
+  20/30 games, 33830 rows
+  30/30 games, 121116 rows
+wrote 121116 rows to rulemine_data/death_ours.csv (0 replays skipped)

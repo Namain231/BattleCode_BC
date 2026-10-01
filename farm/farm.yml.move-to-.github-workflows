@@ -1,0 +1,31 @@
+# Runs every shard in shards/ on its own GitHub runner, in parallel, and uploads the results.
+# Trigger from the Actions tab (workflow_dispatch). Put the farm/ folder at the repo root.
+name: farm
+on:
+  workflow_dispatch:
+    inputs:
+      shards:
+        description: "number of shard files in farm/shards (jobs_0..jobs_N-1)"
+        default: "16"
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.m.outputs.list }}
+    steps:
+      - id: m
+        run: echo "list=$(python3 -c "import json;print(json.dumps(list(range(int('${{ inputs.shards }}')))))")" >> $GITHUB_OUTPUT
+  run:
+    needs: plan
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJson(needs.plan.outputs.list) }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: chmod +x farm/loong-judge && sh farm/run_shard.sh shards/jobs_${{ matrix.shard }}.tsv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: results-${{ matrix.shard }}
+          path: farm/results_jobs_${{ matrix.shard }}.tsv

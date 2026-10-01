@@ -1,0 +1,24 @@
+# Learned rule: queen_move
+
+Conditional logit over 3908 decisions from 16 games.
+Held-out top-1 agreement 0.586 (chance 0.412).
+
+| feature | weight (raw units) | weight (standardised) |
+|---|---|---|
+| eat | +1.9547 | +0.523 |
+| straight | +0.4448 | +0.213 |
+| room_after | +0.0467 | +0.494 |
+| d_enemy | +0.0797 | +3.547 |
+| d_ally | +0.0536 | +2.495 |
+| toward_allies | -0.1368 | -0.151 |
+| enemy_reach | -0.3387 | -0.071 |
+
+Single-feature baselines (always pick the max):
+
+- argmax eat: 0.484
+- argmax straight: 0.507
+- argmax room_after: 0.446
+- argmax d_enemy: 0.430
+- argmax d_ally: 0.459
+- argmax toward_allies: 0.377
+- argmax enemy_reach: 0.408

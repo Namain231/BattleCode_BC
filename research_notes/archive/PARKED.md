@@ -41,3 +41,4 @@ Two simultaneous tracks; abandon neither: test every rule idea first on `bots/ne
 | Encrypted + signed sonar | queen gossip had a SipHash tag variant (CLA3s) | our QPOS/sink gossip is plain: opponents can read our queen position from replays -> sign/encrypt before teams adapt |
 | Evaluation: paired games, ~128-game screen, generated maps reported separately; +5% local ~ +1.5-2% ladder | we do paired Kaggle panels (80 games) | add maps_gen to panels for the coming new maps |
 | Didn't help for them: camping spawners, centre rush, deeper search, bigger nets, value function, PPO after cloning | matches our compass/fountain mixed results | keep compass gated; don't expand it |
+| Sonar offence: read top teams' unencrypted gossip from their public replays (e.g. their queen/keeper position) to hunt it; replay/forge their packets if unauthenticated | parked (2 Oct) | per-team protocol work; only for teams we meet often; check their replay sonar values first |

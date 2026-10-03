@@ -1,6 +1,8 @@
 # UNSW Battlecode — Team Bhole Chature
 
-Start with [AGENTS.md](AGENTS.md) for the current engine rules, active bot lines, test process, and tool index.
+Start with [HANDOVER.md](HANDOVER.md) (current state, insights, open threads), then [AGENTS.md](AGENTS.md)
+(engine rules, process, tools, pitfalls).
 
-Tracked bot snapshots are in [`bots/`](bots/): `newrules_rules` is the primary pure-rules line; `newrules_q9` and
-`newrules_q9n` are hybrid network builds. Historical results are in [`research_notes/`](research_notes/).
+Bot snapshots are in [`bots/`](bots/): `y96` is the active ladder build (Y.9.6); `try_*` hold candidate `main.cpp`
+files (build by copying `y96` and replacing `main.cpp`; `try_v2` also needs its `policy_nn.hpp`). Older lines:
+`newrules_*`. Dated evidence is in [`research_notes/LAB.md`](research_notes/LAB.md).

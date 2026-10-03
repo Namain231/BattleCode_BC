@@ -143,8 +143,8 @@ Nv1.9 (teammate) = nn.1 + sonar only (opponents/nv19, downloaded via GET /submis
    queen gossip** (16-bit SipHash tag replaces the 0xB0C7 header; plays identically) — use for any promotion.
    Other results: CLA1 (trap avoidance) Kaggle 71/119 vs base 76/120 ✗; Y.10o2 40/72 ✗. Tools added:
    `tools/seq_compare.py` (paired SPRT vs stored base games), `tools/kaggle_panel.py --where colab` (Colab worker jobs
-   in G:/My Drive/viper_ml/jobs; worker must run in a browser tab), `tools/lightning_panel.py` (studio auto-stops:
-   unreliable), `tools/ask_cosci.py` (persistent Codex session; ids in ladder/cosci/sessions.json). **agy quota is
+   in G:/My Drive/viper_ml/jobs; worker must run in a browser tab), `tools/lightning_panel.py` (works; the studio was
+   stopped manually by the user on 30 Sept, it did not auto-stop), `tools/ask_cosci.py` (persistent Codex session; ids in ladder/cosci/sessions.json). **agy quota is
    exhausted on all models until ~7 Oct**; Codex (gpt-6-luna) remains. Shared notebook: research_notes/LAB.md.
 1e. **30 Sept 05:00–05:45 IST (user: test vs real opponents and many team bots, not the 4-bot panel; see memory
    testing-approach-sep30)**. Someone activated 12129 (Y.10h2, rejected) ~04:00–05:00 IST: re-activated champion.

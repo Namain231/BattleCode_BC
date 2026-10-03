@@ -1,6 +1,6 @@
 # Team Bhole Chature — agent handoff
 
-Read this first. Current state and working rules only; historical experiments are in [research_notes/HISTORY.md](research_notes/HISTORY.md), full append-only evidence in [research_notes/LAB.md](research_notes/LAB.md), and parked work in [research_notes/PARKED.md](research_notes/PARKED.md).
+Stable rules, mechanics, process and tools. **Current state, insights and open threads: [HANDOVER.md](HANDOVER.md) (read it first).** Dated evidence: [research_notes/LAB.md](research_notes/LAB.md); old-rules history: [research_notes/HISTORY.md](research_notes/HISTORY.md).
 
 ## 00. New rules and current line
 
@@ -10,23 +10,14 @@ Read this first. Current state and working rules only; historical experiments ar
 - Enemy queens die early in nearly all our ladder games; top teams' queens survive to r500 in about 5%. A queen that survives wins. QHIDE (open space, at least 4 from enemy heads, not beside portals) yielded 8–9/24 queen survivals vs 4/24 baseline in sandbox.
 - Feed into the longest dragon, not the hiding queen. Never feed at 10 or fewer units: on Schooltime vs Adrak, feeding cut 22 units to 6 and lost by elimination.
 - MAPFIX: ladder pearl tables differ from `maps/*.map`; old `viewAgrees()` discarded known maps in about half of Devil/Dilemma/QoS/Slithery games. Identify maps by kelp/portals and learn pearl gaps from observations. Check changes on perturbed `maps_ll/` maps.
-- Today's ladder rating moved 1584 → 1769 (rank 22); wins 5–0 vs Cutlery and Hydra, 1–4 vs Adrak vali chai and losses to C--. Adrak took 3–5x our pearls in r40–150 with fountain farming and recycled shaft deaths.
-- Two simultaneous tracks; abandon neither. (1) Pure rules (`bots/newrules_rules/`): judge every rule idea here first. (2) Hybrid rules + network (`bots/newrules_q9/`, `bots/newrules_q9n/`; n4, nr1, n4nr): port every rule change here too and evaluate the hybrid effect. Active ladder build: `bots/newrules_q9/` Y.7.12.49, sub 14198; `bots/newrules_q9n/` Y.7.12.50 uses nr1; pure rules is Y.7.12.51, sub 14227.
+- Top teams farm rich fountains early and recycle deaths (e.g. Adrak took 3-5x our pearls in r40-150).
+- The active line is the hybrid (rules + n4 network): pure rules lost 22/80 vs 45/80 in the sandbox. Latest code: `bots/y96/` (see HANDOVER.md).
 - New-rules top-10 queens survive r500 in about 5% of games; most games still end by elimination or longest-dragon tiebreak. Keep recording queen fate and opening economy.
-
-## Status at wrap-up (2 Oct 2026, 01:10 IST)
-- Active ladder build: 14270 (Y.7.12.54, hybrid). Latest code: `bots/newrules_rules` (pure rules) and
-  `bots/newrules_hybrid` (same + n4): queen safety (QSAFE/QFLEE/CROWD/QPOS), QFEED (feed the true queen from r370),
-  MINE2 (L2 drones mine, except Devil: closes most of vB.19's opening economy gap), ROWLATE, SWAPFIX, MAPFIX.
-  MINE2/ROWLATE/QFEED are NOT yet verified on Kaggle/ladder (panels were running: see research_notes/LAB.md, last section).
-- Biggest open gaps: maze opening economy (Devil), late longest/queen growth vs teams that feed their queen, and a
-  look-ahead search (team calc's writeup, research_notes/external_writeups/calc_writeup.md).
-- Sparring opponents: opponents/vb19 (teammates' vB.19 = vB.19.1 code), nick_farm, nick_arch4.
 
 ## Test and review process
 
-- Start with a small, single-change candidate copied from the current pure-rules base. Review every loss and changed decision; mechanism metrics are diagnostic, not proof of wins. Tune rather than discard on one noisy batch.
-- Sandbox: `python tools/tourney.py bots/newrules_rules CAND --maps MAP --seeds 2 -j 10 --replays OUT`. Use both sides; include `maps_ll/` perturbed pearl tables for map recognition and relevant live maps for mechanics.
+- Start with a small, single-change candidate copied from the current base (`bots/y96/` -> `cand_x/`). Review every loss and changed decision; mechanism metrics are diagnostic, not proof of wins. Tune rather than discard on one noisy batch.
+- Sandbox: `python tools/tourney.py CAND opponents/vb21 --maps MAP[,maps_new/NAME] --seeds 2 -j 10 --replays OUT` (one opponent per call; Zig judge by default). Use both sides; include `maps_ll/` perturbed pearl tables for map recognition and relevant live maps for mechanics.
 - Ladder-like local maps: `maps_ll/`. Inspect paths/CLI with `--help`; map list may contain map files, not just built-in names.
 - Ladder: `tools/top_scrims.py --interleave` for candidate and same-time champion on the same teams/maps. Do not infer a paired win from one score: games diverge early; report per-game losses, queen survival, units/mass, opening pearl intake, and per-map outcomes.
 - `python tools/our_games.py --help` downloads our autoscrim games; check active submission and current autoscrim state before any ladder action. Never use obsolete even-hour guards blindly.

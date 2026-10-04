@@ -271,3 +271,16 @@ work directly. Until the user says otherwise, the director builds directly (no C
 The champion is whatever submission is ACTIVE on the server, not the old-rules `y7_12_nn1`. As of 2026-10-03 that is **Y.9.6 (id 14940)**,
 pulled to `baselines/Y9_6` (teammates change the active build: re-check `GET /submissions`, status `active`, before every ladder test and
 restore THAT id, not an older one). Local gates and yardsticks use `baselines/Y9_6` (`--opp baselines/Y9_6`). `y7_12_nn1` is retired.
+
+### Recent-net refresh tooling (2026-10-04)
+- The current net's training boundary is the 1513 game IDs in
+  `ladder/scout_v6/shards_145/manifest.json`; extra rows in manifest_all.csv are not necessarily trained.
+- Scripts placed under the F: ladder junction must use the repo working directory for repo-relative imports;
+  `Path(__file__).resolve()` resolves to F: and cannot locate C: ml/ or tools/.
+- The trainer supports repeated `--extra-data` directories and an explicit `--val-games` JSON list,
+  excluded from every training directory; `--val-data` counts validation only once.
+- nn_refresh stopped at the disk guard (C: 2.70 GiB); 358 new wins cover all 17 maps. Resume entry: `ladder/scout_v6/refresh_chain.sh`; final report and DONE marker:
+  `ladder/scout_v6/train_out/nn_refresh/`. No refresh candidate is promoted by this workflow.
+
+### Lane routing (user instruction, 2026-10-04: Claude tokens nearly exhausted; master plan in NEXT_STEPS.md)
+Thinking tasks (code, critique, analysis) are balanced between Codex CLI (headless: `codex exec --approve-for-me "$(cat tools/tasks/X.md)"`) and the Antigravity IDE agent (GUI only, no headless CLI: the user tells it "Follow tools/tasks/ag_queue/NEXT.md"). Whichever lane wrote code, the OTHER lane critiques it. Menial work (git push/pull, downloads, file moves, log summaries) goes to OpenRouter models via `opencode run --model openrouter/meituan/longcat-2.0` (or the `or` / `cf` back-ends in tools/delegate.sh). Never use the menial lane for code that changes bots.

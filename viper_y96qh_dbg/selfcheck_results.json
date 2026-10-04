@@ -1,0 +1,12 @@
+{
+  "RANDOM": 240,
+  "HAND": 10,
+  "fallback": 5,
+  "replycap": 1,
+  "budget": 2,
+  "adversarial": 4,
+  "max_call_ms": 0.264,
+  "charge": 3983,
+  "overshoot": 0,
+  "added_points_max": 264352
+}

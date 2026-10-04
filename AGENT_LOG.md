@@ -120,3 +120,64 @@ Newest last. One line per entry: `- [date] [role] [task id] message`. Never edit
 - [2026-10-04] [executor] [enemy_ping_check] 222 games, 0 failures; enemy alarm 12.85% of queen rounds; next-5 headon 4.20% vs 0.53%; last2 3.71% vs 0.47%; coverage 91/121; shuffle lift 2.23x (95% 1.91-2.69), 116 eligible deaths.
 - [2026-10-04] [executor] [queen_guard_build] Created viper_y96qg from qf; flagged QPOS masking, STATUS relays, guard zone/intercepts, soft echo and enemy-ping caution; freeze OFF. Used reach 45.855% (death window 24.9%), three/adapt2 coverage 22/45 and 23/45; default four rays, soft 12-point echo penalty. Build PASS; one big_empty/trauma seed1 both-side smoke 3/4, candidate CPU max 64451199, no observed crashes/timeouts. Global interceptor cap with partial observations, unknown enemy sprint length, posterior after splits/moving blockers, and ablations/ladder remain unverified.
 - [2026-10-04] [executor] [qg_fix] Fixed packet format/status IDs, false threats, bounded intercept/exit guards, relay selection, legacy sonar/portal parity, echo/split reconstruction and signed sentinels; final all-off parity 4/4 identical including sonar/actions/indicators; CPU max 64464075 on australia/around_unsw seed 3; packet checks and final wasm build passed; ablations/ladder unverified.
+- [2026-10-04] [executor] [queen_search] Built viper_y96qh/on and viper_y96qh_off; final builds PASS, 4/4 parity summaries and 504664 gameplay events identical; smoke CPU max 64464114, 0 QS overrides; 3/3 metered C++/engine_sim selfchecks PASS (mean 0.973ms/max 1.208ms); conservative geometry/spawn fallbacks; no big panel or ladder actions.
+- [2026-10-04] [executor] [nn_refresh] START disk C 11.15 GiB F 131.77 GiB; rankings and boundary inspection ETA 2min.
+- [2026-10-04] [executor] [nn_refresh] SCOUT running newest 1043609 to 941697, series IDs deduped; cap 2500MB; ETA several hours; downstream stages queued with disk and RAM gates.
+- [2026-10-04] [executor] [nn_refresh] PROGRESS: >225 new wins, all 17 maps; scout continues with cap 2500MB, heavy test waits for RAM>=3000MB; runtime root-junction bug fixed; critic review underway; ETA hours.
+- [2026-10-04] [executor] [nn_refresh] SCOUT resumed with retryable failed IDs, combined 2500MB cap, and actual training boundary 933320; supervisor owns scout directly, completion marker replaces PID wait; ETA hours.
+- [2026-10-04] [executor] [nn_refresh] SCOUT snapshot: 358 games 11 teams 17 maps 382051345 bytes; BUILD ETA 1-3h
+- [2026-10-04] [executor] [nn_refresh] BLOCKED: scout_gap: C free 2.7 GiB below 3 GiB
+- [2026-10-04] [executor] [nn_refresh] FINAL status BLOCKED; report ladder\scout_v6\train_out\nn_refresh\report.txt; C/F GiB {'C': 2.7, 'F': 130.68}
+- [2026-10-04] [executor] [nn_refresh] FINAL BLOCKED: C reached 2.70 GiB, RAM last observed 2221MiB; 358 new wins/11 teams/17 maps/382051345 bytes preserved; no BUILD/TRAIN/candidate; all refresh processes stopped; static critic PASS; report ladder/scout_v6/train_out/nn_refresh/report.txt.
+- [2026-10-04] [executor] [qs_fix] QS enumerates complete replies or falls back; work budget 4000 and QS_STATS added; 250 differential cases and guards pass; parity 551713 events; max call 0.264ms/264352 points; smoke max 64464432 points; observed eligible/completed/overrides 0; rescue efficacy unverified.
+- [2026-10-04] [director] [queen_search_result] A/B on 20 dev maps x seeds 1,2 x both sides vs Y9_6: search ON 45/80 = OFF 45/80, identical per map, 77/80 queen deaths in both, 0 QS overrides. Fixed prototype (viper_y96qh, critic items done: paid/blocking replies or fallback, hard budgets, differential tests 240 random + 10 hand cases pass, max call 0.26 ms): the debug counters show the search triggers (e.g. Australia 127 triggers in 397 calls) but EVERY trigger is rejected for unknown geometry/unseen actors (eligible 0): complete-information lookahead cannot run under the 7x7 view. Verdict: queen-only search as specified is a no-op; park unless redesigned with a belief over unseen enemies. Sv5.3 (id 16651) vs Sv5.2 on fresh seeds 10-16: 44/98 vs 48/98 (combined 196 games 103 vs 102): no measurable gain.
+- [2026-10-04] [executor] [nn_refresh] SCOUT snapshot: 358 games 11 teams 17 maps 382051345 bytes; BUILD ETA 1-3h
+- [2026-10-04] [executor] [nn_refresh] RESUME stage 2: SCOUT already complete; no scouting; one BUILD worker; ETA 1-3h
+- [2026-10-04] [executor] [nn_refresh] split_test: disk C 14.98 GiB F 126.08 GiB
+- [2026-10-04] [executor] [nn_refresh] split_test after memory gate: disk C 14.98 GiB F 126.08 GiB
+- [2026-10-04] [executor] [nn_refresh] build: disk C 14.98 GiB F 126.08 GiB
+- [2026-10-04] [executor] [nn_refresh] build after memory gate: disk C 14.98 GiB F 126.08 GiB
+- [2026-10-04] [critic] [nn_refresh] Static resume review PASS: global newest-game holdout exclusion, new x2 sampling, scratch initialization reuse, manifest hashes, CPU extraction and parity cleanup correct; runtime outcomes pending; report holdout coverage.
+- [2026-10-04] [executor] [nn_refresh] RESUME2 supervisor started; expansion plus cached BUILD; ETA hours.
+- [2026-10-04] [scout] [nn_refresh] STAGE 1b starts: 21 teams current Elo>=2000; target >=1500 additional wins; ETA listing-dependent
+- [2026-10-04] [scout] [nn_refresh] STAGE 1b enumerated 54 ranked series; downloading wins; ETA 3min
+- [2026-10-04] [scout] [nn_refresh] STAGE 1b 25 additional wins, 1854.4 MB raw total; ETA pending series
+- [2026-10-04] [scout] [nn_refresh] STAGE 1b 50 additional wins, 1875.7 MB raw total; ETA pending series
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 100 cached games; ETA depends on union size
+- [2026-10-04] [scout] [nn_refresh] STAGE 1b 75 additional wins, 1894.0 MB raw total; ETA pending series
+- [2026-10-04] [scout] [nn_refresh] STAGE 1b 100 additional wins, 1921.5 MB raw total; ETA pending series
+- [2026-10-04] [scout] [nn_refresh] STAGE 1b 125 additional wins, 1956.1 MB raw total; ETA pending series
+- [2026-10-04] [scout] [nn_refresh] STAGE 1b 150 additional wins, 1984.7 MB raw total; ETA pending series
+- [2026-10-04] [scout] [nn_refresh] STAGE 1b 175 additional wins, 2007.2 MB raw total; ETA pending series
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 125 cached games; ETA depends on union size
+- [2026-10-04] [scout] [nn_refresh] STAGE 1b 200 additional wins, 2034.5 MB raw total; ETA pending series
+- [2026-10-04] [scout] [nn_refresh] STAGE 1b 225 additional wins, 2069.0 MB raw total; ETA pending series
+- [2026-10-04] [scout] [nn_refresh] STAGE 1b finished: 242 additional, union 600; available listings exhausted; report expand_report.json
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 150 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 175 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 200 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 225 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 250 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 275 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 300 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 325 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 350 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 375 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 400 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 425 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 450 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 475 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 500 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 525 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 550 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 575 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 600 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] SCOUT snapshot: 600 games 21 teams 17 maps 635883281 bytes; BUILD ETA 1-3h
+- [2026-10-04] [executor] [nn_refresh] RESUME stage 2: expanded scout union; one BUILD worker; ETA 1-3h
+- [2026-10-04] [executor] [nn_refresh] split_test: disk C 14.56 GiB F 123.55 GiB
+- [2026-10-04] [executor] [nn_refresh] split_test after memory gate: disk C 14.56 GiB F 123.55 GiB
+- [2026-10-04] [executor] [nn_refresh] build: disk C 14.56 GiB F 123.55 GiB
+- [2026-10-04] [executor] [nn_refresh] build after memory gate: disk C 14.56 GiB F 123.55 GiB
+- [2026-10-04] [executor] [nn_refresh] builder_test: disk C 14.53 GiB F 123.34 GiB
+- [2026-10-04] [executor] [nn_refresh] builder_test after memory gate: disk C 14.53 GiB F 123.34 GiB
+- [2026-10-04] [director] [handoff] Claude tokens nearly exhausted: wrote NEXT_STEPS.md (league -> farm -> param search -> ladder validation), briefs tools/tasks/league_build.md farm_scale.md param_search.md, Antigravity queue tools/tasks/ag_queue/NEXT.md, lane routing in AGENTS.md. In flight: nn_refresh3 (Codex supervisor), opening_census, sv53_losses.

@@ -69,7 +69,7 @@ def analyse(path, our_side):
     res = rep["result"]
     return {"our_queen_death": qd[our_q], "enemy_queen_death": qd[enemy_q], "rounds": last_round, "lost": dict(lost),
             "end": res.get("endReason"), "winner": res.get("winner"), "ours": res.get("AB"[me]) if False else res.get("AB"[me]),
-            "theirs": res.get("AB"[1 - me]), "me": me}
+            "theirs": res.get("AB"[1 - me]), "me": me, "bot": (rep["botA"] if me == 0 else rep["botB"])}
 
 
 def main():

@@ -1,0 +1,178 @@
+{
+  "task": "qs_fix",
+  "parity": [
+    {
+      "game": "maze_3_A.replay",
+      "matching_gameplay_events": 191793
+    },
+    {
+      "game": "maze_3_B.replay",
+      "matching_gameplay_events": 186115
+    },
+    {
+      "game": "trauma_3_A.replay",
+      "matching_gameplay_events": 93008
+    },
+    {
+      "game": "trauma_3_B.replay",
+      "matching_gameplay_events": 80797
+    }
+  ],
+  "parity_summaries_identical": true,
+  "selfcheck": {
+    "RANDOM": 240,
+    "HAND": 10,
+    "fallback": 5,
+    "replycap": 1,
+    "budget": 2,
+    "adversarial": 4,
+    "max_call_ms": 0.264,
+    "charge": 3983,
+    "overshoot": 0,
+    "added_points_max": 264352
+  },
+  "smoke": [
+    {
+      "game": "australia_3_A.replay",
+      "candidate_cpu_max": 64380280,
+      "queen_id": 0,
+      "last_queen_snapshot": {
+        "round": 400,
+        "c": 397,
+        "t": 127,
+        "e": 0,
+        "b": 0,
+        "p": 0,
+        "u": 127,
+        "a": 0,
+        "r": 0,
+        "x": 0,
+        "done": 0,
+        "fatal": 0,
+        "ov": 0,
+        "charge": 5,
+        "over": 0,
+        "ms": 0.002,
+        "turn": 39.409,
+        "abort": 0.0
+      },
+      "summary_events_ours": 226,
+      "override_tags_ours": 0,
+      "cpu_source": "Zig judge stdout; replay action points are zeroed"
+    },
+    {
+      "game": "australia_3_B.replay",
+      "candidate_cpu_max": 64439950,
+      "queen_id": 1,
+      "last_queen_snapshot": {
+        "round": 100,
+        "c": 100,
+        "t": 17,
+        "e": 0,
+        "b": 0,
+        "p": 0,
+        "u": 17,
+        "a": 0,
+        "r": 0,
+        "x": 0,
+        "done": 0,
+        "fatal": 0,
+        "ov": 0,
+        "charge": 4,
+        "over": 0,
+        "ms": 0.002,
+        "turn": 38.634,
+        "abort": 0.0
+      },
+      "summary_events_ours": 200,
+      "override_tags_ours": 0,
+      "cpu_source": "Zig judge stdout; replay action points are zeroed"
+    },
+    {
+      "game": "around_unsw_3_A.replay",
+      "candidate_cpu_max": 64410274,
+      "queen_id": 0,
+      "last_queen_snapshot": {
+        "round": 200,
+        "c": 200,
+        "t": 39,
+        "e": 0,
+        "b": 0,
+        "p": 0,
+        "u": 14,
+        "a": 0,
+        "r": 0,
+        "x": 25,
+        "done": 0,
+        "fatal": 0,
+        "ov": 0,
+        "charge": 5,
+        "over": 0,
+        "ms": 0.002,
+        "turn": 42.451,
+        "abort": 0.0
+      },
+      "summary_events_ours": 240,
+      "override_tags_ours": 0,
+      "cpu_source": "Zig judge stdout; replay action points are zeroed"
+    },
+    {
+      "game": "around_unsw_3_B.replay",
+      "candidate_cpu_max": 64464432,
+      "queen_id": 1,
+      "last_queen_snapshot": {
+        "round": 499,
+        "c": 497,
+        "t": 58,
+        "e": 0,
+        "b": 0,
+        "p": 0,
+        "u": 27,
+        "a": 0,
+        "r": 0,
+        "x": 31,
+        "done": 0,
+        "fatal": 0,
+        "ov": 0,
+        "charge": 23,
+        "over": 0,
+        "ms": 0.008,
+        "turn": 45.588,
+        "abort": 0.0
+      },
+      "summary_events_ours": 262,
+      "override_tags_ours": 0,
+      "cpu_source": "Zig judge stdout; replay action points are zeroed"
+    }
+  ],
+  "smoke_cpu_max": 64464432,
+  "parity_events": 551713,
+  "builds": {
+    "viper_y96qh": {
+      "source_main_sha256": "6bb259df223aa9cd0f1bc720667a7ef8bca68af5feaf9211904d560b8f635ac1",
+      "wasm": "C:\\Users\\sohan\\Downloads\\BattleCode_BC\\wasm_cache\\viper_y96qh-c7ffa6c3f32e3621.wasm",
+      "passed": true
+    },
+    "viper_y96qh_off": {
+      "source_main_sha256": "afa0ef325f8835aabf6641e877c8aa99fa04e66800da78a0c8e16aabec378f0d",
+      "wasm": "C:\\Users\\sohan\\Downloads\\BattleCode_BC\\wasm_cache\\viper_y96qh_off-21b465512e391908.wasm",
+      "passed": true
+    },
+    "viper_y96qh_dbg": {
+      "source_main_sha256": "29f1393267c878882d977afe466e0bacd3295cabd0dbdbb1c2bbb8f7070a97e8",
+      "wasm": "C:\\Users\\sohan\\Downloads\\BattleCode_BC\\wasm_cache\\viper_y96qh_dbg-fba74a554c5d69ef.wasm",
+      "passed": true
+    }
+  },
+  "arm_difference_only_default_flag": true,
+  "scope": "Small serial verification only; movement primitive differential parity, not full-round engine parity.",
+  "limitations": [
+    "All four smoke queens have zero eligible/completed searches; this does not establish rescue efficacy.",
+    "Last queen counter snapshots can precede death and are censored; repeated snapshots are not summed.",
+    "Full observation, actor/split caps and work/reply budgets are intentionally conservative.",
+    "No large paired panel, held-out evaluation or ladder test performed."
+  ],
+  "contact_turn_ms_max_seen": 45.588,
+  "coverage_snapshot_calls": 1194,
+  "coverage_snapshot_triggered": 241
+}

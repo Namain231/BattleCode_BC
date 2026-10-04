@@ -24,7 +24,7 @@ LIVE = CORE.split(",")
 
 
 def _dir(d):
-    return [os.path.relpath(p[:-4], ROOT) for p in sorted(_glob.glob(os.path.join(ROOT, d, "*.map")))]
+    return [os.path.relpath(p[:-4], ROOT).replace("\\", "/") for p in sorted(_glob.glob(os.path.join(ROOT, d, "*.map")))]
 
 
 def _set60a():
@@ -61,6 +61,19 @@ except Exception:
     _ENGINE_DEFAULT = "unswbc_engine.wasm"
 ENGINE = os.environ.get("UNSWBC_ENGINE", _ENGINE_DEFAULT)
 
+# The judge is a Linux (Zig) binary and play() shells out to it with `nice`, which is POSIX-only.
+# On native Windows (not already inside WSL/Git Bash), auto-wrap the judge call through WSL -- same
+# path-translation and retry-on-flaky-spawn pattern as tools/queen_panel.py -- so this script can be
+# run directly from PowerShell without opening a WSL shell and cd-ing in first. Override the distro
+# with WSL_DISTRO if it isn't "Ubuntu"; set PANEL_NO_WSL=1 to force a direct call (e.g. already in WSL).
+USE_WSL = os.name == "nt" and not os.environ.get("PANEL_NO_WSL")
+WSL_DISTRO = os.environ.get("WSL_DISTRO", "Ubuntu")
+
+
+def _wslpath(p):
+    p = os.path.abspath(p).replace("\\", "/")
+    return "/mnt/" + p[0].lower() + p[2:]
+
 
 def wasm(bot):
     return subprocess.run([sys.executable, os.path.join(HERE, "buildwasm.py"), bot], capture_output=True,
@@ -72,7 +85,19 @@ def play(ours, opp, mp, seed, side, outdir):
     if os.path.exists(out):
         return out, "cached"
     a, b = (ours, opp) if side == "A" else (opp, ours)
-    r = subprocess.run(["nice", "-n", "10", JUDGE, "--engine", ENGINE, "--map", os.path.join(ROOT, f"{mp}.map" if "/" in mp else f"maps/{mp}.map"), "--a", a, "--b", b,
+    mpath = os.path.join(ROOT, f"{mp}.map" if "/" in mp else f"maps/{mp}.map")
+    if USE_WSL:
+        # judge lives in the WSL home, not the Windows one: use a WSL-side path unless LOONG_JUDGE is set
+        judge = _wslpath(JUDGE) if os.environ.get("LOONG_JUDGE") else "$HOME/toolchains/zig-judge-out/bin/loong-judge"
+        cmd = (f"nice -n 10 {judge} --engine {_wslpath(ENGINE)} --map {_wslpath(mpath)} "
+               f"--a {_wslpath(a)} --b {_wslpath(b)} --seed {seed} --replay {_wslpath(out)} --debug 2")
+        for attempt in range(3):  # WSL occasionally fails to spawn under load
+            r = subprocess.run(["wsl", "-d", WSL_DISTRO, "--", "bash", "-lc", cmd],
+                               capture_output=True, text=True, encoding="utf-8", timeout=1800)
+            if os.path.exists(out):
+                return out, (r.stdout.strip() or "ok")
+        return out, f"FAILED after 3 tries: rc={r.returncode} {(r.stdout + r.stderr)[-200:]}"
+    r = subprocess.run(["nice", "-n", "10", JUDGE, "--engine", ENGINE, "--map", mpath, "--a", a, "--b", b,
                         "--seed", str(seed), "--replay", out, "--debug", "2"],
                        capture_output=True, text=True, encoding="utf-8", timeout=1800)
     return out, (r.stdout.strip() or r.stderr.strip()[-200:])

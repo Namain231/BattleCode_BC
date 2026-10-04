@@ -1,5 +1,16 @@
 # y7_12_49 vs s2_gP — code review + head-to-head (2026-10-01)
 
+> **SUPERSEDED (2026-10-02) — the root-cause section below ("Root cause, confirmed by reading the exact
+> gating code") is wrong. Do not act on it.** It was reached by reading the code, not by testing the fix.
+> A follow-up session applied the proposed `swarmSplit()` guard change, ran an 8-game panel, and got
+> identical results to the unfixed baseline (queen still dies round 5, `self`, 8/8, both bots). Tracing
+> the actual per-round indicator log showed the round-0/1 splits come from `doomedSplit()` (`SHED` then
+> `ESCAPE-SPLIT`), not `swarmSplit()`/`trySplit()`. See `AGENT_LOG.md`
+> (`swarmsplit_fix`/`qdoomed_off` entries) for the live trace and the follow-up experiment, and
+> `claude/NEW_META_FINDINGS_2026-10-01.md`'s correction note for the same summary. What's still true: the
+> round-5 death on `dilemma`/`slithery_fight` and its correlation with queen spawn length (both >
+> `P.budAt=4`) is real — just not the mechanism claimed below.
+
 Correction to how this got labelled earlier in conversation: `bc-abyss-main` is **not** a teammate's
 code — it's a public starter framework released by a different competing team ("Cat's paradise"). The
 actual teammate baseline is `baselines/y7_12_49` ("Y.8m"), which is what this reviews.

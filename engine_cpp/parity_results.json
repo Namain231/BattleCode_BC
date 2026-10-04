@@ -1,0 +1,31 @@
+{
+  "matched": 1888,
+  "rounds": 1888,
+  "games": [
+    {
+      "game": "default_1_A",
+      "matched": 388,
+      "rounds": 388,
+      "first_divergence": null
+    },
+    {
+      "game": "default_1_B",
+      "matched": 500,
+      "rounds": 500,
+      "first_divergence": null
+    },
+    {
+      "game": "trauma_1_A",
+      "matched": 500,
+      "rounds": 500,
+      "first_divergence": null
+    },
+    {
+      "game": "trauma_1_B",
+      "matched": 500,
+      "rounds": 500,
+      "first_divergence": null
+    }
+  ],
+  "evidence": "Captured runner output and independent critic rerun; scratch files disappeared externally before archiving."
+}

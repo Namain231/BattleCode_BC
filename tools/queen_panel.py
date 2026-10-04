@@ -49,7 +49,7 @@ def analyse(path):
     mp, seed, side = os.path.basename(path)[:-7].rsplit("_", 2)
     me = 0 if side == "A" else 1
     # which of dragons 0/1 is ours depends on the map: the first DRAGON line's team owns id 0
-    teams = [int(l.split()[1]) for l in rep["map"].splitlines() if l.startswith("DRAGON")][:2]
+    teams = [int(l.split()[1]) for l in rep["map"].splitlines() if l.split()[:1] == ["DRAGON"]][:2]
     mine = teams.index(me) if me in teams else me
     rnd, qd, why = -1, None, None
     for e in rep["events"]:

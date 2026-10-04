@@ -1,0 +1,4 @@
+# Task f1_h2h — run a paired head-to-head and report a table (no code edits)
+Repo: C:\Users\sohan\Downloads\BattleCode_BC. Run (python via `uv run --python 3.11 --with unswbc python`):
+`tools/panel_zig.py viper_b19_f1 baselines/vB19 out/f1_h2h --set live --seeds 1,2 -j 2` (40 games; other jobs are running, keep -j 2; run it in the background with a done marker and wait with an `until [ -f ... ]; do sleep 60; done` loop under 590000 ms per call).
+Then write `research_new_meta/f1_h2h.md` with one table: wins/40, win%, per-map wins, our max CPU per side if visible, number of FAILED games, and an honest note that the standard error at n=40 is about 8 points. Append one plain-ASCII UTF-8 line to AGENT_LOG.md using ONLY an append (do not rewrite the file): `- [2026-10-02] [runner] [f1_h2h] <wins/40>`. Do not edit any other file. Final message: the table only.

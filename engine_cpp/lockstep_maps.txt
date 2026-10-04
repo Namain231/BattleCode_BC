@@ -1,0 +1,10 @@
+/mnt/c/Users/sohan/Downloads/BattleCode_BC/maps/portals.map
+/mnt/c/Users/sohan/Downloads/BattleCode_BC/maps/slithery_fight.map
+/mnt/c/Users/sohan/Downloads/BattleCode_BC/maps/schooltime.map
+/mnt/c/Users/sohan/Downloads/BattleCode_BC/maps/trophy.map
+/mnt/c/Users/sohan/Downloads/BattleCode_BC/maps/queen_of_spades.map
+/mnt/c/Users/sohan/Downloads/BattleCode_BC/maps/default.map
+/mnt/c/Users/sohan/Downloads/BattleCode_BC/maps/dilemma.map
+/mnt/c/Users/sohan/Downloads/BattleCode_BC/maps/autarky.map
+/mnt/c/Users/sohan/Downloads/BattleCode_BC/maps/devil.map
+/mnt/c/Users/sohan/Downloads/BattleCode_BC/maps/trauma.map

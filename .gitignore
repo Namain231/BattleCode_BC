@@ -25,3 +25,8 @@ tools/battlecode-eval/
 
 # local wasm build cache (tools/buildwasm.py)
 wasm_cache/
+
+# agent pipeline artefacts (diffs can contain key material)
+tools/tasks/*.diff
+tools/tasks/*.exec.log
+tools/tasks/*.critique.log

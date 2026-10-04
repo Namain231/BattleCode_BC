@@ -1,0 +1,43 @@
+{
+  "parity_games": 4,
+  "summaries_identical": true,
+  "gameplay_events_identical_excluding_cpu": [
+    {
+      "game": "maze_3_A.replay",
+      "identical_events": 179461
+    },
+    {
+      "game": "maze_3_B.replay",
+      "identical_events": 180993
+    },
+    {
+      "game": "trauma_3_A.replay",
+      "identical_events": 87712
+    },
+    {
+      "game": "trauma_3_B.replay",
+      "identical_events": 80768
+    }
+  ],
+  "cpu_games": [
+    {
+      "game": "around_unsw_3_A.replay",
+      "candidate_cpu_max": 64409917
+    },
+    {
+      "game": "around_unsw_3_B.replay",
+      "candidate_cpu_max": 64464075
+    },
+    {
+      "game": "australia_3_A.replay",
+      "candidate_cpu_max": 64384536
+    },
+    {
+      "game": "australia_3_B.replay",
+      "candidate_cpu_max": 64439465
+    }
+  ],
+  "candidate_cpu_max": 64464075,
+  "cpu_source": "judge stdout; replay counters stripped",
+  "main_sha256": "e03998801de8a456264c0663d061fb50247c94decc9b35ac00269368eda20af0"
+}

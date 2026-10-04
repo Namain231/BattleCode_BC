@@ -1,151 +1,86 @@
-"""Comprehensive analysis of losses against opponents.
+"""Deeper look at our ladder games (output of tools/analyze_ours.py): why did we lose?
+
+    uv run --python 3.11 --with unswbc python tools/analyze_losses.py ladder/sv52
+
+Per game: unit counts (ours/theirs) at r50/100/200/300/400, final result counts, queen deaths (correct team mapping), then classifies
+each LOSS: behind-early (<= 0.8x their units at r100), late-collapse (units >= theirs at r200 but ~0 at the end), queen-race (their queen alive at
+the end, ours dead), eliminated (our count 0), other. Aggregates by opponent and map, win rate by situation at r100/r200.
 """
-import io
-import json
-import sys
-from collections import Counter, defaultdict
+import collections, json, os, sys, statistics as st
+from pathlib import Path
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+from replay_lite import decode_lite  # noqa: E402
 
-# Force UTF-8 on Windows stdout
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+D = ["wall", "self", "body", "headon", "noaction"]
+out = Path(sys.argv[1]); games = [g for g in json.load(open(out / "games.json", encoding="utf-8")) if "our_queen_death" in g]
+rows = []
+for g in games:
+    rep = decode_lite(str(out / f"{g['game']}.replay"), {"roundStart", "dragonDeath", "dragonSplit"})
+    dl = [l.split() for l in rep["map"].splitlines() if l.split()[:1] == ["DRAGON"]]
+    owner = {i: int(d[1]) for i, d in enumerate(dl)}; me = g["me"]
+    alive = collections.Counter(owner.values()); snap = {}; rnd = -1; feed = 0
+    for e in rep["events"]:
+        k = e["kind"]
+        if k == "roundStart":
+            if rnd in (50, 100, 200, 300, 400):
+                snap[rnd] = (alive[me], alive[1 - me])
+            rnd = e["round"]
+        elif k == "dragonSplit":
+            owner[e["child"]] = e["team"]; alive[e["team"]] += 1
+        elif k == "dragonDeath":
+            t = owner.get(e["id"])
+            if t is not None:
+                alive[t] -= 1
+                if t == me and e["reason"] == 4 and rnd >= 280:
+                    feed += 1
+    res = rep["result"]; ours = res.get("AB"[me]) or {}; theirs = res.get("AB"[1 - me]) or {}
+    rows.append(dict(g, snap=snap, ours_res=ours, theirs_res=theirs, feed=feed))
 
-with open('ladder/losses/losses_dataset.json', 'r', encoding='utf-8') as f:
-    data = json.load(f)
 
-losses = data['losses']
-all_games = data['allGames']
-subs = data.get('submissions', {})
+def cls(r):
+    if r["win"]:
+        return "win"
+    s = r["snap"]
+    o100, t100 = s.get(100, (0, 0)); o200, t200 = s.get(200, (0, 0))
+    end_o = r["ours_res"].get("count", 0); end_t = r["theirs_res"].get("count", 0)
+    if t100 and o100 <= 0.8 * t100:
+        return "behind-early (<=0.8x units at r100)"
+    if end_o == 0:
+        return "eliminated"
+    if o200 >= t200 and r["our_queen_death"] and not r["enemy_queen_death"]:
+        return "queen-race (even swarm, our queen died, theirs alive)"
+    if o200 >= t200:
+        return "late-collapse/other (even swarm at r200)"
+    return "behind-mid (fewer units at r200)"
 
-print(f"=== BHOLE CHATURE (Team #98) LOSS ANALYSIS ===")
-print(f"Total Battles Recorded: {data['summary']['totalBattles']}")
-print(f"Total Games Played:     {len(all_games)}")
-print(f"Total Wins:             {data['summary']['totalWins']} ({data['summary']['totalWins']/len(all_games)*100:.1f}%)")
-print(f"Total Losses:           {len(losses)} ({len(losses)/len(all_games)*100:.1f}%)")
-print(f"Total Draws:            {data['summary']['totalDraws']}")
 
-# 1. Opponent Breakdown
-opp_losses = Counter()
-opp_games = Counter()
-opp_wins = Counter()
-opp_elo = {}
-for g in all_games:
-    opp = g['oppName']
-    opp_games[opp] += 1
-    if g.get('oppElo'):
-        opp_elo[opp] = g['oppElo']
-    if g['outcome'] == 'loss':
-        opp_losses[opp] += 1
-    elif g['outcome'] == 'win':
-        opp_wins[opp] += 1
-
-print("\n--- LOSSES BY OPPONENT (All-Time) ---")
-print(f"{'Opponent':<28} {'ELO':<6} {'Losses':<8} {'Total':<8} {'Loss Rate':<10} {'Record (W-L)'}")
-print("-" * 75)
-for opp, cnt in opp_losses.most_common():
-    tot = opp_games[opp]
-    w = opp_wins[opp]
-    rate = cnt / tot * 100
-    elo_str = str(opp_elo.get(opp, '?'))
-    print(f"{opp:<28} {elo_str:<6} {cnt:<8} {tot:<8} {rate:>5.1f}%     {w}W - {cnt}L")
-
-# 2. Map Breakdown
-map_losses = Counter()
-map_games = Counter()
-map_wins = Counter()
-for g in all_games:
-    m = g['mapName'] or "Unknown"
-    map_games[m] += 1
-    if g['outcome'] == 'loss':
-        map_losses[m] += 1
-    elif g['outcome'] == 'win':
-        map_wins[m] += 1
-
-print("\n--- LOSSES BY MAP (All-Time) ---")
-print(f"{'Map Name':<22} {'Losses':<8} {'Total':<8} {'Loss Rate':<10} {'Record (W-L)'}")
-print("-" * 65)
-for m, cnt in map_losses.most_common():
-    tot = map_games[m]
-    w = map_wins[m]
-    rate = cnt / tot * 100
-    print(f"{m:<22} {cnt:<8} {tot:<8} {rate:>5.1f}%     {w}W - {cnt}L")
-
-# 3. Version Breakdown
-ver_losses = Counter()
-ver_games = Counter()
-ver_wins = Counter()
-for g in all_games:
-    v = g['ourSubName']
-    ver_games[v] += 1
-    if g['outcome'] == 'loss':
-        ver_losses[v] += 1
-    elif g['outcome'] == 'win':
-        ver_wins[v] += 1
-
-print("\n--- LOSSES BY BOT SUBMISSION VERSION ---")
-print(f"{'Version':<26} {'Losses':<8} {'Total':<8} {'Loss Rate':<10} {'Record (W-L)'}")
-print("-" * 70)
-# Sort by submission id or version order
-sub_ids = sorted(subs.keys(), reverse=True)
-for sid in sub_ids:
-    sname = subs[sid]['name']
-    cnt = ver_losses[sname]
-    tot = ver_games[sname]
-    w = ver_wins[sname]
-    if tot == 0:
-        continue
-    rate = cnt / tot * 100
-    print(f"{sname:<26} {cnt:<8} {tot:<8} {rate:>5.1f}%     {w}W - {cnt}L")
-
-# 4. Recent Versions (v7.4 - v7.7) Detailed Performance per Map
-recent_vers = ["v7.7-viable-buds", "v7.6-escapable-miners", "v7.5-miners", "v7.4-numbers"]
-print("\n--- RECENT GENERATION (V7.4 - V7.7) MAP LOSS MATRIX ---")
-header = f"{'Map':<20}" + "".join([f"{v[:12]:<14}" for v in recent_vers]) + "Total Loss Rate"
-print(header)
-print("-" * len(header))
-
-all_maps = sorted(map_games.keys())
-for m in all_maps:
-    row = f"{m:<20}"
-    tot_rec_m = 0
-    loss_rec_m = 0
-    for v in recent_vers:
-        g_mv = [g for g in all_games if g['mapName'] == m and g['ourSubName'] == v]
-        l_mv = [g for g in g_mv if g['outcome'] == 'loss']
-        tot_rec_m += len(g_mv)
-        loss_rec_m += len(l_mv)
-        if g_mv:
-            row += f"{len(l_mv)}L/{len(g_mv)}G ({len(g_mv)-len(l_mv)}W)  "
-        else:
-            row += f"{'-':<14}"
-    overall = f"{loss_rec_m}/{tot_rec_m} ({loss_rec_m/tot_rec_m*100:.0f}%)" if tot_rec_m else "-"
-    row += overall
-    print(row)
-
-# 5. Side comparison (Team A vs Team B)
-side_losses = Counter()
-side_games = Counter()
-for g in all_games:
-    s = g['ourSide']
-    side_games[s] += 1
-    if g['outcome'] == 'loss':
-        side_losses[s] += 1
-
-print("\n--- SIDE BIAS ---")
-for s in ['A', 'B']:
-    tot = side_games[s]
-    l = side_losses[s]
-    print(f"Side {s}: {l} losses out of {tot} games ({l/tot*100:.1f}% loss rate)")
-
-# 6. Ranked vs Unranked
-match_type_losses = Counter()
-match_type_games = Counter()
-for g in all_games:
-    t = "Ranked" if g['ranked'] else "Unranked"
-    match_type_games[t] += 1
-    if g['outcome'] == 'loss':
-        match_type_losses[t] += 1
-
-print("\n--- MATCH TYPE ---")
-for t in ['Ranked', 'Unranked']:
-    tot = match_type_games[t]
-    l = match_type_losses[t]
-    print(f"{t}: {l} losses out of {tot} games ({l/tot*100:.1f}% loss rate)")
+print(f"{len(rows)} games, W {sum(r['win'] for r in rows)}")
+print("\nLOSS classes:", dict(collections.Counter(cls(r) for r in rows if not r["win"])))
+for tag, f in (("units at r100 ours>=theirs", lambda r: r["snap"].get(100, (0, 0))[0] >= r["snap"].get(100, (0, 0))[1]),
+               ("units at r200 ours>=theirs", lambda r: r["snap"].get(200, (0, 0))[0] >= r["snap"].get(200, (0, 0))[1]),
+               ("our queen alive at end", lambda r: not r["our_queen_death"]),
+               ("their queen dead", lambda r: bool(r["enemy_queen_death"]))):
+    a = [r for r in rows if f(r)]; b = [r for r in rows if not f(r)]
+    print(f"  {tag}: win% {100*sum(r['win'] for r in a)/max(1,len(a)):.0f} (n={len(a)}) vs {100*sum(r['win'] for r in b)/max(1,len(b)):.0f} (n={len(b)})")
+by = collections.defaultdict(lambda: [0, 0, 0])
+for r in rows:
+    by[r["opp"]][0] += r["win"]; by[r["opp"]][1] += 1; by[r["opp"]][2] = r["oppElo"]
+print("\nby opponent (W/N, elo):", {o.encode('ascii', 'replace').decode(): f"{a}/{b} {e}" for o, (a, b, e) in sorted(by.items(), key=lambda kv: -kv[1][2])})
+bm = collections.defaultdict(list)
+for r in rows:
+    bm[r["map"]].append(r)
+print("\nmap | n | W | our queen died (median r) | our units r100/r200/r300 avg | their units r100/r200/r300 avg")
+for m, s in sorted(bm.items(), key=lambda kv: sum(r["win"] for r in kv[1]) / len(kv[1])):
+    qd = [r["our_queen_death"][0] for r in s if r["our_queen_death"]]
+    av = lambda i, side: sum(r["snap"].get(i, (0, 0))[side] for r in s) / len(s)
+    print(f"{m} | {len(s)} | {sum(r['win'] for r in s)} | {len(qd)}/{len(s)} ({int(st.median(qd)) if qd else '-'}) | {av(100,0):.0f}/{av(200,0):.0f}/{av(300,0):.0f} | {av(100,1):.0f}/{av(200,1):.0f}/{av(300,1):.0f}")
+lost = collections.Counter()
+for r in rows:
+    for k, v in r["lost"].items():
+        lost[k] += v
+print("\nour dragons lost per game by cause:", {k: round(v / len(rows)) for k, v in lost.items()})
+print("late feed suicides (noaction after r280) per game:", round(sum(r["feed"] for r in rows) / len(rows), 1))
+q = [r["our_queen_death"] for r in rows if r["our_queen_death"]]
+print(f"our queen died {len(q)}/{len(rows)}; median r {st.median([x[0] for x in q]) if q else '-'}; causes {dict(collections.Counter(x[1] for x in q))}; early (<=20): {sum(x[0] <= 20 for x in q)}")
+print("games with our queen alive: win%", round(100 * sum(r['win'] for r in rows if not r['our_queen_death']) / max(1, sum(1 for r in rows if not r['our_queen_death']))), "| dead:", round(100 * sum(r['win'] for r in rows if r['our_queen_death']) / max(1, sum(1 for r in rows if r['our_queen_death']))))

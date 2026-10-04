@@ -127,6 +127,8 @@ Autoscrims (ranked) run every 2 hours on the hour and use whatever is active at 
 | `players_index.py SCOUT_DIR` | Builds `SCOUT_DIR/PLAYERS.md`: a per-player (not per-game) index of a `scout.py`-style directory — summary table plus every game with map/side/opponent/result. |
 | `mem_guard.sh MIN_MB` | Blocks until free physical memory clears `MIN_MB` (checks every 20s via PowerShell). Put before every memory-heavy stage of an unattended/background chain — see AGENTS.md "Running things safely on this machine". |
 | `split_by_team.py SRC_CSV OUT_DIR COLUMN` | Streams a large CSV once and writes one small CSV per distinct value of `COLUMN` into `OUT_DIR`. Use before fanning out parallel jobs that would otherwise each load the full file (the OOM cause below). |
+| `delegate.sh TASK_FILE.md [VERIFY_CMD] [MAX_ROUNDS]` | Director/critic/executor delegation loop: executor edits, `VERIFY_CMD` runs and its output goes to the critic along with the diff, critic verdicts PASS/FAIL, and on FAIL it auto-iterates up to `MAX_ROUNDS` before escalating to you. See "Delegating to other agents" below. |
+| `regression_gate.py CANDIDATE OUTDIR [--opp DIR] [--set live\|dev\|test\|setA\|setB] [--min-queen-round N]` | Standing regression gate on top of `panel_zig.py`: fails (exit 1) if win rate vs `--opp` (default champion) drops below `--win-threshold`, **or** the candidate's queen dies before `--min-queen-round` on any game where the opponent's doesn't. Good as a `VERIFY_CMD` for `delegate.sh` on a queen-survival task. Writes `gate_report.json` to `OUTDIR`. |
 
 Unranked challenge: `curl -s $BASE/battles -H "Authorization: Bearer $UNSWBC_KEY" -H "Content-Type: application/json"
 -d '{"teamId": 590, "ranked": false, "mapIds": [20,21,9,11,7,4,17,19,13,15]}'` (map ids: Portals 20, Slithery 21,
@@ -150,6 +152,49 @@ redirects).
 - Indicator strings are visible to opponents in replays; strip them before the final tournament.
 - Debug builds: copy the bot to `dbg7/` and add `debug_cfg.hpp` with `#define DEBUG_FROM a` / `#define DEBUG_TO b`
   for board dumps and per-option evaluation logs in the replay.
+
+## Delegating to other agents (director/critic/executor, added 2026-10-01, revised 2026-10-02)
+
+For a well-scoped subtask (a specific bug fix, a specific refactor — not open-ended design work), you can hand
+it off instead of doing it inline, to save your own context budget. **A single executor→critic pass is not
+enough** — a critic that only compares the diff to the task catches "didn't do what was asked" but not "did
+it but the bug's still there," and that gap was exactly what made the first `swarmsplit_fix` round look done
+when it wasn't (see `AGENT_LOG.md`). So:
+
+- **You (Claude, in this terminal) are the director.** Write a complete, standalone task file — the executor
+  and critic below have no memory of this conversation, so brief it like a stranger: what to change, which
+  files, constraints, **and the exact command that proves it worked** (a `regression_gate.py` or
+  `queen_panel.py` call, not just "run the tests"). That verify command is what keeps you out of every round.
+- **Executor / critic back-ends** (pick per job; `tools/delegate.sh` takes `EXECUTOR_CHAIN` and `CRITIC`, and
+  falls through the chain on usage-limit/auth/empty-output failures). Secrets come from `secrets.env`; the CLIs
+  live in `~/.bun/bin` (`opencode`, `codex`) and `~/.kimi-code/bin` (`kimi.exe`), which are NOT on every shell's PATH
+  (the script adds them).
+
+  | Name | What | Status (2026-10-02) |
+  |---|---|---|
+  | `codex` | Codex CLI (`codex exec --approve-for-me` to edit, `-s read-only` to review; the read-only sandbox cannot read files, so give a reviewer the diff in the prompt or use `--approve-for-me`) | Best quality; ChatGPT-plan **usage limit** (hit 2026-10-02, resets ~17:22 IST) |
+  | `cf` / `cfcode` | `opencode` + Cloudflare Workers AI `@cf/openai/gpt-oss-120b` / `@cf/qwen/qwen2.5-coder-32b-instruct` | **Free plan, works with tools**. Kimi-k2.7-code, GLM-5.3 and DeepSeek-V4 are paid-plan only. Token needs Workers AI permission and no IP filter |
+  | `or` | `opencode` + OpenRouter free models (`nvidia/nemotron-3-super-120b-a12b:free` best in our test; others 429 or fail) | Free, rate limited, ok for small jobs |
+  | `longcat` | `opencode` + OpenRouter `meituan/longcat-2.0` | Needs OpenRouter ACCOUNT credit (the error "can only afford N tokens" is the account balance, not the key limit). Output capped at 8000 in `~/.config/opencode/opencode.json` |
+  | `groq` | `opencode` + Groq `openai/gpt-oss-120b` (fast, free tier) | Fine for one-shot calls; multi-step runs FAIL (Groq rejects `reasoning_content`). Prefer `cf` |
+  | `kimi` | Kimi CLI (`kimi.exe --auto -p ...`, `kimi login --region global`) | Logged in, but 403 until a paid Kimi Code plan; Kimi models are also on OpenRouter |
+
+  Quick quality test (two small coding tasks, assertions): gpt-oss-120b (Groq, Cloudflare), qwen2.5-coder-32b, llama-3.3-70b-fast
+  and the Nemotron free models passed both; this does NOT show they can do long multi-file jobs. Use Codex for the hard
+  ones (CPU work, queen logic) and wait for its limit to reset rather than hand those to a weak model; use free models for
+  narrow, well-specified edits, scouting, smoke tests and review.
+  Pitfalls: Codex agents may append to `AGENT_LOG.md` as UTF-16 (strip NUL bytes: `tr -d '\000'`) and run read-only unless
+  given `--approve-for-me`; a Codex "usage limit" makes every job fail instantly, so check `out/*.codex.log` tails.
+
+`tools/delegate.sh TASK_FILE.md [VERIFY_CMD]` runs: snapshot (`tools/scoped_diff.py`) -> executor (first working back-end in the
+chain) -> scoped diff of ONLY what the executor changed (never `secrets.env`, `out/`, `ladder/`, files > 2 MB) -> optional
+`VERIFY_CMD` -> critic, whose last line must be `VERDICT: PASS` or `VERDICT: FAIL: <reason>`. It writes
+`<task>.<stamp>.{exec.log,diff,verify.log,critique.log,backend.txt}` and acts on nothing: you decide. Run it from Git Bash
+or WSL. Diff/log files can contain key material: they are gitignored (`tools/tasks/*.diff`, `*.exec.log`, `*.critique.log`).
+
+**Active-bot rule for ladder tests:** record the active submission first (`GET /submissions`, status `active`; originally
+Y.9.5, id 14685), and restore it after queuing ranked battles or finishing an unranked test window
+(`POST /submissions/<id>/activate`). Unranked quota may be used freely (60 games/hour).
 
 ## Running things safely on this machine (learned 2026-10-01, see `insights.md` for the incidents)
 
@@ -187,3 +232,42 @@ redirects).
   unattended chain — `sleep`-chaining across tool calls is blocked by the harness (use `run_in_background: true`
   or a real `until <condition>; do sleep N; done` loop instead), and one script is far easier to make
   memory-gated and resumable than re-deriving queue state across calls.
+
+## Agent protocol (director / executor / critic)
+
+- **Log:** all agents append to `AGENT_LOG.md` (not this file). One line per entry, newest last:
+  `- [date] [director|executor|critic] [task id] message`. Never edit another agent's line.
+- **Director** (Claude in the terminal): writes `tools/tasks/<id>.md`, owns the working dir, decides accept/reject.
+  The task file must be standalone and include the exact verify command (`regression_gate.py` / `queen_panel.py`).
+- **Executor:** edits only the working dir the task names (copy `baselines/<x>` first; never edit `baselines/`).
+  Reports files changed, the diff, and what it did NOT verify.
+- **Critic:** edits nothing. Reports correct / risky / missing with line numbers, and tests the task's own
+  premise (the first `swarmsplit_fix` task prescribed a wrong guard and a wrong root cause).
+- **Back-ends:** `tools/delegate.sh` with `opencode`+`codex` when installed (neither is on this machine as of
+  2026-10-02); otherwise Claude subagents follow the same protocol.
+- **Panel runs:** `uv run --python 3.11 --with unswbc python tools/panel_zig.py ...` from PowerShell (auto-wraps
+  WSL). `tools/queen_panel.py` is Windows-only. Don't compare numbers across the PowerShell and in-WSL paths.
+
+### Extra roles (added 2026-10-02: the director must conserve tokens — delegate, don't poll or read raw logs)
+
+| Role | Does | Returns to director |
+|---|---|---|
+| **runner** | Starts and waits on panels/sweeps (`panel_zig.py`, `regression_gate.py`), keeps `-j` caps and `mem_guard.sh`, retries failures | One table per run: wins/games, per-map, CPU max, failures. Never raw logs |
+| **analyst** | Reads replays/logs/code for a stated question (deaths, FEED counts, CPU), writes numbers | A short findings note with file:line or counts, plus the script path |
+| **scout** | Downloads public replays/maps within the disk cap, converts to shards, deletes raw files | Counts, disk used, dataset path |
+| **trainer** | Builds datasets and trains/exports nets (Python310 has CUDA torch; 6 GB disk cap) | Metrics, weights path, size, `p8` weight check |
+| **researcher** | Reads docs/transcripts/code for ideas and feasibility | A plan or review file, <=10-line summary |
+| **critic** | Edits nothing; attacks the task's premise and the result | Verdict + required fixes |
+
+Director rules: write one task file per job; ask for <=10-line returns; do not tail logs or sleep-poll (use
+background runs with a done-marker, and let a runner report); run a critic on any result that would change a decision.
+
+### Delegation policy (user instruction, 2026-10-02)
+Codex is the CRITIC only (tokens are scarce); executors are free models (gq, gcf, cf, or). If every free executor fails
+(or the job is too big for their limits: Groq 8000 TPM, Cloudflare/OpenRouter daily caps), the director (Claude) does the
+work directly. Until the user says otherwise, the director builds directly (no Codex executor jobs).
+
+### Current champion / yardstick (user correction, 2026-10-03)
+The champion is whatever submission is ACTIVE on the server, not the old-rules `y7_12_nn1`. As of 2026-10-03 that is **Y.9.6 (id 14940)**,
+pulled to `baselines/Y9_6` (teammates change the active build: re-check `GET /submissions`, status `active`, before every ladder test and
+restore THAT id, not an older one). Local gates and yardsticks use `baselines/Y9_6` (`--opp baselines/Y9_6`). `y7_12_nn1` is retired.

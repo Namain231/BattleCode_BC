@@ -1,0 +1,19 @@
+{
+  "matched": 62,
+  "rounds": 62,
+  "games": [
+    {
+      "game": "dense",
+      "matched": 12,
+      "rounds": 12
+    },
+    {
+      "game": "separated",
+      "matched": 50,
+      "rounds": 50
+    }
+  ],
+  "initial_countdowns_checked": true,
+  "spawn_injection": false,
+  "independent_critic_rerun": true
+}

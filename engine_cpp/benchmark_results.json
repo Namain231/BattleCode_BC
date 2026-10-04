@@ -1,0 +1,47 @@
+{
+  "trials": 3,
+  "cpp_rollouts_per_trial": 100000,
+  "python_rollouts_per_trial": 300,
+  "rounds_per_rollout": 3,
+  "source": "Captured actual final benchmark tool stdout",
+  "results": [
+    {
+      "dragons": 6,
+      "cpp_rounds_s": 54534.647,
+      "cpp_move_steps_s": 327207.882,
+      "python_rounds_s": 1247.2858349971118,
+      "python_move_steps_s": 7483.71500998267,
+      "speedup": 43.72265399785148,
+      "cpp_seconds": [
+        5.50109,
+        5.521605,
+        5.477801
+      ],
+      "python_seconds": [
+        0.7722206619999952,
+        0.7134270970000216,
+        0.7215667609999628
+      ],
+      "cpp_checksum": 16599744
+    },
+    {
+      "dragons": 60,
+      "cpp_rounds_s": 39408.792,
+      "cpp_move_steps_s": 2364527.52,
+      "python_rounds_s": 1097.587352507685,
+      "python_move_steps_s": 65855.2411504611,
+      "speedup": 35.90492538927472,
+      "cpp_seconds": [
+        7.634017,
+        7.612515,
+        7.571984
+      ],
+      "python_seconds": [
+        0.8199802940000609,
+        0.8098202179999134,
+        0.8510452059999807
+      ],
+      "cpp_checksum": 189374400
+    }
+  ]
+}

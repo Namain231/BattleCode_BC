@@ -1,0 +1,10 @@
+{
+  "engine_header_sha256": "1885e9945e9deec40e05c4b805cbd8ca624e29c275620e538757e706ed498a66",
+  "trauma_engine_sha256": "26e68680e45eb0f221db702aead9eefde776c2ad2ba066f4ddf8c12500c6a546",
+  "default_engine_sha256": null,
+  "replay_hashes": null,
+  "notes": [
+    "Original uv engine cache vanished externally after default games.",
+    "RAM scratch vanished externally after all verification and benchmarks; replay hashes and raw logs unavailable."
+  ]
+}

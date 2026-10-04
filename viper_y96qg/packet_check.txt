@@ -1,0 +1,34 @@
+
+#define main qg_bot_main
+#include "main.cpp"
+#undef main
+#include <cassert>
+int main() {
+    N=4096; W=H=64; ROUND=200; MY_ID=0; MY_LEN=8; maxKnownId=1; body={10};
+    for(int encrypted=0;encrypted<2;encrypted++) {
+        P.encryptPayload=encrypted;
+        for(int kind=1;kind<=4;kind++) for(int r=199;r<=200;r++) {
+            uint64_t input=1234567, output=0; int tx=-1;
+            auto word=packSecure(input,kind,r);
+            assert(openSecure(word,kind,output,tx) && output==input && tx==r);
+        }
+    }
+    // Legacy is accepted by its MAC domain even when encryption is enabled.
+    uint64_t plain=10|(uint64_t(199)<<12)|(uint64_t(4095)<<21);
+    P.encryptPayload=false; auto legacy=packSecure(plain,SEC_STATUS,199);
+    P.encryptPayload=true; uint64_t output=0; int tx=-1;
+    assert(openSecure(legacy,SEC_STATUS,output,tx) && output==plain);
+    assert(securePayloadPlausible(SEC_STATUS,output,tx)); // unseen high-id sender
+    V.msgs={0}; authenticateMessages(); assert(enemyPingNow); // enemy zero is evidence
+    V.msgs={packSecure(10,SEC_PPROBE,ROUND)}; authenticateMessages(); assert(!enemyPingNow);
+    guardFriends.clear();
+    uint64_t q=10|(uint64_t(199)<<12)|(uint64_t(1)<<21);
+    secureMessages={{SEC_QPOS,q,200},{SEC_STATUS,plain,200}};
+    guardUpdate();
+    assert(relaySeen[SEC_QPOS][1]==0 && relaySeen[SEC_STATUS][4095]==0);
+    assert(guardRelayKind==SEC_STATUS && relayId==4095);
+    relaySeen[guardRelayKind][relayId]=relayRound;
+    guardRelayKind=0; guardUpdate();
+    assert(guardRelayKind==SEC_QPOS); // untransmitted QPOS remains eligible
+    puts("packet/legacy/high-id/zero/relay checks passed");
+}

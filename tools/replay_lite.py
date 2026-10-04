@@ -23,6 +23,8 @@ def decode_lite(path, kinds):
             e["round"] = body.i32(0)
         elif kind == "turnStart":
             e["id"] = body.i32(0)
+        elif kind == "pearlCountdown":
+            e["tile"] = point(body.struct(0)); e["countdown"] = body.i32(0)
         elif kind in ("dragonIndicator", "dragonLog", "engineLog"):
             e["id"] = body.i32(0); e["text"] = body.text(0)
         elif kind == "dragonUpdate":
@@ -69,5 +71,4 @@ def decode_lite(path, kinds):
             teams.append({"count": t.i32(0), "longest": t.i32(4), "total": t.i32(8)} if t else None)
         rep["result"] = {"endReason": res.u16(2), "winner": res.u16(6) if res.u16(4) else None, "A": teams[0], "B": teams[1]}
     return rep
-
 

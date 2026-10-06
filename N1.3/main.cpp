@@ -1,11 +1,6 @@
-// Viper V8 -- V7.12 generalised for unseen maps.
-//
-// On top of V7.12: online symmetry and pearl-gap learning, terrain classification by
-// similarity to the known maps, encrypted sonar packets (status, queen, enemy giant,
-// fountains) on all four rays with per-ray echo attribution, adaptive phase timing,
-// a saturation queen, local budding, late queen hunts, lane safety, a two-ply fork check
-// in the head-on model, and endgame length management. Every addition has a switch in
-// Params so it can be ablated.
+// weights v1
+// nn forward: padded convolutions (build 2)
+// Viper V6 "Leviathan" -- C++ rewrite.
 //
 // Each dragon runs its own copy of this program. Per turn it:
 //   1. parses the 7x7 view and folds it into a persistent map memory
@@ -32,14 +27,7 @@
 #include <vector>
 
 #include "maps_data.hpp"
-#if __has_include("blind_cfg.hpp")
-#include "blind_cfg.hpp"
-#endif
-#ifdef NO_MAP_DB
-static const int N_IDENT_MAPS = 0;   // test build: play every map as if unseen
-#else
-static const int N_IDENT_MAPS = N_KNOWN_MAPS;
-#endif
+#include "policy_nn.hpp"
 
 using namespace std;
 
@@ -83,31 +71,15 @@ struct Params {
     int splitRoundMax = 300;
     // endgame: rounds before the end where greed stops mattering
     int endgameRounds = 25;
-
-    // V8 switches
-    bool fOnlineSym = true, fGapLearn = true, fTerrain = true, fPhase = true, fTerritory = true,
-         fSatQueen = true, fLocalBud = true, fHunt = true, fCorridor = true, fEchoAll = true,
-         fMoveOrder = true, fDieNearFriends = true, fSprintGain = true, fLookahead = true,
-         fReadEnemy = true, fReserves = true, fEndLen = true;
-    int huntRadius = 24;
-    int endLenFrom = 470;
-    // corridor maps (many tiles with <= 2 open sides): miners die in dead ends and the swarm stalls
-    bool fNarrowMiner = true, fEarlyPocket = true, fLowUnitBud = true;
-    double narrowFracMin = 0.25;
-    double narrowMinerCost = 3.0;  // miner death cost on a narrow maze map, instead of 1
-    int earlyPocketLen = 4;        // dragons this long weigh dead-end pockets from round 0, miners included
-    int lowUnits = 15;             // below this many units, non-queens keep budding past the queen round
-    int bud4Until = 150;           // before this round always bud at 4
-    // a dead end too short to grow in is a plain death, not a cheap dive
-    bool fTrapGuard = true;
-    // short-sighted drones still value tiles respawning within rushGap rounds at the long horizon
-    bool fFountRush = true;
-    int rushGap = 2;
-    // the lowest-id starting dragons look far (and ignore territory) until scoutUntil
-    bool fScouts = true;
-    int nScouts = 2;
-    int scoutUntil = 60;
-    double wScoutProgress = 3.0;   // like a hunt: nearby pearls must not pull a scout off its way
+    // move-imitation network (top teams' replays): score += wNN * log p(move) while ROUND < nnUntil
+    double wNN = 2;
+    int nnUntil = 500;
+    // Opening traps: a dragon born after r0 (escape-split / bud child) does not get miner
+    // cheap-death for babyTurns, so it will not dive back into the pocket it just left.
+    // Not a corridor filter. Starters (born round 0) are unchanged. false = champion.
+    bool fOpenTrap = true;
+    int openTrapUntil = 120;
+    int babyTurns = 15;
 };
 static Params P;
 
@@ -244,23 +216,8 @@ static int obsP[MAXN * 4];
 static const KnownMap* KM = nullptr;
 static vector<int8_t> mapK;
 static vector<int> mapP;
-static int SYM = -1;           // 0 flip x, 1 flip y, 2 rotate; from KM or learnt online
-static inline int mirrorCellS(int c, int s) {
-    int x = c % W, y = c / W;
-    if (s == 0) x = W - 1 - x;
-    else if (s == 1) y = H - 1 - y;
-    else { x = W - 1 - x; y = H - 1 - y; }
-    return y * W + x;
-}
-static inline int mirrorCell(int c) { return mirrorCellS(c, SYM); }
-// direction d at c maps to this direction at the mirror tile
-static inline int mirrorDirS(int d, int s) {
-    if (s == 0) return (d == 1 || d == 3) ? opp(d) : d;
-    if (s == 1) return (d == 0 || d == 2) ? opp(d) : d;
-    return opp(d);
-}
+static int SYM = -1;           // 0 flip x, 1 flip y, 2 rotate; valid with KM
 static int nbr[MAXN * 4];      // destination, -1 blocked
-static int degS[MAXN];         // open static exits of a tile (kelp only; dragons ignored)
 static bool nbrDirty = true;
 
 struct Candidate { int idx; vector<int8_t> k; vector<int> p; };
@@ -283,11 +240,6 @@ static inline int effK(int c, int d) {
     int k = obsK[c * 4 + d];
     if (k) return k;
     if (KM) return mapK[c * 4 + d];
-    if (SYM >= 0) {
-        // the mirror edge: kelp and open carry over; a portal's partner is unknown
-        int mk = obsK[mirrorCell(c) * 4 + mirrorDirS(d, SYM)];
-        if (mk == 1 || mk == 2) return mk;
-    }
     return 0;
 }
 static inline int effP(int c, int d) {
@@ -319,11 +271,6 @@ static void rebuildNbr() {
         nbr[a1 * 4 + d1] = b2; nbr[b1 * 4 + opp(d1)] = a2;
         nbr[a2 * 4 + d1] = b1; nbr[b2 * 4 + opp(d1)] = a1;
     }
-    for (int c = 0; c < N; c++) {
-        int k = 0;
-        for (int d = 0; d < 4; d++) if (nbr[c * 4 + d] >= 0) k++;
-        degS[c] = k;
-    }
     nbrDirty = false;
 }
 
@@ -337,14 +284,15 @@ static int memExpire[MAXN];   // round until which an unseen cell is presumed st
 static int maxEnemyId = -1;   // enemies that split constantly run into high ids
 static bool swarm = false;
 static int radarExpire[MAXN]; // an enemy was echoed somewhere on a ray through this unseen cell
-static int laneExpire[MAXN];  // an ally head faces us somewhere down a ray through this unseen cell
-static int friendExpire[MAXN];// an ally body was echoed on a ray through this unseen cell
-// online knowledge that the known-map database would otherwise supply
-static bool tileSeen[MAXN];   // all four edges of this tile have been observed
-static bool neverSp[MAXN];    // observed countdown -1
-static int lrnMin[MAXN], lrnMax[MAXN], lrnN[MAXN];  // sampled pearl gaps
-static bool symBad[3];
-static int symEv[3];
+static vector<int> lastRay;   // cells our forward sonar crossed last turn
+
+static int mirrorCell(int c) {
+    int x = c % W, y = c / W;
+    if (SYM == 0) x = W - 1 - x;
+    else if (SYM == 1) y = H - 1 - y;
+    else { x = W - 1 - x; y = H - 1 - y; }
+    return y * W + x;
+}
 
 static void detectSymmetry() {
     SYM = -1;
@@ -359,143 +307,26 @@ static void detectSymmetry() {
     }
 }
 
-// ------------------------------------------------------------ map class --
-// The macro depends on the kind of map. On the ten live maps the choice was measured on the
-// ladder; any other map takes the choice of the live map it resembles most, by terrain
-// features computed from what the swarm has seen.
 static bool bigFeed = false;  // aggressive (v7.2-style) consolidation on this map
 static bool farSight = false; // keep long-range miner targets (ladder panel: short sight lost Dilemma)
-static int mapMode = 0;       // 0 unclassified (maze defaults), 1 maze, 2 big feed, 3 maze + far sight
-static double narrowFrac = 0; // share of tiles with at most 2 open sides (known map, else as seen)
-static int modeConf = 0;      // 0..3, 3 = map identified
-static const int NFEAT = 6;
-struct RefMap { const char* name; int mode; double f[NFEAT]; };
-static vector<RefMap> refs;
-
-static int modeOfName(const string& nm) {
-    // measured on the ladder and in v7.2 vs v7.3: feeding wins Portals, Slithery Fight, Schooltime
-    if (nm == "portals" || nm == "slithery_fight" || nm == "schooltime") return 2;
-    if (nm == "dilemma") return 3;
-    if (nm == "trophy" || nm == "queen_of_spades" || nm == "default" || nm == "autarky" || nm == "devil" ||
-        nm == "trauma") return 1;
-    return 0;  // not a live map: no measured choice
-}
-static void setMode(int m, int conf) {
-    if (m <= 0) return;
-    mapMode = m; modeConf = conf;
-    bigFeed = m == 2;
-    farSight = m == 3;
-}
-// features: log area, narrow tiles, kelp edges, portal edges, never-spawn tiles, fast tiles
-static void featuresOf(int nTiles, int narrow, int kelpE, int knownE, int portalE, int never, int gapT, int fast,
-                       double area, double* f) {
-    f[0] = log2(max(1.0, area));
-    f[1] = nTiles ? (double)narrow / nTiles : 0;
-    f[2] = knownE ? (double)kelpE / knownE : 0;
-    f[3] = nTiles ? (double)portalE / nTiles : 0;
-    f[4] = nTiles ? (double)never / nTiles : 0;
-    f[5] = gapT >= 20 ? (double)fast / gapT : -1;
-}
-static const double FSCALE[NFEAT] = {1.0, 0.08, 0.06, 0.03, 0.15, 0.04};
-static void buildRefs() {
-    for (int i = 0; i < N_KNOWN_MAPS; i++) {
-        const KnownMap& m = KNOWN_MAPS[i];
-        int md = modeOfName(m.name);
-        if (!md) continue;
-#ifdef NO_MAP_DB
-        if (m.w == W && m.h == H) continue;  // the test build must not recognise the map by its size
-#endif
-        int n = m.w * m.h;
-        vector<int8_t> k(n * 4, 1);
-        int portalE = 0, kelpE = 0;
-        for (int e = 0; e < m.n_edges; e++) {
-            int c = m.edges[4 * e], d = m.edges[4 * e + 1], kind = m.edges[4 * e + 2];
-            int x = c % m.w + DX[d], y = c / m.w + DY[d];
-            x = (x + m.w) % m.w; y = (y + m.h) % m.h;
-            int o = y * m.w + x;
-            int kk = kind == 1 ? 2 : 3;
-            k[c * 4 + d] = kk; k[o * 4 + opp(d)] = kk;
-        }
-        int narrow = 0, never = 0, fast = 0, gapT = 0;
-        for (int c = 0; c < n; c++) {
-            int open = 0;
-            for (int d = 0; d < 4; d++) {
-                if (k[c * 4 + d] == 2) kelpE++;
-                else if (k[c * 4 + d] == 3) portalE++;
-                if (k[c * 4 + d] != 2) open++;
-            }
-            if (open <= 2) narrow++;
-            int hi = m.gaps[2 * c + 1];
-            if (hi == 0) never++;
-            else { gapT++; if (hi <= 3) fast++; }
-        }
-        RefMap r; r.name = m.name; r.mode = md;
-        featuresOf(n, narrow, kelpE, n * 4, portalE, never, gapT, fast, n, r.f);
-        refs.push_back(r);
-    }
-}
-static int featTick = -100;
-static void classifyOnline() {
-    if (!P.fTerrain || modeConf >= 3 || ROUND >= 280 || ROUND - featTick < 8) return;
-    featTick = ROUND;
-    int nTiles = 0, narrow = 0, kelpE = 0, knownE = 0, portalE = 0, never = 0, gapT = 0, fast = 0;
-    for (int c = 0; c < N; c++) {
-        if (!tileSeen[c]) continue;
-        nTiles++;
-        int open = 0;
-        for (int d = 0; d < 4; d++) {
-            int k = obsK[c * 4 + d];
-            knownE++;
-            if (k == 2) kelpE++; else { open++; if (k == 3) portalE++; }
-        }
-        if (open <= 2) narrow++;
-        if (neverSp[c]) never++;
-        else if (lrnN[c] > 0) { gapT++; if (lrnMax[c] <= 3) fast++; }
-    }
-    int conf = nTiles < 60 ? 0 : nTiles < N / 6 ? 1 : 2;
-    if (conf == 0 || conf < modeConf || refs.empty()) return;
-    double f[NFEAT];
-    featuresOf(nTiles, narrow, kelpE, knownE, portalE, never, gapT, fast, N, f);
-    narrowFrac = f[1];
-    double best = 1e18; int bm = 0;
-    for (auto& r : refs) {
-        double s = 0;
-        for (int i = 0; i < NFEAT; i++) {
-            if (f[i] < 0 || r.f[i] < 0) continue;
-            double z = (f[i] - r.f[i]) / FSCALE[i];
-            s += z * z;
-        }
-        if (s < best) { best = s; bm = r.mode; }
-    }
-    setMode(bm, conf);
-}
-
 static void activateMap(int idx, vector<int8_t>&& k, vector<int>&& p) {
     KM = &KNOWN_MAPS[idx];
     {
-        int md = modeOfName(KM->name);
-        if (md) setMode(md, 3);
+        string nm = KM->name;
+        // measured on the ladder and in v7.2 vs v7.3: feeding wins Portals, Slithery Fight, Schooltime
+        bigFeed = nm == "portals" || nm == "slithery_fight" || nm == "schooltime";
+        if (bigFeed) P.budUntil = 330;
+        else P.protectFrom = 340;  // maze maps: grow one queen for the longest-dragon tiebreak
+        farSight = nm == "dilemma";
     }
     mapK = std::move(k); mapP = std::move(p);
-    int narrow = 0;
-    for (int c = 0; c < N; c++) {
-        int open = 0;
-        for (int d = 0; d < 4; d++) if (mapK[c * 4 + d] != 2) open++;
-        if (open <= 2) narrow++;
-    }
-    narrowFrac = (double)narrow / N;
     for (int c = 0; c < N; c++) { gmin[c] = KM->gaps[2 * c]; gmax[c] = KM->gaps[2 * c + 1]; }
     detectSymmetry();
     nbrDirty = true;
 }
 static void dropMap() {
     KM = nullptr; SYM = -1;
-    for (int c = 0; c < N; c++) {
-        gmin[c] = gmax[c] = -1;
-        if (lrnN[c] > 0) { gmin[c] = lrnMin[c]; gmax[c] = lrnMax[c]; }
-        else if (neverSp[c]) gmin[c] = gmax[c] = 0;
-    }
-    if (modeConf >= 3) modeConf = 0;
+    for (int c = 0; c < N; c++) { gmin[c] = gmax[c] = -1; }
     nbrDirty = true;
 }
 
@@ -519,70 +350,15 @@ static void initKnowledge() {
     memset(obsK, 0, sizeof obsK);
     for (int c = 0; c < N; c++) {
         seenR[c] = -1; pearlSeen[c] = false; spawnAt[c] = -2; mirSpawn[c] = -2; memExpire[c] = 0; radarExpire[c] = 0;
-        laneExpire[c] = 0; friendExpire[c] = 0;
-        tileSeen[c] = false; neverSp[c] = false; lrnMin[c] = 1 << 20; lrnMax[c] = -1; lrnN[c] = 0;
         gmin[c] = gmax[c] = -1;
     }
-    buildRefs();
-    for (int i = 0; i < N_IDENT_MAPS; i++) {
+    for (int i = 0; i < N_KNOWN_MAPS; i++) {
         if (KNOWN_MAPS[i].w != W || KNOWN_MAPS[i].h != H) continue;
         Candidate cd; cd.idx = i;
         loadMapLayer(KNOWN_MAPS[i], cd.k, cd.p);
         mapCands.push_back(std::move(cd));
     }
     if (mapCands.empty()) mapResolved = true;
-}
-
-static void learnOne(int c, int lo, int hi) {
-    lrnMin[c] = min(lrnMin[c], lo); lrnMax[c] = max(lrnMax[c], hi); lrnN[c]++;
-    if (!KM) { gmin[c] = lrnMin[c]; gmax[c] = lrnMax[c]; }
-}
-static void learnGap(int c, int g) {
-    learnOne(c, g, g);
-    if (SYM >= 0) { int m = mirrorCell(c); if (m != c) learnOne(m, g, g); }
-}
-static void setSym(int s) {
-    SYM = s;
-    nbrDirty = true;
-    for (int c = 0; c < N; c++) {
-        int m = mirrorCell(c);
-        if (m == c) continue;
-        if (lrnN[c] > 0 && lrnN[m] == 0) learnOne(m, lrnMin[c], lrnMax[c]);
-        if (neverSp[c] && !KM && gmax[m] < 0) gmin[m] = gmax[m] = 0;
-    }
-}
-// Maps are mirrored or rotated, and mirror tiles share one countdown: every pair of
-// observations either keeps a symmetry possible or rules it out.
-static void updateSymmetry() {
-    for (int s = 0; s < 3; s++) {
-        if (symBad[s]) continue;
-        for (int i = 0; i < 49 && !symBad[s]; i++) {
-            int c = V.cell[i], m = mirrorCellS(c, s);
-            if (m == c) continue;
-            int j = viewIndex[m];
-            if (j >= 0) {
-                if (V.ptime[i] != V.ptime[j]) symBad[s] = true; else symEv[s]++;
-                continue;
-            }
-            if (!tileSeen[m]) continue;
-            if (neverSp[m] != (V.ptime[i] < 0)) { symBad[s] = true; break; }
-            for (int d = 0; d < 4; d++) {
-                int km = obsK[m * 4 + mirrorDirS(d, s)], kc = V.ek[i][d];
-                if ((km == 2) != (kc == 2) || (km == 3) != (kc == 3)) { symBad[s] = true; break; }
-            }
-            if (symBad[s]) break;
-            symEv[s]++;
-            if (V.ptime[i] >= 0 && spawnAt[m] > ROUND && seenR[m] >= ROUND - 60) {
-                if (spawnAt[m] != ROUND + V.ptime[i]) symBad[s] = true; else symEv[s] += 3;
-            }
-        }
-    }
-    if (SYM >= 0 && symBad[SYM]) { SYM = -1; nbrDirty = true; }
-    if (SYM < 0) {
-        int alive = 0, s1 = -1;
-        for (int s = 0; s < 3; s++) if (!symBad[s]) { alive++; s1 = s; }
-        if (alive == 1 && symEv[s1] >= 12) setSym(s1);
-    }
 }
 
 static void absorbView() {
@@ -616,21 +392,12 @@ static void absorbView() {
                 nbrDirty = true;
             }
         }
-        tileSeen[c] = true;
-        // a countdown that reset since we last looked reveals one draw from the tile's gap
-        if (P.fGapLearn && V.ptime[i] > 0 && seenR[c] >= 0 && ROUND - seenR[c] <= 12 && spawnAt[c] >= 0 &&
-            spawnAt[c] <= ROUND) {
-            int g = V.ptime[i] + (ROUND - spawnAt[c]);
-            if (g >= 1 && g <= 1000) learnGap(c, g);
-        }
         seenR[c] = ROUND;
         pearlSeen[c] = V.pearl[i];
         spawnAt[c] = V.ptime[i] < 0 ? -1 : ROUND + V.ptime[i];
-        if (V.ptime[i] < 0) neverSp[c] = true;
         if (V.ptime[i] < 0 && gmax[c] < 0) { gmax[c] = 0; gmin[c] = 0; }
     }
-    if (P.fOnlineSym && !KM) updateSymmetry();
-    if (SYM >= 0) {
+    if (KM && SYM >= 0) {
         for (int i = 0; i < 49; i++) {
             int m = mirrorCell(V.cell[i]);
             if (viewIndex[m] < 0 && V.ptime[i] >= 0) mirSpawn[m] = ROUND + V.ptime[i];
@@ -700,59 +467,15 @@ static int otherBT[MAXN];         // blocked for BFS depth <= value
 static int occId[MAXN];           // id+1 occupying now (any dragon incl. me), 0 free
 static bool occHead[MAXN];
 static int zoneE[MAXN], zoneF[MAXN];  // adjacency to other heads
-static int enemyDist[MAXN], friendDist[MAXN], friendMinId[MAXN], enemyMinId[MAXN];
-static int occFace[MAXN], occTeam[MAXN];
+static int enemyDist[MAXN], friendDist[MAXN], friendMinId[MAXN];
 static const int UNKNOWN_EXTRA = 10;
-
-// ally heads heard over sonar (position and heading when they cast)
-struct HeardAlly { int cell, dir, len, round; };
-static vector<HeardAlly> heard;
-
-// sonar rays cast last turn, with what we expected each to stop on
-struct RayRec { int kind; vector<int> unseen; };  // kind: 0..4 echo kind, -1 nothing, -2 unknown
-static RayRec rays[4];
-static int nRays = 0;
-static bool raysValid = false;
-
-// echo counts that no in-view prediction explains belong to the rays that left our view
-static void attributeEchoes() {
-    if (!raysValid || !P.fEchoAll) { raysValid = false; return; }
-    raysValid = false;
-    int R[5];
-    for (int k = 0; k < 5; k++) R[k] = ECHO[k];
-    vector<int> unk;
-    for (int r = 0; r < nRays; r++) {
-        if (rays[r].kind >= 0) R[rays[r].kind]--;
-        else if (rays[r].kind == -2) unk.push_back(r);
-    }
-    for (int k = 0; k < 5; k++) if (R[k] < 0) return;  // prediction broke (something moved): trust nothing
-    if (unk.empty()) return;
-    int enemy = R[3] + R[4], ally = R[1] + R[2];
-    auto mark = [&](int r, int* arr, int until) {
-        // a dragon that is now in view explains the echo
-        for (int c : rays[r].unseen) {
-            if (viewIndex[c] < 0) break;
-            if (occId[c]) return;
-        }
-        for (int c : rays[r].unseen) if (viewIndex[c] < 0) arr[c] = max(arr[c], until);
-    };
-    if (unk.size() == 1) {
-        int r = unk[0];
-        if (enemy) mark(r, radarExpire, ROUND + (R[4] ? 8 : 5));
-        else if (R[2]) mark(r, laneExpire, ROUND + 5);
-        else if (R[1]) mark(r, friendExpire, ROUND + 3);
-    } else if (enemy >= (int)unk.size()) {
-        for (int r : unk) mark(r, radarExpire, ROUND + 5);
-    } else if (enemy == 0 && R[2] >= (int)unk.size()) {
-        for (int r : unk) mark(r, laneExpire, ROUND + 5);
-    }
-}
 
 static vector<int> body;          // head first, -1 unknown
 static vector<int> lastPath;      // cells my head entered last turn, in order
 static bool havePrev = false;
 
 static int partAt[MAXN];
+static int visFree[MAXN], visFreeRound[MAXN];
 static int ownLost[MAXN];
 static int eatMargin[256];
 
@@ -765,8 +488,6 @@ static void buildDragons() {
         partAt[parts[i].cell] = i;
         occId[parts[i].cell] = parts[i].id + 1;
         occHead[parts[i].cell] = parts[i].head;
-        occFace[parts[i].cell] = parts[i].face;
-        occTeam[parts[i].cell] = parts[i].team;
     }
     // link each segment to the one in front (towards the head)
     vector<int> nxt(np, -1), prv(np, -1);
@@ -810,14 +531,23 @@ static void buildDragons() {
     for (int i = 0; i < 49; i++) memExpire[V.cell[i]] = 0;
     for (int c = 0; c < N; c++)
         if (viewIndex[c] < 0 && memExpire[c] > ROUND) otherBT[c] = memExpire[c] - ROUND;
-    // radar: echoes of last turn's rays locate dragons we cannot see
-    attributeEchoes();
+    // radar: last turn's forward ray hit an enemy we cannot see -> it is somewhere on that line
+    if (ECHO[3] + ECHO[4] > 0 && !lastRay.empty() && ROUND <= P.gossipFrom) {
+        bool explained = false;
+        for (int c : lastRay) {
+            if (viewIndex[c] < 0) break;
+            if (occId[c]) { explained = true; break; }
+        }
+        if (!explained)
+            for (int c : lastRay) if (viewIndex[c] < 0) radarExpire[c] = ROUND + (ECHO[4] ? 8 : 5);
+    }
     others.clear();
     unordered_map<int, int> idx;
     for (int i = 0; i < np; i++) {
         const Part& q = parts[i];
         if (q.id == MY_ID) continue;
         int extra = certain[i] ? 0 : UNKNOWN_EXTRA;
+        visFree[q.cell] = behind[i] + 1 + (certain[i] ? 0 : 2); visFreeRound[q.cell] = ROUND;
         otherBT[q.cell] = behind[i] + extra + 1 + eatMargin[q.id % 256];
         memExpire[q.cell] = ROUND + otherBT[q.cell];
         auto it = idx.find(q.id);
@@ -886,19 +616,16 @@ static void buildDragons() {
     }
 
     // plain multi-source distances from other heads (for pearl competition)
-    for (int c = 0; c < N; c++) {
-        enemyDist[c] = 1 << 20; friendDist[c] = 1 << 20; friendMinId[c] = 1 << 20; enemyMinId[c] = 1 << 20;
-    }
+    for (int c = 0; c < N; c++) { enemyDist[c] = 1 << 20; friendDist[c] = 1 << 20; friendMinId[c] = 1 << 20; }
     static int q[MAXN];
     for (int pass = 0; pass < 2; pass++) {
         int* dist = pass == 0 ? enemyDist : friendDist;
-        int* minId = pass == 0 ? enemyMinId : friendMinId;
         int qh = 0, qt = 0;
         for (auto& dr : others) {
             if (dr.headCell < 0) continue;
             if ((dr.team == MY_TEAM) != (pass == 1)) continue;
             if (dist[dr.headCell] > 0) { dist[dr.headCell] = 0; q[qt++] = dr.headCell; }
-            minId[dr.headCell] = min(minId[dr.headCell], dr.id);
+            if (pass == 1) friendMinId[dr.headCell] = min(friendMinId[dr.headCell], dr.id);
         }
         while (qh < qt) {
             int c = q[qh++];
@@ -908,9 +635,9 @@ static void buildDragons() {
                 if (n < 0) continue;
                 if (dist[n] > dist[c] + 1) {
                     dist[n] = dist[c] + 1;
-                    minId[n] = minId[c];
+                    if (pass == 1) friendMinId[n] = friendMinId[c];
                     q[qt++] = n;
-                } else if (dist[n] == dist[c] + 1) minId[n] = min(minId[n], minId[c]);
+                } else if (pass == 1 && dist[n] == dist[c] + 1) friendMinId[n] = min(friendMinId[n], friendMinId[c]);
             }
         }
     }
@@ -966,46 +693,11 @@ static bool recordVals = false;
 static double valT[MAXN];
 struct QueenInfo { int cell = -1, len = 0, round = -1000, id = -1; };
 static QueenInfo queen;
-static QueenInfo eq;              // the longest enemy we know of (seen or heard)
 static int goalCell = -1, lastGoal = -1, goalDistNow = -1;
-static bool feeding = false, hunting = false;
-static bool satQueen = false;     // the swarm is saturated: the longest dragon stops budding and grows
-static int satResignUntil = -1;   // a longer saturation queen was heard: do not claim the role again yet
-static int homeCell = -1;         // where our side started (own spawn, or heard)
-static bool scout = false;        // starting dragon that looks for far fountains early
-static bool homeOrigin = false;   // homeCell comes from an initial dragon's own spawn
-static bool localSup = false;     // we outnumber the visible enemy heads here (heard allies count)
-static int earlyQ = 999;          // queen phase pulled forward by an event (ours or heard)
-static inline int chebDist(int a, int b) {
-    int dx = abs(a % W - b % W), dy = abs(a / W - b / W);
-    return max(min(dx, W - dx), min(dy, H - dy));
-}
-static bool eqFresh(int age) { return eq.cell >= 0 && ROUND - eq.round <= age; }
-// late game or a lone giant: our cheap drones go for the longest enemy's head
-static bool huntTarget() {
-    if (!P.fHunt || !eqFresh(15)) return false;
-    if (ROUND >= P.protectFrom + 40 && eq.len >= 8) return true;
-    return ROUND >= 60 && eq.len >= 12 && eq.len >= max(queen.len, MY_LEN) + 3;
-}
-
-// a one-wide lane we would enter, with something coming the other way down it
-static bool laneBlocked(int from, int X) {
-    if (!P.fCorridor || degS[X] > 2) return false;
-    int prev = from, cur = X, k = 0;
-    bool blocked = false;
-    for (int step = 0; step < 16; step++) {
-        k++;
-        if (laneExpire[cur] > ROUND || radarExpire[cur] > ROUND) blocked = true;
-        if (occHead[cur] && occId[cur] && occId[cur] != MY_ID + 1 && nbr[cur * 4 + occFace[cur]] == prev) blocked = true;
-        for (auto& a : heard)
-            if (a.round >= ROUND - 1 && a.cell == cur && nbr[a.cell * 4 + a.dir] == prev) blocked = true;
-        if (degS[cur] != 2) break;
-        int nxt = -1;
-        for (int d = 0; d < 4; d++) { int n = nbr[cur * 4 + d]; if (n >= 0 && n != prev) { nxt = n; break; } }
-        if (nxt < 0) break;
-        prev = cur; cur = nxt;
-    }
-    return blocked && k >= 3;
+static bool feeding = false;
+static int bornRound = -1;
+static inline bool openTrapBaby() {
+    return P.fOpenTrap && bornRound > 0 && bornRound < P.openTrapUntil && ROUND < bornRound + P.babyTurns;
 }
 
 struct EnemyReach { int id; int len; vector<pair<int, int>> cells; };
@@ -1072,8 +764,7 @@ static int dfs(int head, int t, int len) {
         int c = nbr[head * 4 + d];
         if (c < 0) continue;
         if (vt[c] >= t - len + 1) continue;
-        if (otherBT[c] >= t + 1 || (dfsPessimist && (otherBT[c] > 0 || radarExpire[c] > ROUND || laneExpire[c] > ROUND ||
-                                                     friendExpire[c] > ROUND || min(enemyDist[c], friendDist[c]) <= t + 1))) continue;
+        if (otherBT[c] >= t + 1 || (dfsPessimist && (otherBT[c] > 0 || radarExpire[c] > ROUND || min(enemyDist[c], friendDist[c]) <= t + 1))) continue;
         if (t == 0 && (zoneE[c] || zoneF[c])) continue;
         // Warnsdorff: explore the tighter continuation first
         int free = 0;
@@ -1128,7 +819,7 @@ static int staticSpace(const vector<int>& B, int cap) {
             if (zoneE[n] || zoneF[n] || otherBT[n] > 0) continue;
             if (otherHeadDist(n) <= sDist[c] + 1) continue;
             staticMark[n] = staticCtr; sDist[n] = sDist[c] + 1; qA[qt++] = n;
-            cnt += viewIndex[n] >= 0 ? 1.0 : (radarExpire[n] > ROUND || laneExpire[n] > ROUND) ? 0.0 : 0.5;
+            cnt += viewIndex[n] >= 0 ? 1.0 : radarExpire[n] > ROUND ? 0.0 : 0.5;
         }
     }
     return (int)cnt;
@@ -1191,13 +882,8 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
     const vector<int>& B = s.body;
     int L = s.len;
     int head = B[0];
-    bool scouting = scout && ROUND < P.scoutUntil;
     // early small drones: short-horizon targets (don't trek to far, contested fountains)
-    bool shortSight = !bigFeed && !farSight && UNITS >= 3 && L <= 4 && queen.id != MY_ID && ROUND < P.mineUntil &&
-                      !satQueen && !scouting;
-    // territory: early drones mine their own half and the middle, not deep in the enemy's half
-    int enemyHome = (P.fTerritory && SYM >= 0 && homeCell >= 0 && L <= 4 && !satQueen && ROUND < P.mineUntil && !scouting)
-                        ? mirrorCell(homeCell) : -1;
+    bool shortSight = !bigFeed && !farSight && UNITS >= 3 && L <= 4 && queen.id != MY_ID && ROUND < P.mineUntil;
     // late maze game: pearls go to the queen first
     bool lateQ = !bigFeed && ROUND >= P.protectFrom;
     bool meQueen = lateQ && queen.id == MY_ID;
@@ -1229,19 +915,12 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
                 if (p > 0) {
                     // against a swarm every pearl is contested; discounting them all just starves us
                     if (enemyDist[n] < nd) p *= swarm ? 0.8 : P.enemyCloser;
-                    else if (enemyDist[n] == nd) {
-                        // equal distance: dragons move in id order, so the lower id gets there first
-                        if (!P.fMoveOrder) p *= swarm ? 0.9 : P.enemyTie;
-                        else if (enemyMinId[n] < MY_ID) p *= swarm ? 0.8 : P.enemyCloser;
-                        else p *= 0.95;
-                    }
-                    if (enemyHome >= 0 && torusDist(n, enemyHome) + 4 < torusDist(n, homeCell)) p *= 0.8;
+                    else if (enemyDist[n] == nd) p *= swarm ? 0.9 : P.enemyTie;
                     if (!meQueen && (friendDist[n] < nd || (friendDist[n] == nd && friendMinId[n] < MY_ID))) p *= P.friendCloser;
                     if (qCell >= 0 && torusDist(qCell, n) < nd) p *= 0.3;
-                    bool near = shortSight && !(P.fFountRush && gmax[n] > 0 && gmax[n] <= P.rushGap);
-                    p *= near ? min(P.minerFarmCap, farmBonus(n)) : farmBonus(n);
+                    p *= shortSight ? min(P.minerFarmCap, farmBonus(n)) : farmBonus(n);
                     fsum += p * powG[nd];
-                    double v = p * (near ? powM[nd] : powT[nd]);
+                    double v = p * (shortSight ? powM[nd] : powT[nd]);
                     if (v > fmax) { fmax = v; e.targetCell = n; }
                     if (recordVals) valT[n] = v;
                 }
@@ -1294,45 +973,15 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
         else if (dd == 3 && er.len <= 4) p = P.p3Drone;
         else if (dd == 3 && er.len >= 4) p = P.p3;
         if (p <= 0) continue;
-        // a head-on kills both: an enemy longer than us gives up more than it takes
-        if (P.fLookahead) p *= er.len <= L ? 1.0 : er.len <= L + 3 ? 0.8 : 0.6;
         // a lost dragon also brings us a unit closer to elimination
         double unitValue = UNITS <= 2 ? 10.0 : UNITS <= 4 ? 5.0 : 2.0;
         double loss = max(0.5, L - 0.8 * er.len + 3.0) + unitValue;
         if (swarm) p = min(0.95, p * 1.4);
         if (ROUND >= P.feedFrom - 30 && queen.id == MY_ID) loss *= (ROUND >= P.protectFrom ? 3.0 : 2.0);
-        if (satQueen && ROUND < P.feedFrom - 30) loss *= 1.5;
         // anything that can reach our head this coming turn (sprints included) is a real threat
         if ((L >= 6 || UNITS <= 4) && (dd == 1 || (dd <= 3 && dd <= er.len - 1))) adjacentThreat = true;
         if (UNITS == 1) loss = L + 14.0;
         danger += p * loss;
-    }
-    // two-ply: after the enemies' next moves, is there still a cell we can step to?
-    if (P.fLookahead && !reaches.empty()) {
-        bool near = false;
-        for (auto& er : reaches)
-            for (auto& pc : er.cells) if (pc.second <= 2 && pc.first == head) near = true;
-        if (near) {
-            int escapes = 0;
-            for (int d = 0; d < 4; d++) {
-                int y = nbr[head * 4 + d];
-                if (y < 0 || otherBT[y] >= 2) continue;
-                bool own = false;
-                for (int i = 0; i + 1 < (int)B.size(); i++) if (B[i] == y) { own = true; break; }
-                if (own) continue;
-                bool taken = false;
-                for (auto& er : reaches) {
-                    if (er.len > L + 3) continue;  // big ones rarely trade
-                    for (auto& pc : er.cells) if (pc.second == 1 && pc.first == y) { taken = true; break; }
-                    if (taken) break;
-                }
-                if (!taken) escapes++;
-            }
-            if (escapes == 0) {
-                double unitValue = UNITS <= 2 ? 10.0 : UNITS <= 4 ? 5.0 : 2.0;
-                danger += 0.5 * (L + unitValue);
-            }
-        }
     }
     e.danger = danger;
     if (adjacentThreat) e.safeClass = min(e.safeClass, 1);
@@ -1364,21 +1013,17 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
     if (goalCell >= 0 && goalDistNow >= 0) {
         bool ateGoal = find(s.cells.begin(), s.cells.end(), goalCell) != s.cells.end();
         double prog = ateGoal ? 1.0 : e.goalDist < 0 ? -1.5 : max(-2.0, min(2.0, (double)(goalDistNow - e.goalDist)));
-        score += (feeding ? 4.0 : hunting ? 3.0 : scouting ? P.wScoutProgress : greed) * P.wProgress * prog;
+        score += (feeding ? 4.0 : greed) * P.wProgress * prog;
     }
     score -= danger;
     // in a big swarm a small drone is cheap: its death costs little more than its length
-    // a pocket with less room than it takes to grow to a bud and split out: the child is left at
-    // the mouth and walks back in, so the dive only loses dragons
-    bool trap = P.fTrapGuard && e.pDeath > 0.8 && e.room + L < P.budAt + 2;
-    bool cheap = !trap && UNITS >= 4 && L <= 4 && queen.id != MY_ID;
+    bool baby = openTrapBaby();
+    bool cheap = !baby && UNITS >= 4 && L <= 4 && queen.id != MY_ID;
     // greedy miner (what every top team does): a small drone dives into dead-end pockets for
     // pearls; it may die there, but it buds a child out first and the swarm grows 2x faster
-    bool miner = !trap && UNITS >= 3 && L <= 4 && queen.id != MY_ID && ROUND < P.mineUntil;
-    bool narrowMaze = P.fNarrowMiner && !bigFeed && narrowFrac >= P.narrowFracMin;
-    double minerCost = narrowMaze ? P.narrowMinerCost : 1.0;
-    score -= e.pDeath * (L + (miner ? minerCost : cheap ? 3.0 : P.deathExtra));
-    if (!miner || (P.fEarlyPocket && L >= P.earlyPocketLen)) score -= P.wPocket * e.pocket * (2.0 + L / 4.0);
+    bool miner = !baby && UNITS >= 3 && L <= 4 && queen.id != MY_ID && ROUND < P.mineUntil;
+    score -= e.pDeath * (L + (miner ? 1.0 : cheap ? 3.0 : P.deathExtra));
+    if (!miner) score -= P.wPocket * e.pocket * (2.0 + L / 4.0);
     score += P.spaceBonus * min(1.0, space / (double)(2 * L + 20));
     if (s.outside) {
         // on a known map we know what is behind a portal except for dragons: a modest risk,
@@ -1389,23 +1034,10 @@ static Eval evaluate(const SimResult& s, bool deepAllowed) {
     }
     e.corridor = miner ? 0.0 : corridorRisk(B);
     score -= e.corridor * (L / 2.0 + 10.0);
-    // one-wide lane with a head coming the other way: neither of us can turn round in it
-    bool lane = !s.cells.empty() && !body.empty() && body[0] >= 0 && laneBlocked(body[0], s.cells[0]);
-    if (lane) score -= 0.8 * (L + 8.0);
-    // hidden reserves: without local superiority, cheap drones wait just outside enemy sight
-    if (P.fReserves && !localSup && L <= 3 && UNITS >= 12 && queen.id != MY_ID && ROUND < P.protectFrom && !hunting)
-        for (auto& dr : others)
-            if (dr.team != MY_TEAM && dr.headCell >= 0 && chebDist(head, dr.headCell) <= 3 &&
-                chebDist(body[0], dr.headCell) > 3) { score -= 0.3; break; }
-    // a likely death drops half our length as pearls: better where friends will collect them
-    if (P.fDieNearFriends && e.pDeath > 0.3) {
-        double fr = friendDist[head] <= 4 ? 1.0 : 0.0, en = enemyDist[head] <= 4 ? 1.0 : 0.0;
-        score += e.pDeath * 0.25 * L * (fr - en);
-    }
     e.score = score;
     // one coarse safety class: greed chooses freely among moves that are reasonably safe
     bool riskOk = e.pDeath < 0.25 || miner || (cheap && !bigFeed && e.pDeath < 0.9);
-    e.safeClass = (riskOk && !adjacentThreat && !lane && (!s.outside || (KM && e.safeClass > 0))) ? 1 : 0;
+    e.safeClass = (riskOk && !adjacentThreat && (!s.outside || (KM && e.safeClass > 0))) ? 1 : 0;
     return e;
 }
 
@@ -1443,8 +1075,6 @@ static void dumpState() {
     }
 }
 static vector<int> chosenCells;
-static vector<int> chosenBody;   // our body after this turn's move
-static bool moveKnown = false;
 
 static void emitMove(const vector<int>& dirs, const vector<int>& cells) {
     string m = "MOVE ";
@@ -1461,11 +1091,11 @@ static bool findAttack(bool desperate) {
         // a trade costs us a unit too: only take clearly lopsided ones
         bool worth = UNITS >= 2 && dr.estLen >= max(MY_LEN + 4, 2 * MY_LEN);
         // war of numbers: a big swarm trades small drones evenly when it has local superiority
-        if (!worth && UNITS >= 12 && MY_LEN <= 3 && queen.id != MY_ID && !satQueen && dr.estLen >= MY_LEN && localSup)
-            worth = true;
-        // queen hunt / lone giant: any cheap drone trades itself for the longest enemy
-        if (!worth && huntTarget() && dr.id == eq.id && MY_LEN <= 6 && queen.id != MY_ID && !satQueen && UNITS >= 3)
-            worth = true;
+        if (!worth && UNITS >= 12 && MY_LEN <= 3 && queen.id != MY_ID && dr.estLen >= MY_LEN) {
+            int mine = 0, theirs = 0;
+            for (auto& o : others) if (o.headCell >= 0) (o.team == MY_TEAM ? mine : theirs)++;
+            if (mine + 1 > theirs) worth = true;
+        }
         if (UNITS >= 2 && endgame() && dr.estLen >= MY_LEN + 2) worth = true;
         // never throw away a long dragon at the end: it is probably what wins the tiebreak
         if (desperate && !(endgame() && MY_LEN > dr.estLen)) worth = true;
@@ -1497,23 +1127,11 @@ static bool findAttack(bool desperate) {
     return true;
 }
 
-// swarm size worth budding towards: 40 was measured on the maze maps (512-1152 tiles)
-static int unitsTarget() {
+static int maxUnitsForMap() {
     int area = W * H;
-    if (area < 500) return max(16, 40 * area / 500);
-    if (area > 1200) return min(64, 40 * area / 1200);
-    return 40;
-}
-// bud at 4 where pearls and room allow; grow to 6 first where it is crowded and barren
-static int hereRoom = 99;
-static int budAtNow() {
-    if (!P.fLocalBud || ROUND < P.bud4Until) return P.budAt;
-    int pearls = 0, friends = 0;
-    for (int i = 0; i < 49; i++) if (V.pearl[i]) pearls++;
-    for (auto& dr : others) if (dr.team == MY_TEAM && dr.headCell >= 0) friends++;
-    if (pearls == 0 && friends >= 3) return 6;
-    if (hereRoom < 10) return 6;
-    return P.budAt;
+    if (area < 400) return 3;
+    if (area < 1200) return 5;
+    return 6;
 }
 
 // Our head is about to be stuck, but the tail end may be free: hand most of the
@@ -1576,14 +1194,12 @@ static bool doomedSplit(bool allowShed = true) {
 // Swarm expansion (the ladder leader's macro): any dragon that reaches length 4 buds off a
 // length-2 child until the unit cap. Many heads collect far more pearls, a swarm cannot be
 // eliminated, and once the cap stops the splitting the dragons simply grow.
-static int budLateUntil = 420;
 static bool swarmSplit() {
-    if (MY_LEN < budAtNow() || UNITS >= UNIT_LIMIT) return false;
-    if (satQueen) return false;
+    if (MY_LEN < P.budAt || UNITS >= UNIT_LIMIT) return false;
     // stop budding once late; on the maze maps keep going while the swarm is still small,
     // because a small swarm just loses the head-on war of numbers
-    int until = bigFeed ? P.budUntil : (UNITS < unitsTarget() ? budLateUntil : P.budUntil);
-    if (P.fLowUnitBud && UNITS < P.lowUnits && queen.id != MY_ID) until = max(until, P.endFeedFrom);
+    bool narrow = false;  // ladder test: the top teams keep budding on Autarky (55-64 units by r300)
+    int until = (bigFeed || narrow) ? P.budUntil : (UNITS < 40 ? 420 : P.budUntil);
     if (ROUND >= until) return false;
     for (int i = MY_LEN - 2; i < MY_LEN; i++) if (body[i] < 0) return false;
     int tail = body[MY_LEN - 1];
@@ -1600,8 +1216,7 @@ static bool swarmSplit() {
 
 static bool trySplit(const Eval& stayEval) {
     int c = P.splitChild > 0 ? P.splitChild : MY_LEN / 2;
-    bool overlong = MY_LEN > (satQueen ? 2 * capLen : capLen) && !endgame();
-    if (satQueen && !overlong) return false;
+    bool overlong = MY_LEN > capLen && !endgame();
     if (overlong) {
         c = MY_LEN / 2;
         if (UNITS >= min(UNIT_LIMIT, 6)) return false;
@@ -1642,148 +1257,31 @@ static bool trySplit(const Eval& stayEval) {
     return true;
 }
 
-// ---------------------------------------------------------------- sonar --
-// Packets are 4 type bits, 48 data bits and a 12-bit checksum, sealed with a keyed Feistel
-// permutation: to anyone without the key every ray carries uniform noise, and a foreign
-// value fails the checksum 4095 times in 4096.
-enum { PK_STATUS = 1, PK_QUEEN = 2, PK_ENEMYQ = 3, PK_FOUNT = 4 };
-static const uint32_t SKEY[4] = {0x9E3779B9u, 0x7F4A7C15u, 0xC2B2AE35u, 0x27D4EB2Fu};
-static inline uint32_t fmix32(uint32_t h) {
-    h ^= h >> 16; h *= 0x85EBCA6Bu; h ^= h >> 13; h *= 0xC2B2AE35u; h ^= h >> 16;
-    return h;
-}
-static inline uint32_t check12(uint64_t body) {
-    return (fmix32((uint32_t)body ^ 0x5bd1e995u) ^ fmix32((uint32_t)(body >> 32) + 0x1b873593u)) & 0xFFF;
-}
-static uint64_t seal(int type, uint64_t data) {
-    uint64_t b = (data & ((1ULL << 48) - 1)) | ((uint64_t)(type & 15) << 48);
-    uint64_t x = b | ((uint64_t)check12(b) << 52);
-    uint32_t L = (uint32_t)(x >> 32), R = (uint32_t)x;
-    for (int i = 0; i < 4; i++) { uint32_t t = L ^ fmix32(R ^ SKEY[i]); L = R; R = t; }
-    return ((uint64_t)L << 32) | R;
-}
-static bool unseal(uint64_t v, int& type, uint64_t& data) {
-    uint32_t L = (uint32_t)(v >> 32), R = (uint32_t)v;
-    for (int i = 3; i >= 0; i--) { uint32_t t = R ^ fmix32(L ^ SKEY[i]); R = L; L = t; }
-    uint64_t x = ((uint64_t)L << 32) | R;
-    uint64_t b = x & ((1ULL << 52) - 1);
-    if ((x >> 52) != check12(b)) return false;
-    type = (int)(b >> 48); data = b & ((1ULL << 48) - 1);
-    return true;
-}
-static inline int roundFrom9(int r9) { return ROUND - ((ROUND - r9) & 511); }
-static inline uint64_t earlyBits() {
-    return earlyQ < 999 ? (uint64_t)max(0, min(30, (earlyQ - 200) / 8)) : 31ULL;
-}
-static void takeEarly(int bits) {
-    if (bits >= 31 || !P.fPhase) return;
-    earlyQ = min(earlyQ, 200 + 8 * bits);
-}
+// ---------------------------------------------------------- queen gossip --
+// Late game the swarm consolidates into one long dragon. Every dragon relays the best
+// queen it knows of (position, length, when) on all four sonar rays.
+static const uint64_t QMAGIC = 0xB0C7ULL;
 
-// status: head 12, dir 2, len 6, sym 2 (3 unknown), mode 2, conf 2, sat queen 1, home 12, home origin 1,
-// early 5, id low 3
-static uint64_t packStatus(int cell, int dir) {
-    uint64_t d = (uint64_t)cell | ((uint64_t)dir << 12) | ((uint64_t)min(MY_LEN, 63) << 14) |
-                 ((uint64_t)(SYM >= 0 ? SYM : 3) << 20) | ((uint64_t)(mapMode & 3) << 22) |
-                 ((uint64_t)min(modeConf, 3) << 24) | ((uint64_t)(satQueen ? 1 : 0) << 26) |
-                 ((uint64_t)(homeCell >= 0 ? homeCell : 0) << 27) | ((uint64_t)(homeCell >= 0 && homeOrigin ? 1 : 0) << 39) |
-                 (earlyBits() << 40) | ((uint64_t)(MY_ID & 7) << 45);
-    return seal(PK_STATUS, d);
+static uint64_t packQueen(const QueenInfo& q) {
+    uint64_t x = q.cell % W, y = q.cell / W;
+    return (QMAGIC << 48) | (x << 42) | (y << 36) | ((uint64_t)min(q.len, 4095) << 24) |
+           ((uint64_t)(q.round & 4095) << 12) | (uint64_t)(q.id & 4095);
 }
-static uint64_t packQueenInfo(int type, const QueenInfo& q) {
-    uint64_t d = (uint64_t)q.cell | ((uint64_t)min(q.len, 1023) << 12) | ((uint64_t)(q.round & 511) << 22) |
-                 ((uint64_t)(q.id & 4095) << 31) | (earlyBits() << 43);
-    return seal(type, d);
+static bool unpackQueen(uint64_t v, QueenInfo& q) {
+    if ((v >> 48) != QMAGIC) return false;
+    int x = (v >> 42) & 63, y = (v >> 36) & 63;
+    if (x >= W || y >= H) return false;
+    q.cell = y * W + x; q.len = (v >> 24) & 4095; q.round = (v >> 12) & 4095; q.id = v & 4095;
+    return q.round <= ROUND;
 }
-static bool unpackQueenInfo(uint64_t d, QueenInfo& q) {
-    q.cell = (int)(d & 4095);
-    if (q.cell >= N) return false;
-    q.len = (int)((d >> 12) & 1023);
-    q.round = roundFrom9((int)((d >> 22) & 511));
-    q.id = (int)((d >> 31) & 4095);
-    return true;
-}
-// up to three fast tiles we have learnt, 12-bit cell and 4-bit gap each
-static uint64_t packFount(int rot) {
-    vector<pair<int, int>> fast;
-    for (int c = 0; c < N; c++)
-        if (lrnN[c] > 0 && lrnMax[c] <= 8) fast.push_back({c, max(1, (lrnMin[c] + lrnMax[c]) / 2)});
-    if (fast.empty()) return 0;
-    // fastest first, and only the fastest dozen rotate, so rush-worthy fountains spread quickly
-    stable_sort(fast.begin(), fast.end(), [](const pair<int, int>& a, const pair<int, int>& b) { return a.second < b.second; });
-    if (fast.size() > 12) fast.resize(12);
-    uint64_t d = 0;
-    int k = (int)fast.size();
-    for (int j = 0; j < 3 && j < k; j++) {
-        auto& f = fast[(rot * 3 + j) % k];
-        d |= ((uint64_t)f.first | ((uint64_t)min(15, f.second) << 12)) << (16 * j);
-    }
-    return seal(PK_FOUNT, d);
-}
-
 static void considerQueen(const QueenInfo& q) {
     if (q.cell < 0) return;
     bool stale = ROUND - queen.round > 40;
     if (q.id == queen.id) { if (q.round >= queen.round) queen = q; return; }
     if (stale || q.len > queen.len || (q.len == queen.len && q.id < queen.id)) queen = q;
 }
-static void considerEnemyQ(const QueenInfo& q) {
-    if (q.cell < 0) return;
-    bool stale = ROUND - eq.round > 30;
-    if (q.id == eq.id) { if (q.round >= eq.round) eq = q; return; }
-    if (stale || q.len > eq.len) eq = q;
-}
-
-static int foreignMsgs = 0;
-static void readInbox() {
-    heard.clear();
-    for (uint64_t v : V.msgs) {
-        int type; uint64_t d;
-        if (!unseal(v, type, d)) {
-            // enemy sonar: count it, and if it looks like a cell on one of our lines, the
-            // sender may be announcing its own position
-            foreignMsgs++;
-            if (P.fReadEnemy && v > 0 && v < (uint64_t)N && !body.empty() && body[0] >= 0) {
-                int c = (int)v;
-                if ((c % W == body[0] % W || c / W == body[0] / W) && viewIndex[c] < 0)
-                    radarExpire[c] = max(radarExpire[c], ROUND + 3);
-            }
-            continue;
-        }
-        if (type == PK_STATUS) {
-            HeardAlly a;
-            a.cell = (int)(d & 4095); a.dir = (int)((d >> 12) & 3); a.len = (int)((d >> 14) & 63); a.round = ROUND;
-            if (a.cell >= N) continue;
-            bool mine = false;
-            for (int c : body) if (c == a.cell) mine = true;
-            if (!mine) heard.push_back(a);
-            int s = (int)((d >> 20) & 3), md = (int)((d >> 22) & 3), cf = (int)((d >> 24) & 3);
-            if (s < 3 && SYM < 0 && !KM && !symBad[s]) setSym(s);
-            if (md > 0 && cf > modeConf && ROUND < 280 && modeConf < 3) setMode(md, cf);
-            // one saturation queen per neighbourhood: the longer one (then the lower id) keeps the role
-            if (((d >> 26) & 1) && satQueen && !mine &&
-                (a.len > MY_LEN || (a.len == MY_LEN && (int)((d >> 45) & 7) < (MY_ID & 7))))
-                satQueen = false, satResignUntil = ROUND + 30;
-            int hc = (int)((d >> 27) & 4095);
-            bool ho = (d >> 39) & 1;
-            if (ho && !homeOrigin && hc < N) { homeCell = hc; homeOrigin = true; }
-            takeEarly((int)((d >> 40) & 31));
-        } else if (type == PK_QUEEN || type == PK_ENEMYQ) {
-            QueenInfo q;
-            if (!unpackQueenInfo(d, q) || q.round > ROUND) continue;
-            if (type == PK_QUEEN) considerQueen(q); else considerEnemyQ(q);
-            takeEarly((int)((d >> 43) & 31));
-        } else if (type == PK_FOUNT) {
-            for (int j = 0; j < 3; j++) {
-                int c = (int)((d >> (16 * j)) & 4095), g = (int)((d >> (16 * j + 12)) & 15);
-                if (g == 0 || c >= N || KM || lrnN[c] > 0) continue;
-                learnGap(c, g);
-            }
-        }
-    }
-}
-
 static void updateQueen() {
+    for (uint64_t v : V.msgs) { QueenInfo q; if (unpackQueen(v, q)) considerQueen(q); }
     QueenInfo me; me.cell = body[0]; me.len = MY_LEN; me.round = ROUND; me.id = MY_ID;
     considerQueen(me);
     for (auto& dr : others)
@@ -1791,37 +1289,7 @@ static void updateQueen() {
             QueenInfo f; f.cell = dr.headCell; f.len = dr.estLen; f.round = ROUND; f.id = dr.id;
             considerQueen(f);
         }
-    for (auto& dr : others)
-        if (dr.team != MY_TEAM && dr.headCell >= 0 && dr.estLen >= 6) {
-            QueenInfo f; f.cell = dr.headCell; f.len = dr.estLen; f.round = ROUND; f.id = dr.id;
-            considerEnemyQ(f);
-        }
     if (ROUND - queen.round > 40) queen = me;
-}
-
-// Phase timing. The measured schedule (maze: queen 340, feed 350, late feed 440, budding to
-// 420 or 300; big feed: queen 400, feed 350, budding to 330) is kept relative to the queen
-// round Q, and Q moves earlier when the game calls for it: a giant enemy, or a swarm that
-// has already collapsed.
-static void applyPhase() {
-    int base = bigFeed ? 400 : 340;
-    if (P.fPhase && ROUND >= 150 && ROUND < 400) {
-        // giant trigger: an enemy dragon far longer than our queen wins the tiebreak unless we
-        // start growing ours now (heard over sonar, so the whole swarm switches together)
-        if (eqFresh(30) && eq.len >= max(12, queen.len + 3)) earlyQ = min(earlyQ, max(ROUND + 10, 240));
-        if (ROUND >= 250 && UNITS <= 5) earlyQ = min(earlyQ, max(ROUND + 10, 260));
-    }
-    int Q = min(base, max(earlyQ, 240));
-    if (!P.fPhase) Q = base;
-    P.protectFrom = Q;
-    if (bigFeed) {
-        P.feedFrom = Q - 50; P.gossipFrom = min(300, Q - 100); P.budUntil = Q - 70;
-        P.endFeedFrom = Q + 40; budLateUntil = P.budUntil;
-    } else {
-        P.feedFrom = Q + 10; P.endFeedFrom = Q + 100; P.gossipFrom = min(300, Q - 40);
-        P.budUntil = Q - 40; budLateUntil = Q + 80;
-    }
-    P.mineUntil = min(300, P.gossipFrom);
 }
 static bool iAmQueen() { return queen.id == MY_ID; }
 static bool protectedQueen() { return !bigFeed && ROUND >= P.protectFrom && (queen.id == MY_ID || MY_LEN >= queen.len) && MY_LEN >= (ROUND >= 400 ? 6 : 4); }
@@ -1830,25 +1298,13 @@ static bool outranks(int len, int id) { return len > MY_LEN || (len == MY_LEN &&
 static bool lateFeed() { return !bigFeed && ROUND >= P.endFeedFrom && UNITS >= 6; }
 
 // feeding: a small dragon near the queen turns itself into pearls right in her path
-// endgame length: the longest dragon decides first and total length second. A safe lead
-// keeps the total (feeding loses half of every drone); a close race pours everything in.
-static int endLenState() {
-    if (!P.fEndLen || ROUND < P.endLenFrom) return 0;
-    if (eqFresh(40) && queen.len >= eq.len + 4) return 1;
-    if (ROUND >= 480 && (!eqFresh(60) || eq.len >= queen.len - 3)) return 2;
-    return 0;
-}
 static bool tryFeed() {
-    if (satQueen && !iAmQueen() && MY_LEN >= 6) return false;
-    int els = endLenState();
-    if (els == 1) return false;
     if (ROUND < P.feedFrom || iAmQueen() || !outranks(queen.len, queen.id) || ROUND - queen.round > 25) return false;
     if (queen.cell < 0 || torusDist(queen.cell, body[0]) > P.feedRadius) return false;
     for (auto& dr : others) {
         // only a clearly longer dragon we can see is worth dying for; it must be able to eat us
         bool worthy = bigFeed ? (dr.id == queen.id || dr.estLen >= MY_LEN + 3)
                               : (dr.estLen >= max(10, 2 * MY_LEN) || (lateFeed() && dr.id == queen.id && dr.estLen >= MY_LEN + 2));
-        if (els == 2 && dr.id == queen.id && dr.estLen >= MY_LEN + 1) worthy = true;
         if (dr.team != MY_TEAM || dr.headCell < 0 || !worthy) continue;
         if (torusDist(dr.headCell, body[0]) <= 3) {
             printf("SPLIT 1\n");  // illegal on purpose: we die and crystallise into pearls
@@ -1859,87 +1315,74 @@ static bool tryFeed() {
     return false;
 }
 
-// A scout heads for the richest contested area, not the nearest fast tile: the spawn rate summed
-// over a 7x7 block, open tiles counting double (a lone fountain in a one-wide lane is a death
-// trap). Our own side keeps until later, the middle goes to whoever gets there first, so areas
-// about as close to the enemy's spawn as to ours count fully and the rest a third.
-// Uses distA from the last evaluate() from our head.
-static int scoutCell = -1, scoutTick = -100;
-static int scoutGoal() {
-    if (ROUND - scoutTick < 10 && scoutCell >= 0) return scoutCell;
-    scoutTick = ROUND;
-    static double rate[MAXN];
-    for (int c = 0; c < N; c++) {
-        rate[c] = gmax[c] > 0 ? 1.0 / max(1.0, 0.5 * (gmin[c] + gmax[c])) : 0.0;
-        if (degS[c] >= 3) rate[c] *= 2.0;
-    }
-    int foe = (SYM >= 0 && homeCell >= 0) ? mirrorCell(homeCell) : -1;
-    double best = 0; scoutCell = -1;
-    for (int c = 0; c < N; c++) {
-        int d = distA[c];
-        if (d <= 0 || d > 60) continue;
-        double contest = 1.0;
-        if (foe >= 0) {
-            int dh = torusDist(c, homeCell), df = torusDist(c, foe);
-            if (dh > df + 2) continue;
-            if (df > dh + 4) contest = 0.35;
+// ---------------------------------------------------------- policy network --
+static float nnProb[6];
+static bool nnReady = false;
+static void nnInput(unsigned char* pl, float* sc) {
+    const int R = 7, S = 15, f = MY_DIR;
+    int hc = body[0], hx = hc % W, hy = hc / W;
+    memset(pl, 0, 16 * S * S);
+    unordered_map<int, int> lenOf, teamOf;
+    for (auto& dr : others) { lenOf[dr.id] = dr.estLen; teamOf[dr.id] = dr.team; }
+    for (int v = 0; v < S; v++)
+        for (int u = 0; u < S; u++) {
+            int x = u - R, y = v - R;
+            for (int k = 0; k < f; k++) { int t = x; x = -y; y = t; }
+            int c = (((hy + y) % H + H) % H) * W + (((hx + x) % W + W) % W);
+            auto at = [&](int plane) -> unsigned char& { return pl[(plane * S + v) * S + u]; };
+            for (int r = 0; r < 4; r++) {
+                int k = effK(c, (r + f) % 4);
+                if (k == 2) at(r) = 255;
+                if (k == 3) at(4 + r) = 255;
+            }
+            if (gmax[c] > 0) at(8) = (unsigned char)min(255, (int)(255.0 * 2.0 / max(1, gmin[c] + gmax[c]) * 4));
+            bool view = abs(x) <= 3 && abs(y) <= 3;
+            if (!view) continue;
+            at(9) = 255;
+            if (pearlNow(c)) at(10) = 255;
+            if (occId[c]) {
+                int id = occId[c] - 1;
+                if (id == MY_ID) {
+                    for (int k = 0; k < (int)body.size(); k++)
+                        if (body[k] == c) at(11) = (unsigned char)min(255, (MY_LEN - k) * 16);
+                } else {
+                    bool ally = teamOf.count(id) ? teamOf[id] == MY_TEAM : false;
+                    int fr = visFreeRound[c] == ROUND ? visFree[c] : 1;
+                    at(ally ? 12 : 13) = (unsigned char)min(255, fr * 16);
+                    if (occHead[c]) at(ally ? 14 : 15) = (unsigned char)min(255, (lenOf.count(id) ? lenOf[id] : 2) * 8);
+                }
+            }
         }
-        double r = 0;
-        int x = c % W, y = c / W;
-        for (int dy = -3; dy <= 3; dy++)
-            for (int dx = -3; dx <= 3; dx++)
-                r += rate[((y + dy + H) % H) * W + (x + dx + W) % W];
-        double v = r * contest * powT[d];
-        if (v > best) { best = v; scoutCell = c; }
-    }
-    return scoutCell;
+    sc[0] = MY_LEN / 32.0f; sc[1] = ROUND / 500.0f; sc[2] = UNITS / 64.0f;
 }
-
-static bool firstTurn = true;
-static void initProcess() {
-    if (!firstTurn) return;
-    firstTurn = false;
-    homeCell = body[0];
-    homeOrigin = ROUND == 0;
-    if (P.fScouts && ROUND == 0) {
-        int rank = 0;  // among the starting dragons in view; spawns are close together
-        for (auto& dr : others) if (dr.team == MY_TEAM && dr.id < MY_ID) rank++;
-        scout = rank < P.nScouts;
-    }
+static void nnRun() {
+    nnReady = false;
+    if (bigFeed || ROUND >= P.nnUntil || P.wNN <= 0 || body.empty() || body[0] < 0 || elapsedMs() > 40) return;
+    static unsigned char pl[16 * 15 * 15];
+    float sc[3], lg[6];
+    nnInput(pl, sc);
+    nn::forward(pl, sc, lg);
+    float mx = lg[0];
+    for (int i = 1; i < 6; i++) mx = max(mx, lg[i]);
+    float z = 0;
+    for (int i = 0; i < 6; i++) { nnProb[i] = exp(lg[i] - mx); z += nnProb[i]; }
+    for (int i = 0; i < 6; i++) nnProb[i] /= z;
+    nnReady = true;
 }
-
-// Saturation queen: once the swarm is as big as budding can usefully make it, extra buds add
-// little, so the locally longest dragon stops budding and grows. It starts early on rich maps
-// and late on poor ones. The late-queen rules take over from the queen round.
-static void updateSatQueen() {
-    if (!P.fSatQueen) { satQueen = false; return; }
-    int satUnits = min(unitsTarget(), UNIT_LIMIT - 4);
-    if (satQueen) {
-        bool outgrown = queen.id != MY_ID && queen.len >= MY_LEN + 2 && ROUND - queen.round <= 25;
-        if (MY_LEN < 4 || outgrown || UNITS < satUnits - 8) satQueen = false;
-        return;
-    }
-    if (ROUND >= P.protectFrom || ROUND < satResignUntil || UNITS < satUnits || MY_LEN < 4 || queen.id != MY_ID) return;
-    satQueen = true;
+static void nnSelfTest() {
+    float lg[6];
+    nn::forward(NN_TEST_PLANES, NN_TEST_SCALARS, lg);
+    printf("LOG NNTEST");
+    for (int i = 0; i < 6; i++) printf(" %.4f/%.4f", lg[i], NN_TEST_LOGITS[i]);
+    printf(" t=%.1fms\n", elapsedMs());
 }
 
 static void think() {
+    if (bornRound < 0) bornRound = ROUND;
     buildDragons();
-    initProcess();
-    readInbox();
     buildReaches();
     computeCap();
     updateQueen();
-    classifyOnline();
-    applyPhase();
-    updateSatQueen();
-    {
-        int mine = 0, theirs = 0;
-        for (auto& o : others) if (o.headCell >= 0) (o.team == MY_TEAM ? mine : theirs)++;
-        if (P.fReserves)
-            for (auto& a : heard) if (viewIndex[a.cell] < 0 && torusDist(a.cell, body[0]) <= 6) mine++;
-        localSup = mine + 1 > theirs;
-    }
     if (tryFeed()) return;
     dumpState();
     chosenCells.clear();
@@ -1957,11 +1400,6 @@ static void think() {
         if (lastGoal >= 0 && lastGoal != best && best >= 0 && distA[lastGoal] > 0 && valT[lastGoal] >= 0.75 * valT[best])
             g = lastGoal;
         if (g >= 0 && distA[g] > 0) { goalCell = g; goalDistNow = distA[g]; }
-        if (scout && ROUND < P.scoutUntil) {
-            int sg = scoutGoal();
-            if (sg >= 0 && distA[sg] > 2) { goalCell = sg; goalDistNow = distA[sg]; }
-            else if (sg >= 0 && distA[sg] >= 0) scout = false;  // arrived: mine the area like everyone else
-        }
         feeding = ROUND >= P.feedFrom && !iAmQueen() && (bigFeed ? outranks(queen.len, queen.id) : (queen.len >= max(10, 2 * MY_LEN) || (lateFeed() && queen.len >= MY_LEN + 2)))
                   && ROUND - queen.round <= 25
                   && queen.cell >= 0 && torusDist(queen.cell, body[0]) <= P.feedRadius;
@@ -1972,17 +1410,6 @@ static void think() {
             } else g = queen.cell;
             if (qd > 0) { goalCell = g; goalDistNow = qd; }
         }
-        hunting = !feeding && huntTarget() && MY_LEN <= 5 && !iAmQueen() && !satQueen && UNITS >= 3 &&
-                  torusDist(eq.cell, body[0]) <= P.huntRadius;
-        if (hunting) {
-            int hd = -1, hg = -1;
-            for (int d = 0; d < 4; d++) {
-                int n = nbr[eq.cell * 4 + d];
-                if (n >= 0 && distA[n] > 0 && (hd < 0 || distA[n] < hd)) { hd = distA[n]; hg = n; }
-            }
-            if (hd > 0) { goalCell = hg; goalDistNow = hd; } else hunting = false;
-        }
-        hereRoom = he.room;
         lastGoal = goalCell;
     }
     struct Opt { vector<int> dirs; SimResult sim; Eval ev; };
@@ -2003,36 +1430,15 @@ static void think() {
             }
         }
     }
-    // race sprints: a pearl two steps away that an enemy reaches as soon as we do
-    vector<char> race(opts.size(), 0);
-    if (P.fSprintGain && MY_LEN >= 5 && !(endgame() && iAmQueen())) {
-        for (int a = 0; a < 4; a++) for (int b = 0; b < 4; b++) {
-            if (b == opp(a)) continue;
-            int c1 = nbr[body[0] * 4 + a];
-            if (c1 < 0) continue;
-            int c2 = nbr[c1 * 4 + b];
-            if (c2 < 0 || !pearlNow(c2) || enemyDist[c2] > 2 || pearlNow(c1)) continue;
-            if (enemyDist[c2] == 2 && P.fMoveOrder && enemyMinId[c2] > MY_ID) continue;  // we get there first anyway
-            Opt o; o.dirs = {a, b}; o.sim = simulate(o.dirs);
-            if (!o.sim.dead) { opts.push_back(o); race.push_back(1); }
-        }
-    }
-    for (size_t i = 0; i < opts.size(); i++) {
-        opts[i].ev = evaluate(opts[i].sim, true);
-        if (i < race.size() && race[i]) opts[i].ev.score += 0.8;  // the pearl we deny them
-    }
+    for (auto& o : opts) o.ev = evaluate(o.sim, true);
+    if (ROUND == 0 && MY_ID == 0) nnSelfTest();
+    nnRun();
+    if (nnReady)  // the network only reorders options inside a safety class
+        for (auto& o : opts) o.ev.score += P.wNN * log(max(1e-3f, nnProb[(o.dirs[0] - MY_DIR + 4) % 4]));
     sort(opts.begin(), opts.end(), [](const Opt& a, const Opt& b) {
         if (a.ev.safeClass != b.ev.safeClass) return a.ev.safeClass > b.ev.safeClass;
         return a.ev.score > b.ev.score;
     });
-    // a sprint costs a segment: take it only when it beats the best single step by a margin
-    if (P.fSprintGain && !opts.empty() && opts[0].dirs.size() > 1 && opts[0].ev.pDeath < 0.5) {
-        for (size_t i = 1; i < opts.size(); i++)
-            if (opts[i].dirs.size() == 1 && opts[i].ev.safeClass >= opts[0].ev.safeClass) {
-                if (opts[0].ev.score - opts[i].ev.score < 0.5) swap(opts[0], opts[i]);
-                break;
-            }
-    }
     if ((opts.empty() || opts[0].ev.pDeath >= (MY_LEN >= 8 ? 0.5 : 0.9)) && MY_LEN >= 3) {
         // sprinting sheds tail segments, which can be what lets us fit
         vector<Opt> extra;
@@ -2082,22 +1488,18 @@ static void think() {
         if (!protectedQueen() && (opts[0].ev.pDeath == 0 || MY_LEN > capLen) && trySplit(se)) return;
         auto& o = opts[0];
         emitMove(o.dirs, o.sim.cells);
-        chosenBody = o.sim.body; moveKnown = true;
         char tmp[96];
         snprintf(tmp, sizeof tmp, "L%d s%.1f sp%d rm%d f%.2f t%.2f dg%.2f pd%.2f%s", MY_LEN, o.ev.score, o.ev.space, o.ev.room,
                  o.ev.field, o.ev.target, o.ev.danger, o.ev.pDeath, KM ? " K" : "");
         indicator = tmp;
         if (o.ev.targetCell >= 0) indicator += " T" + to_string(o.ev.targetCell % W) + "," + to_string(o.ev.targetCell / W);
-        if (scout && ROUND < P.scoutUntil && scoutCell >= 0) indicator += " SC" + to_string(scoutCell % W) + "," + to_string(scoutCell / W);
         return;
     }
-    // nothing survives: take the least bad raw step, never into a friend; among equals,
-    // die where friends rather than enemies will pick up our pearls
-    int bestD = MY_DIR;
-    double bestRank = -1;
+    // nothing survives: take the least bad raw step, never into a friend
+    int bestD = MY_DIR, bestRank = -1;
     for (int d = 0; d < 4; d++) {
         int n = nbr[body[0] * 4 + d];
-        double rank;
+        int rank;
         if (n < 0) rank = 1;                                   // kelp: only we die
         else if (!occId[n]) rank = 4;                          // free (only unseen risk)
         else {
@@ -2108,68 +1510,34 @@ static void think() {
             else if (friendly) rank = 0;
             else rank = occHead[n] ? 3 : 2;                    // take an enemy with us
         }
-        if (P.fDieNearFriends && n >= 0) rank += 0.3 * (friendDist[n] <= 4) - 0.3 * (enemyDist[n] <= 4);
         if (rank > bestRank) { bestRank = rank; bestD = d; }
     }
     emitMove({bestD}, {});
     indicator = "DOOMED " + dsWhy;
 }
 
-// Four rays after every action. Forward carries our status and is the radar; the other
-// three gossip (queen, enemy giant, fountains). Each ray is traced through what we can see,
-// so next turn's echo counts can be split between the rays that left our view.
-static void traceRay(const vector<int>& pb, int start, int dir, RayRec& r) {
-    r.kind = -1; r.unseen.clear();
-    int c = start;
-    for (int k = 0; k < W + H; k++) {
-        int n = nbr[c * 4 + dir];
-        if (n < 0) { if (r.unseen.empty()) r.kind = 0; break; }
-        c = n;
-        if (viewIndex[c] < 0) { r.unseen.push_back(c); continue; }
-        int kind = -1;
-        for (size_t i = 0; i < pb.size(); i++) if (pb[i] == c) { kind = i == 0 ? 2 : 1; break; }
-        if (kind < 0 && occId[c] && occId[c] != MY_ID + 1)
-            kind = occTeam[c] == MY_TEAM ? (occHead[c] ? 2 : 1) : (occHead[c] ? 4 : 3);
-        if (kind >= 0) { if (r.unseen.empty()) r.kind = kind; break; }
+// forward sonar: next turn's echo tells us whether an enemy sits somewhere down this line
+static void castRadar() {
+    lastRay.clear();
+    if (ROUND >= P.gossipFrom) {
+        uint64_t v = packQueen(queen);
+        for (int d = 0; d < 4; d++) printf("SONAR %c %llu\n", DCH[d], (unsigned long long)v);
+        return;
     }
-    if (!r.unseen.empty()) r.kind = -2;
-}
-static void castRays() {
-    nRays = 0; raysValid = false;
     if (body.empty() || body[0] < 0) return;
-    const vector<int>& pb = moveKnown ? chosenBody : body;
-    if (pb.empty() || pb[0] < 0) return;
-    int head = pb[0], hd = MY_DIR;
-    if (moveKnown && !chosenCells.empty()) {
+    int head = body[0], dir = MY_DIR;
+    if (!chosenCells.empty()) {
+        head = chosenCells.back();
         int prev = chosenCells.size() >= 2 ? chosenCells[chosenCells.size() - 2] : body[0];
-        for (int d = 0; d < 4; d++) if (nbr[prev * 4 + d] == head) hd = d;
+        for (int d = 0; d < 4; d++) if (nbr[prev * 4 + d] == head) dir = d;
     }
-    bool gossip = ROUND >= P.gossipFrom;
-    uint64_t status = packStatus(head, hd);
-    uint64_t fount = (!KM && !gossip) ? packFount(ROUND) : 0;
-    uint64_t qv = packQueenInfo(PK_QUEEN, queen);
-    uint64_t ev = eqFresh(20) ? packQueenInfo(PK_ENEMYQ, eq) : 0;
-    int dirs[4] = {hd, (hd + 3) % 4, (hd + 1) % 4, opp(hd)};
-    uint64_t vals[4];
-    vals[0] = status;
-    if (gossip) { vals[1] = qv; vals[2] = qv; vals[3] = ev ? ev : qv; }
-    else { vals[1] = status; vals[2] = fount ? fount : status; vals[3] = ev ? ev : status; }
-    int L = (int)pb.size();
-    bool tailOk = L >= 2 && pb[L - 1] >= 0 && pb[L - 2] >= 0;
-    for (int r = 0; r < 4; r++) {
-        int start = head, dir = dirs[r];
-        if (r == 3) {
-            // a ray sent backwards leaves from the tail, pointing away from the body
-            if (!tailOk) continue;
-            start = pb[L - 1]; dir = -1;
-            for (int d = 0; d < 4; d++) if (nbr[pb[L - 2] * 4 + d] == pb[L - 1]) dir = d;
-            if (dir < 0) continue;
-        }
-        traceRay(pb, start, dir, rays[nRays]);
-        nRays++;
-        printf("SONAR %c %llu\n", DCH[dirs[r]], (unsigned long long)vals[r]);
+    int c = head;
+    for (int k = 0; k < W + H; k++) {
+        c = nbr[c * 4 + dir];
+        if (c < 0) break;
+        lastRay.push_back(c);
     }
-    raysValid = moveKnown;
+    printf("SONAR %c 0\n", DCH[dir]);
 }
 
 static void fallback() {
@@ -2206,14 +1574,13 @@ int main() {
     while (readTurn()) {
         T0 = chrono::steady_clock::now();
         indicator.clear();
-        moveKnown = false;
         try {
             absorbView();
             think();
-            castRays();
         } catch (...) {
             fallback();
         }
+        castRadar();
         if (!indicator.empty()) printf("INDICATOR %s\n", indicator.c_str());
         printf("PROTOCOL 3\nENDTURN\n");
         fflush(stdout);

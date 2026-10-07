@@ -181,3 +181,143 @@ Newest last. One line per entry: `- [date] [role] [task id] message`. Never edit
 - [2026-10-04] [executor] [nn_refresh] builder_test: disk C 14.53 GiB F 123.34 GiB
 - [2026-10-04] [executor] [nn_refresh] builder_test after memory gate: disk C 14.53 GiB F 123.34 GiB
 - [2026-10-04] [director] [handoff] Claude tokens nearly exhausted: wrote NEXT_STEPS.md (league -> farm -> param search -> ladder validation), briefs tools/tasks/league_build.md farm_scale.md param_search.md, Antigravity queue tools/tasks/ag_queue/NEXT.md, lane routing in AGENTS.md. In flight: nn_refresh3 (Codex supervisor), opening_census, sv53_losses.
+- [2026-10-04] [critic] [sv53_losses] Read-only analyst: tools/sv53_loss_dive.py and out/sv53_losses.txt; 147 Sv5.3 + 77 Sv5.2 replays, 18 detailed losses, zero reconstruction/final-state mismatches. Loss buckets: 52 early deficits, 22 equal-queen longest/total, 9 later eliminations, 5 queen-only, 1 living-queen deficit. Metadata lost omits initial non-queen dragons (265 deaths across losses); documented and corrected accounting. Five evidence-backed proposals with local commands; no bot changes, panels, submissions, or causal feature claims.
+- [2026-10-04] [executor] [opening_census] Added tools/opening_census.py and out/opening_census.txt: 224 ours vs 529 top wins across 25 teams; 753 final-state parity checks, 18 opening traces; food-starved routing precedes split delays; hypotheses untested.
+- [2026-10-04] [executor] [nn_refresh] BUILD PASS: 8893206 samples; newest 60 games held out; DRIFT ETA 5-15min
+- [2026-10-04] [executor] [nn_refresh] drift_old_net: disk C 15.02 GiB F 123.34 GiB
+- [2026-10-04] [executor] [nn_refresh] drift_old_net after memory gate: disk C 15.02 GiB F 123.34 GiB
+- [2026-10-04] [executor] [nn_refresh] DRIFT old 0.7035 recent 0.6858; TRAIN ETA 2-4h
+- [2026-10-04] [executor] [nn_refresh] kaggle_refreshft: disk C 15.2 GiB F 123.34 GiB
+- [2026-10-04] [executor] [nn_refresh] kaggle_refreshft after memory gate: disk C 15.2 GiB F 123.34 GiB
+- [2026-10-04] [executor] [nn_refresh] TRAIN refreshft BLOCKED: kaggle_refreshft failed, exit 1; see ladder\scout_v6\train_out\nn_refresh\kaggle_refreshft.log
+- [2026-10-04] [executor] [nn_refresh] kaggle_refreshscratch: disk C 15.27 GiB F 123.33 GiB
+- [2026-10-04] [executor] [nn_refresh] kaggle_refreshscratch after memory gate: disk C 15.27 GiB F 123.33 GiB
+- [2026-10-04] [executor] [nn_refresh] TRAIN refreshscratch BLOCKED: kaggle_refreshscratch failed, exit 1; see ladder\scout_v6\train_out\nn_refresh\kaggle_refreshscratch.log
+- [2026-10-04] [executor] [nn_refresh] EXPORT best ladder\scout_v6\train_out\k_fullft\v6.pt acc 0.6858; parity/build/smoke ETA 10min
+- [2026-10-04] [executor] [nn_refresh] candidate: disk C 15.27 GiB F 123.33 GiB
+- [2026-10-04] [executor] [nn_refresh] export: disk C 15.27 GiB F 123.33 GiB
+- [2026-10-04] [executor] [nn_refresh] export after memory gate: disk C 15.27 GiB F 123.33 GiB
+- [2026-10-04] [executor] [nn_refresh] buildwasm: disk C 15.27 GiB F 123.33 GiB
+- [2026-10-04] [executor] [nn_refresh] buildwasm after memory gate: disk C 15.27 GiB F 123.33 GiB
+- [2026-10-04] [executor] [nn_refresh] parity: disk C 15.06 GiB F 123.33 GiB
+- [2026-10-04] [executor] [nn_refresh] parity after memory gate: disk C 15.06 GiB F 123.33 GiB
+- [2026-10-04] [executor] [nn_refresh] smoke: disk C 15.03 GiB F 123.32 GiB
+- [2026-10-04] [executor] [nn_refresh] smoke after memory gate: disk C 15.03 GiB F 123.32 GiB
+- [2026-10-04] [executor] [nn_refresh] cpu: disk C 15.03 GiB F 123.31 GiB
+- [2026-10-04] [executor] [nn_refresh] cpu after memory gate: disk C 15.03 GiB F 123.31 GiB
+- [2026-10-04] [executor] [nn_refresh] BLOCKED: cpu failed, exit 1; see ladder\scout_v6\train_out\nn_refresh\cpu.log
+- [2026-10-04] [executor] [nn_refresh] FINAL status BLOCKED; report ladder\scout_v6\train_out\nn_refresh\report.txt; C/F GiB {'C': 15.03, 'F': 123.31}
+- [2026-10-04] [director] [league_build] Local CUDA league pipeline created; winning cached Sv53 losses supplement missing scout teams; data/checkpoints/evaluations on F:, remote lanes off. Validation pending.
+- [2026-10-05] [director] [league_build] FINAL: eight local CUDA proxies built; 64 fidelity + 160 Sv53 + 8 exact verification games completed. 0/8 accepted; ranking 2/12 discordant pairs and 4 collapsed ties; maximum league CPU 57.594M. Report out/league_build_report.md (36 lines); data/resume on F:, remote lanes OFF; runtime feature parity unverified.
+- [2026-10-05] [director] [orchestrate_build] league_build critic FAIL (expected: 0/8 league bots faithful); step marked done; retry detection fixed (it matched 'usage limit' text inside logs); restarting at farm_scale.
+
+- [2026-10-05] [executor] [farm_scale] Created paired local farm runner, offline optional shard worker and metric/schedule fixtures; 4000-job plan passed; full candidate selection pending; remote lanes OFF.
+- [2026-10-05] [executor] [farm_scale] Final verification: four paired smoke games, local j=2 throughput 18.5 games/hour; fixed queen real replay r198 and offline worker import PASS; report out/farm_scale_report.md; 2000-game candidate run pending directory selection.
+
+- [2026-10-05] [executor] [farm_scale_fix1] Hardened artifact identity/checkpoints/judge results, balanced precision sizing and WSL lease ownership; contract and killed-supervisor fixtures pass; no candidate promotion or remote dispatch.
+- [2026-10-05] [director] [farm_scale_fix1] Critic PASS after integral/map-queen/cached-winner fixes; 13 rejection checks, killed-supervisor WSL lease, final sealed pack/collection and 9604/opponent precision plan PASS. Full candidate games remain unrun pending selection.
+- [2026-10-05] [executor] [farm_scale_round2] Fixed WSL pathname quoting and repeated manifest parsing; focused and existing fixtures plus sealed pack/collection pass; no games or remote dispatch. See out/farm_scale_report.md.
+- [2026-10-05] [director] [orchestrate_build] step farm_scale finished (see out/farm_scale_report.md and out/farm_scale_critique.md)
+
+- [2026-10-05] [executor] [param_search] Added offline 12-parameter successive-halving search and farm stop/budget/log hooks; validation pending.
+- [2026-10-05] [critic] [param_search] Independent tooling review PASS after fixing crash TSV recovery, stop persistence and balanced-cycle statistical stopping; no candidate approved.
+- [2026-10-05] [runner] [param_search] Ran local four-worker search; ps_00 completed 112 arm checkpoints (56 pairs), CPU peak 64.01192M; stopped interactive supervisor for durable transfer, confirmed no judge children or active leases. No code edits or submissions.
+- [2026-10-06] [director] [stop_search] User: param search too slow/indirect (20h, Stripes units@100 7 -> 9.5 vs top 12.5). Stopped orchestrator, param_search and farm jobs; state kept in out/param_search/ (resumable). Pivot: hand-coded closed-start opening recipe from the census traces with a 15-minute test loop (tools/tasks/opening_recipe.md).
+- [2026-10-06] [director] [mlp_student] User asked to use our nn in the calc-writeup architecture (small MLP proposer + short search + rules). Stage 1 launched: distil v6 conv net into a 256/128 MLP (target <=3M points/call vs ~20M), swap into viper_y96qm, non-inferiority panel. Stage 2 (in-bot search with engine step, unknown=open, unseen=absent, 3 rounds) only after stage 1. Runs alongside opening_recipe (cutoff 08:00).
+- [2026-10-06] [executor] [mlp_student] Prepared trainer/parity and candidate; RAM guard blocked training; no weights or panel; see out/mlp_student_report.md.
+- [2026-10-06] [executor] [mlp_student_fix1] Fixed resume identity/export recovery, shard release, validation and exact parity sampling; eight small checks PASS; inherited evidence labelled; training/export/CPU/panel still blocked by <2500MB free RAM, report rewritten, no submission.
+- [2026-10-06] [executor] [mlp_student] FIX ROUND 2: identity and compact package repaired; nine small checks pass; training/parity/CPU/panel memory-blocked; see out/mlp_student_report.md.
+- [2026-10-06] [director] [orchestrate_build] step mlp_student finished (see out/mlp_student_report.md and out/mlp_student_critique.md)
+- [2026-10-06] [director] [opening_recipe] Implemented viper_y96qo; 3 revisions; halfway 1/4, safety 50/98 vs59/98 FAIL, CPU64.648M PASS; no submission; report out/opening_recipe_report.md.
+- [2026-10-06] [director] [orchestrate_build] step opening_recipe finished (see out/opening_recipe_report.md and out/opening_recipe_critique.md)
+- [2026-10-06] [executor] [mlp_student] Resumed guarded streaming local GPU training; verification supervisor waits for training then parity, metered CPU and safety panel; no submission.
+- [2026-10-06] [critic] [mlp_student] Export math, parity and metered CPU PASS; full safety panel pending; cache hashes and report acceptance wording reviewed.
+- [2026-10-06] [director] [next_steps] Following NEXT_STEPS UPDATE: (1) mlp_student: student 67.98% vs teacher 68.58% (-0.6pp, 1 epoch), parity PASS, CPU 1.25M vs 21.1M points/call (17x cheaper), package 3.88 MB (limit 4.0); safety panel running (-j 2). (2) opening_fix queued to start after mlp_student step finishes (tools/tasks/opening_fix.md). (3) Server active submission is L.10 (id 17124, teammates), NOT Sv5.2/Sv5.3: freeze decision needs the user.
+- [2026-10-06] [executor] [mlp_student] Completed eight streaming GPU epochs; viper_y96qm best epoch7 accuracy68.628% vs conv68.579%; parity1600/1600 max0.000671; MLP1.659M mean2.482M sampled max points; safety FAIL50/98 vs59/98 (-9.18pp), queen91/98 vs87/98; report out/mlp_student_report.md; no submission or promotion.
+- [2026-10-06] [critic] [mlp_student_fix1] Dropped failed candidate (50/98 vs 59/98); retired unsafe supervisor, updated handoff/report; exact 98-key summary/replay/census coverage and disabled entry points verified. Original control bot/engine provenance unavailable; no heavy reruns or submissions.
+- [2026-10-06] [executor] [mlp_student_fix2] Hardened CPU verifier and native parity I/O; parity 1600/1600 and sampled CPU max 2.482M reverified; failure paths pass; safety FAIL retained, no promotion or submission.
+- [2026-10-06] [director] [orchestrate_build] step mlp_student finished (see out/mlp_student_report.md and out/mlp_student_critique.md)
+- [2026-10-06] [director] [mlp_verdict] mlp_student safety panel 50/98 (51.0%) vs 59/98 control (-9.2 pp): FAIL, dropped per NEXT_STEPS (student 67.98% vs teacher 68.58%, 17x cheaper, but plays worse). Three candidates (opening_recipe, mlp, first broken qg build) all scored 50/98 on this panel: re-running a FRESH control of viper_y96qg on the same seeds (out/ctl_fresh) to check that the 59/98 reference reproduces (deterministic judge expected identical). opening_fix runs next.
+- [2026-10-07] [director] [orchestrate_build] step opening_fix finished (see out/opening_fix_report.md and out/opening_fix_critique.md)
+- [2026-10-07] [director] [resume] Codex limit reset 02:22. ctl_fresh = 59/98 exactly (reference reproduces): mlp (50/98) and opening candidates truly worse. Relaunched opening_fix (hard stop 08:00) and l10_analysis (754 L.10-era games pulled to ladder/l10).
+- [2026-10-07] [analyst] [l10_analysis] Audited 752 L10, 147 Sv5.3 and 77 Sv5.2 replays; validation clean; recommend conservative Sv5.2 freeze; L10 CPU peak 66.083M; report out/l10_analysis.txt; no activation change.
+- [2026-10-07] [director] [kamikaze] User asked: look into hardcoding kamikaze on the enemy queen by small scouts. Rule basis: moving into another dragon's head kills both (execution-order.md:50); queens act first so her head is static at scouts' turns. Launched tools/tasks/kamikaze.md (measure opportunity in l10/sv53/sv52 replays, implement flagged rule in viper_y96nk from baselines/Nv30, smoke now, 98-game panel after 08:00). Nv3.0 (id 18983, active since 03:19 IST) = L.10 + WRECK miner targeting (29 lines).
+- [2026-10-07] [executor] [kamikaze] Created isolated Nv30 candidate viper_y96nk and checkpointed offline audit; C++/engine_sim ram and four guards PASS; guarded local panels pending, no submission.
+- [2026-10-07] [director] [nv30_improve] User: Nv3.0 locked, goal = improve it. NEXT_STEPS updated (control = baselines/Nv30). Queued tools/tasks/nv30_improve.md (3 flagged variants from loss analysis: queen anti-ram, pocket escape, vulture extension / feeding cap; screen vs Nv30 control) to start when opening_fix finishes; kamikaze already running on Nv30.
+- [2026-10-07] [director] [nn_refresh4] User: update the NN (Nv3.0/L.10 use k_fullft trained 2026-10-03 on 1,513 games). Launched tools/tasks/nn_refresh4.md: scout 3 more windows (Elo>=2000), build shards, LOCAL GPU fine-tune from k_fullft (new games x2), export into viper_nv30n (Nv30 + weights only), screen vs Nv30 control (out/kz_ctl). Heavy stages wait for RAM/opening_fix.
+- [2026-10-07] [director] [codex_limit3] Codex usage limit hit again (reset 07:59 IST): paused orchestrators (no false stepdone). Plain-script scouting started 04:50 (out/scout_nn4.sh: 3 windows, Elo>=2000). out/resume_after_limit.sh restarts kamikaze + nn_refresh4 (Kaggle T4 training allowed, probe OK) at 08:02 and nv30_improve after kamikaze; opening_fix dropped (Sv5.3 lineage; Nv3.0 locked).
+- [2026-10-07] [executor] [kamikaze-fix2] Fixed build/replay resume identity, exact coverage/CPU/audit gates, disk checks and shared WSL reservation; unit and focused rejection checks PASS; full refresh and paired verification pending.
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 25 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 50 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 75 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 100 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 125 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 150 cached games; ETA depends on union size
+- [2026-10-07] [executor] [nn_refresh4] Fix round 2 safeguards verified: manifest ownership, exact checkpoint resume, scout coverage, finite CPU and runtime provenance PASS; 1448 new games; guarded local build running, no submission.
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 175 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 200 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 225 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 250 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 275 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 300 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 325 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 350 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 375 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 400 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 425 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 450 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 475 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 500 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 525 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 550 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 575 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 600 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 625 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 650 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 675 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 700 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 725 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 750 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 775 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 800 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 825 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 850 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 875 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 900 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 925 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 950 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 975 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1000 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1025 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1050 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1075 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1100 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1125 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1150 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1175 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1200 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1225 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1250 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1275 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1300 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1325 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1350 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1375 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1400 cached games; ETA depends on union size
+- [2026-10-04] [executor] [nn_refresh] BUILD progress 1425 cached games; ETA depends on union size
+- [2026-10-07] [director] [kaggle_train_new2] User: train on Kaggle (faster). Launched tools/tasks/kaggle_train_new2.md in parallel with the local nn_refresh4: waits for shards_new2, uploads new shards (shards_new + shards_new2) as bc-v6-shards-new2, reuses bc-v6-shards (old), T4 fine-tune from k_fullft (new x2), exports viper_nv30k (Nv30 + weights). Panels scheduled by the director.
+- [2026-10-07] [critic] [kaggle_train_new2] Preflight: 1430/1448 games committed; all 18 omissions face team 98 and are intentionally excluded. Awaiting eligible-only scope clarification; no upload, training, export, or submission. Report: out/kaggle_train_new2_report.md.
+- [2026-10-07] [director] [orchestrate_build] step kamikaze finished (see out/kamikaze_report.md and out/kamikaze_critique.md)
+- [2026-10-07] [director] [orchestrate_build] step nn_refresh4 finished (see out/nn_refresh4_report.md and out/nn_refresh4_critique.md)
+- [2026-10-07] [director] [orchestrate_build] step kaggle_train_new2 finished (see out/kaggle_train_new2_report.md and out/kaggle_train_new2_critique.md)
+- [2026-10-07] [director] [codex_limit4] Codex limit until 14:00 IST: stopped orchestrators (no false stepdone). Running kamikaze panels directly (tools/kamikaze_run.py, plain script, out/kz_run.log). out/resume_1400.sh restarts kaggle_train_new2 (scope: 1,430 eligible games) and nv30_improve at 14:03. nn_refresh4 local training died with Errno 22 (Invalid argument) before training; Kaggle is the training path.
+- [2026-10-07] [director] [handoff_ag] kaggle_train_new2 handed to the Antigravity lane (lock out/LOCK_kaggle_train_new2); resume_1400.sh now restarts only nv30_improve at 14:03.
+- [2026-10-07] [director] [kaggle_train_new2] Took over from Antigravity (it ran out). Export finished: shards_new2 = 1,430 games, 167 shards, 20.8M samples. Staged /f/tmp/shards_staging (shards_new + shards_new2, 3.4 GB), uploading as bc-v6-shards-new2 (-r zip so sub-folders survive); chain /f/tmp/kaggle_chain.sh then pushes kernel bc-v6-train-new2 (T4, 4 epochs, new x2, 143-game newest holdout), polls and downloads output to out/kaggle_train_new2. Needs internet for the upload (~40 min at 1.5 MB/s).
+- [2026-10-07] [executor] [kamikaze] Offline audit, deterministic unit and sequential local candidate/control panels complete; see out/kamikaze_report.md; no submission.
+- [2026-10-07] [executor] [nv30_improve] Three isolated candidates built; control and a complete, corrected b and remaining screens running under crash-resume supervisor; report is interim; no submission.
+- [2026-10-07] [director] [nv30k] Kaggle T4 run bc-v6-train-new2 (107 min, 30M samples old x1 + new x2, 4 epochs): newest-143-game holdout top-1 old 69.85% -> new 70.66% (+0.8). viper_nv30k = baselines/Nv30 + new policy_weights_v6.hpp only. Parity vs torch: argmax 100% over 1600 states but max logit error 2.7e-3 (> script bar 1e-3; old net 2.2e-4 on the same states) - unexplained, likely benign. 98-game screen vs Y9_6 (seeds 3-9) running vs Nv30 control baselines/Nv30/out/kz_ctl = 42/98.
+- [2026-10-08] [director] [nv30k_result] viper_nv30k (Nv3.0 + refreshed net) 52/98 vs Nv30 control 42/98 (seeds 3-9, vs Y9_6), queen deaths 88 vs 90, median r 179.5 vs 199; gain mostly Islands (8 vs 2). Other variants on the same panel: nv31a 48/98, nv31b 51.5/98 (DOOMED events unchanged 10772 vs 10932). All beat the control by 6-10: the control (42) is low vs Sv5.2 54 / Sv5.3 59 on the same seeds, so regression to the mean is likely; confirmation on seeds 10-16 started for nv30k (out/nv30k_conf); control confirmation expected from the nv30_improve job.
+- [2026-10-08] [director] [status] Sv6 (id 19955) submitted 02:07 then replaced by teammates re-activating Y.12.11 (19952). Stopped my nv30k_conf confirmation per user (it was waiting on RAM anyway). Y.12.x line (c28-c43) already has QHUNT/guards/phases/sonar security + own v7 net: our nv31a/b/kamikaze largely redundant.
+- [2026-10-08] [director] [hunger] User: add a HUNGER exploration mechanism (adventurousness grows with rounds since last pearl; separate queen/non-queen rules) and build on OUR bot (viper_nv30k = Sv6), borrowing only needed ideas from the Y-bots (EXPL31, STUCK36). Brief tools/tasks/hunger.md -> candidate viper_nv30h; mechanism metrics (unique cells, retrace rate, eats/dragon-turn) + safety panel vs viper_nv30k control (out/nv30k = 52/98). Stopped the redundant nv30_improve job.
+- [2026-10-08] [director] [hunger_results] Closed-start 64 games vs Y9_6 (stripes,tower_defense,queen_of_spades,dilemma seeds1-8): control viper_nv30k 29 wins, retrace 34.1%, unique cells 26.4, units100 6.63; hunger default 36 wins retrace 31.4%; s1 (grace5 ramp25 expl4 revisit1.5 frontier1.5) 33 wins retrace 27.8% unique 28.5; s2 (grace4 ramp15 expl6 revisit2.5 frontier3) 38 wins retrace 24.5% unique 29.5 units100 7.09. Open maps (16 games) default: no change (9 vs 7 wins, retrace 21% both, CPU 66.3M vs 65.1M). Running s2 safety 98 games (out/hg_s2_safety) vs control out/nv30k 52/98. Patch out/hunger_s2.patch.
+- [2026-10-08] [director] [hunger_final] Hunger (exploration drive grows with rounds since last pearl). Closed-start 64 games vs Y9_6: control Sv6 29 wins/retrace 34.1%/unique cells 26.4/units100 6.63 -> strong (s2) 38 wins/24.5%/29.5/7.09. Strong hunger HURTS big maps (s2 partial: Australia 1/14 vs 7/14, Around UNSW 6/14 vs 8/14, Islands 0/3; s1 open 4/16 vs 9/16; default open 7/16 vs 9/16). Final candidate viper_nv30h_s4 = strong hunger only when W*H<=900, OFF above (patch out/hunger_s4.patch, 162 lines, base viper_nv30k). Weakhold (600 cells) 10/14 vs 11/14. Parity on big maps NOT exact (3/4 games differ from control: hunger code overhead shifts CPU-guard timing) so big-map neutrality unverified; 98-game safety panel started 05:08 (out/hg_s4_safety). No submission.

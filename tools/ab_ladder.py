@@ -79,7 +79,7 @@ def wait_all(battle_ids, deadline):
         bl = api("/battles?limit=60")
         bl = bl.get("battles", bl) if isinstance(bl, dict) else bl
         for b in bl:
-            if b["id"] in pending and b.get("outcome") not in ("live", "queued"):
+            if isinstance(b, dict) and b.get("id") in pending and b.get("outcome") not in ("live", "queued"):
                 results[b["id"]] = b
                 pending.discard(b["id"])
         if pending:
@@ -121,7 +121,7 @@ def run_arm(label, sub_id, teams, maps, out, deadline):
             opp_side = "B" if side == "A" else "A"
             opp_name = detail["teamBName"] if side == "A" else detail["teamAName"]
             opp_elo = detail["teamBElo"] if side == "A" else detail["teamAElo"]
-            win = g["winner"] == side
+            win = str(g.get("winner")).lower() == side.lower()
             wins += win
             losses += not win
             dst = out / label / f"{g['id']}.replay"

@@ -50,4 +50,7 @@ A short, honest account of what we tried, what the data said, and what we learne
 - A long automated search was started before the measurement problem (a faithful yardstick) was solved.
 
 ## Where to start if you continue
-`NEXT_STEPS.md`, then `reports/` for each experiment's verdict, then `tools/README` pointers in `AGENTS.md`.
+`README.md` lists the docs. Read `docs/BOT_HISTORY.md` (what exists and how it scored), then `docs/GAME_KNOWLEDGE.md`
+and `docs/TOOLS_AND_OPS.md`; `reports/` holds each experiment's verdict. The original working notes that were merged
+into these docs (playbooks, handoffs, research notes, task briefs) were removed in the 2026-10-14 cleanup and remain
+in git history, for example `git show 4c202f8:S4_7_PLAYBOOK.md` or `git ls-tree -r --name-only 4c202f8 research_new_meta`.

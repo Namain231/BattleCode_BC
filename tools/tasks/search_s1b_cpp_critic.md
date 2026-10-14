@@ -1,1 +1,0 @@
-Review engine_cpp read-only. Check reference derivation, new rules, branch safety and verification claims. Return <=10 lines, verdict PASS/FAIL and concrete fixes. Exact verify: python engine_cpp/verify.py --library /dev/shm/search_s1b_cpp/libengine.so /dev/shm/search_s1b_cpp/replays . No skipped game is a pass. Do not append AGENT_LOG: user permits one executor line only.

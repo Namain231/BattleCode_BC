@@ -1,4 +1,0 @@
-# search_followup S1b
-Build only engine_cpp/host.cc as official reference into ~/toolchains/zig-judge-out-s1b; no shipped bot/baseline edits. Compare 100 games ten live maps seeds123..222. Check Windows disk before/after builds and stop under1.5GB; max build/game parallelism2. Fix observed engine_cpp divergences; record exact mismatch if unresolved in research_new_meta/engine_cpp_status.md. Append ASCII UTF8 log only.
-Verify: wsl -d Ubuntu -- /home/sohan/toolchains/zig-judge-out-s1b/bin/loong-judge --engine /mnt/c/Users/sohan/AppData/Local/uv/cache/archive-v0/4Hmu77GCQL90pPgp/Lib/site-packages/unswbc/unswbc_engine.wasm --lockstep /mnt/c/Users/sohan/Downloads/BattleCode_BC/engine_cpp/lockstep_maps.txt --games 100 --seed 123
-Build: cd ~/the-loong-game/examples/tooling; just zig-judge-build -j2 --prefix /home/sohan/toolchains/zig-judge-out-s1b -Dreference-source=/mnt/c/Users/sohan/Downloads/BattleCode_BC/engine_cpp/host.cc

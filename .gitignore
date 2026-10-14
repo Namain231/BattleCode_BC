@@ -30,3 +30,5 @@ wasm_cache/
 tools/tasks/*.diff
 tools/tasks/*.exec.log
 tools/tasks/*.critique.log
+
+secrets.env

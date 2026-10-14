@@ -25,3 +25,6 @@ maps: look at these only for final checks).
     python3 summarize.py results*.tsv            # win rate per pairing, 95% CI, per map family
 
 GPUs do not help: games are CPU-bound WebAssembly. What scales is CPU cores across machines.
+
+## Current paired farm (2026-10-05)
+Use tools/farm_run.sh and farm/README_SCALE.md for the 17-map paired opening-metric farm. The scripts above are the legacy prototype; remote lanes stay OFF by default.

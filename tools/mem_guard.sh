@@ -1,7 +1,7 @@
 #!/bin/bash
 # Waits until free physical memory is above a safe floor before letting a caller proceed.
 # Usage: bash tools/mem_guard.sh [min_mb]
-MIN_MB=${1:-3000}
+MIN_MB=${MEM_GUARD_MIN:-${1:-3000}}
 while true; do
   FREE_KB=$(powershell.exe -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory" 2>/dev/null | tr -d '\r')
   if [ -z "$FREE_KB" ]; then sleep 10; continue; fi

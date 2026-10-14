@@ -1,0 +1,1576 @@
+L10 ANALYSIS SUMMARY -- 2026-10-07
+Recommendation: freeze Sv5.2 (viper_y96qf), conservatively; no activation/submission was performed.
+L10 355/752 = 47.2% (Wilson95% 43.7-50.8); Sv5.3 58/147 = 39.5% (31.9-47.5); Sv5.2 29/77 = 37.7% (27.7-48.8).
+L10 faced easier opponents (mean Elo1697 vs1780 Sv5.3); its raw lead is not a controlled improvement.
+Shared opponents: L10 minus Sv5.3 +2.9pp (Newcombe95% -10.4,+15.7); minus Sv5.2 +1.6pp (-18.8,+20.8).
+Equal-weight shared opponent/map rates favor older builds; sparse historical comparisons cannot establish a causal ranking.
+L10 queen died503/752 (66.9%), medianr183: headon355, wall90, self43, body15. Shared-opponent survival advantage is small.
+L10 losses: early unit deficit231/397; equal-queen longest/total101; dead-queen tiebreak22; living-queen deficit15; elimination28.
+L10 mean units ours/enemy: r50 12.36/12.76 (n752); r100 20.09/21.89 (n741; early-ended games excluded).
+L10 is Sv5.2 with stronger pearl competition/routing and a small-drone risk discount. v6 weights identical; n4 difference is line endings only.
+It retains legacy QPOS/echo/queen spacing, CPU1/FSPRINT/SEARCH1/amputation/QBOX; it lacks Sv5.3 encryption/status/guard/intercept/laneEcho/enemyPing.
+Updated map tables are identical to Sv5.2/3. Compass routing benefits known maps only; AGGR1 also changes early queen foraging.
+CPU: live L10 peak66.083242M on64x64 Australia; cached current-hash four-game smoke peak64.925890M, 0/4 wins. No hard worst-case CPU guarantee.
+Team Elo1682 before upload ->1660 latest; replay-matched155 series net-15. Full history includes later games without replay attribution.
+All976 included replays pass ID/count/queen checks; two missing-ID L10 pull rows excluded. Source/model/CPU/seed-control limits are detailed below.
+A fresh balanced same-time comparison on unseen maps, including late big-map CPU and queen survival, could change the recommendation.
+
+FULL ANALYSIS
+L10 ANALYSIS -- 2026-10-07 -- original queens determine first tiebreak under current rules
+SOURCE: baselines/L10, Sv5.3=viper_y96qg, Sv5.2=viper_y96qf, Y9_6=baselines/Y9_6.
+L10 is the v6/CPU1/FSPRINT/SEARCH1/queenAmputate rules line with extra aggression, not a new trained v6 model.
+Compared with Y9_6: switches from n4 (16 planes/3 scalars/6 outputs) to v6 (19/6/7), adding queen memory and enemy sprint reach inputs. Only first-direction logits reorder moves within safety classes; extra action outputs are not directly executed.
+Opening changes: enemyCloser .55 -> .85 and enemyTie .8 -> 1.0 value contested pearls more; wCompass .8 -> 1.6; region routing expands from one third of small miners with >=6 units to ALL length<=6 drones with >=2 units before r150. Routing remains known-map-only and excludes true/elected queens. Unknown maps do not receive this compass benefit. URISK19 multiplies head-threat probability by .6 for nonqueen length<=4 drones once >=8 units, reducing risk aversion. QSAFE triples the true queen danger score penalty (all rounds).
+Contains: legacy QPOS four queen rays from r200, stale-position landing buffer, qfeedFrom=280, authenticated queen gossip from r300, portal probes/exploration; CPU1 O(1) enemy reach and 48ms DFS/free-path guards, 52ms attack/option guards, 40ms NN admission; FSPRINT all free 2/3-step paths; SEARCH1 trap veto; queenAmputate and QBOX fallback; updated known-map tables.
+Does NOT contain Sv5.3 early QPOS from r12/heading/mode/threat extensions, encrypted payload, STATUS ray/relay, guardZone new-exit obstruction penalty, guardIntercept assignment, Bayesian laneEcho or enemyPing alarm. qFreeze was false in Sv5.3 anyway. Sv5.2 also lacks that guard system. L10 returns to Sv5.2 sonar layout, with plaintext low-48-bit fields plus a 16-bit SipHash tag; authenticity is not confidentiality. Coordinates/queen length/id/source-round are readable in public replays. Indicators disclose target coordinates, evaluation and AMPUTATE/QBOX/SEARCH1 decisions.
+CPU risk: evaluate disables DFS at 48ms and DFS checks every 64 nodes; options stop after >=2 at >52ms. NN can start at 40ms and forward has no interruption; queenAmputate starts <62ms, checks 60ms only between split sizes, and may run four full evaluations within a size. Flood fill, initial buildReaches/field and minimum two option evaluations are not hard bounded by these admission guards. Removing Sv5.3 status/echo reduces some work but does not establish a safe peak on 64x64.
+Amputation premise risk (shared with Sv5.2/3): assumes child moves and frees its tail before next queen turn; occupied-child cells are only partially modeled during evaluate, and future enemy actions are uncertain. QBOX-SHED is a rescue heuristic, not a survival proof. Attack danger discount and extra routing may trade opening units for growth. Legacy four aggregate rays after r200 disable a uniquely localized forward radar; there is no Sv5.3 ambiguity bookkeeping. Child split does not move parent; legacy code relies on chosenCells being empty on split paths.
+Normalized source diff vs baselines/Y9_6: added=189 removed=36
+policy_weights.hpp vs baselines/Y9_6: byte_equal=False, newline_normalized_equal=True
+policy_nn.hpp vs baselines/Y9_6: byte_equal=True, newline_normalized_equal=True
+maps_data.hpp vs baselines/Y9_6: byte_equal=False, newline_normalized_equal=False
+Normalized source diff vs viper_y96qf: added=4 removed=3
+policy_weights.hpp vs viper_y96qf: byte_equal=False, newline_normalized_equal=True
+policy_nn.hpp vs viper_y96qf: byte_equal=True, newline_normalized_equal=True
+policy_weights_v6.hpp vs viper_y96qf: byte_equal=True, newline_normalized_equal=True
+policy_nn_v6.hpp vs viper_y96qf: byte_equal=True, newline_normalized_equal=True
+maps_data.hpp vs viper_y96qf: byte_equal=False, newline_normalized_equal=True
+Normalized source diff vs viper_y96qg: added=31 removed=276
+policy_weights.hpp vs viper_y96qg: byte_equal=False, newline_normalized_equal=True
+policy_nn.hpp vs viper_y96qg: byte_equal=True, newline_normalized_equal=True
+policy_weights_v6.hpp vs viper_y96qg: byte_equal=True, newline_normalized_equal=True
+policy_nn_v6.hpp vs viper_y96qg: byte_equal=True, newline_normalized_equal=True
+maps_data.hpp vs viper_y96qg: byte_equal=False, newline_normalized_equal=True
+n4 policy_weights.hpp differs ONLY in newline encoding: normalized text is identical to Y9_6/Sv5.2/Sv5.3. No weight retraining or manual weight edit; n4 is unused by L10 main include. v6 weights/inference headers byte-identical to both Sv builds.
+Table changed vs Y9_6: autarky.map m1_gaps; integer count 1944->1944
+Table changed vs Y9_6: autarky.map m1_spawns; integer count 82->82
+Table changed vs Y9_6: default.map m4_edges; integer count 960->976
+Table changed vs Y9_6: dilemma.map m7_gaps; integer count 1024->1024
+Table changed vs Y9_6: dilemma.map m7_spawns; integer count 46->46
+Table changed vs Y9_6: schooltime.map m10_edges; integer count 3748->3812
+Table changed vs Y9_6: slithery_fight.map m11_gaps; integer count 3402->3402
+Table changed vs Y9_6: slithery_fight.map m11_spawns; integer count 122->122
+Table changed vs Y9_6: trophy.map m14_edges; integer count 360->376
+Table changed vs Y9_6: trophy.map m14_gaps; integer count 1250->1250
+Table changed vs Y9_6: trophy.map m14_spawns; integer count 20->20
+No tables differ from Sv5.2 or Sv5.3 after newline normalization; 15-map inventory unchanged. Updates are Autarky gaps/spawns, Default edges, Dilemma gaps/spawns, Schooltime edges, Slithery gaps/spawns, Trophy edges/gaps/spawns. Unknown-map generation is not represented by new tables.
+Source anchor main.cpp:1093: if (UNITS >= 8 && L <= 4 && !isTrueQueen()) p *= 0.6;  // URISK19: a swarm can afford risky drones (Trophy vs Check Raise r50-100: our drones skipped the centre pearls, ate 10 vs 124)
+Source anchor main.cpp:1127: // QSAFE: ladder Devil vs Quaker r415-426: our queen (theirs dead since r19 = a sure win) chased pearls T26,15 into
+Source anchor main.cpp:1146: score -= isTrueQueen() ? 3.0 * danger : danger;  // QSAFE
+Source anchor main.cpp:1167: if (isTrueQueen() && s.outside) score -= 120.0;  // NEWRULES + QSAFE (Trauma vs Quaker r362: portal step -> DOOMED)
+Source anchor main.cpp:1189: if (effK(hc, d) == 3) pp = max(pp, 40.0);  // QSAFE: Trauma vs Peanut Butter r452: a friend came out of a portal onto her head (their queen dead since r41)
+Source anchor main.cpp:1362: static bool queenAmputate(double curPd) {
+Source anchor main.cpp:1567: static uint64_t packSecure(uint64_t payload, int kind, int txRound) {
+Source anchor main.cpp:1824: if (bigFeed || ROUND >= P.nnUntil || P.wNN <= 0 || body.empty() || body[0] < 0 || elapsedMs() > 40) return;
+Source anchor main.cpp:1898: MY_LEN <= 6 && UNITS >= 2 && body[0] >= 0 && elapsedMs() <= 40) { // RUSH21: every small drone races for the rich region (Trophy vs Check Raise: whoever eats the cup in r<50 won 5/5)
+Source anchor main.cpp:1905: if (elapsedMs() > 40) { complete = false; break; }
+Source anchor main.cpp:1921: if (elapsedMs() > 40) { complete = false; break; }
+Source anchor main.cpp:1980: if (i >= 2 && elapsedMs() > 52) { opts.resize(i); break; }   // CPU1: keep >= 2 options, admit more only under the shared deadline
+Source anchor main.cpp:2148: static void castRadar() {
+L10 metadata bot counts {'17124': 752, 'missing': 2}
+Replay bot identity exclusions []
+
+L10 355/752 (47.2%; Wilson 95% 43.7-50.8%)
+Ranked 335/698 (48.0%; Wilson 95% 44.3-51.7%); unranked 20/54 (37.0%; Wilson 95% 25.4-50.4%)
+Draws 0 (strict wins, draws counted in N)
+Queen death 503/752; 95% 63.4-70.2%; round mean=214.27 median=183; causes={'headon': 355, 'self': 43, 'wall': 90, 'body': 15}; <=50=30 <=100=114
+Loss buckets (exclusive, early deficit takes precedence): {'equal queens; longest/total deficit or draw': 101, 'early unit deficit <=80% at r100': 231, 'queen-only tiebreak (our queen dead)': 22, 'living queen length deficit': 15, 'elimination without measured early deficit': 28}
+Loss queen deaths {'self': 21, 'headon': 265, 'wall': 52, 'body': 11}
+Losses our queen dead/enemy living 89
+units@r50: n=752 mean ours/enemy [12.36, 12.76]; mean paired margin=-0.4; early-ended excluded=0
+units@r100: n=741 mean ours/enemy [20.09, 21.89]; mean paired margin=-1.8; early-ended excluded=11
+Validation {}
+Indicators {'S1[': 24861, 'FEED': 11180, 'QBOX': 294, 'AMPUTATE': 135}
+Nonzero replay CPU peak 66083242 (zero means stripped/unavailable, not zero cost)
+BY opp
+1234: 2/5 (40.0%; Wilson 95% 11.8-76.9%); qdead=4/5
+777: 5/5 (100.0%; Wilson 95% 56.6-100.0%); qdead=1/5
+:3: 1/5 (20.0%; Wilson 95% 3.6-62.4%); qdead=3/5
+ASI: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=4/5
+Akatsuki: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=3/5
+All Roads Lead to Makuhari: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=1/5
+CURSEYOUBAYLE: 7/10 (70.0%; Wilson 95% 39.7-89.2%); qdead=9/10
+Check Raise: 2/9 (22.2%; Wilson 95% 6.3-54.7%); qdead=7/9
+Citadel Insecurities: 11/15 (73.3%; Wilson 95% 48.0-89.1%); qdead=8/15
+CookAgent: 6/20 (30.0%; Wilson 95% 14.5-51.9%); qdead=13/20
+DIET CODE: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=3/5
+DeepSeek-V4.1-Flash: 2/10 (20.0%; Wilson 95% 5.7-51.0%); qdead=9/10
+Deer Park: 7/20 (35.0%; Wilson 95% 18.1-56.7%); qdead=12/20
+EternalWisdom: 10/15 (66.7%; Wilson 95% 41.7-84.8%); qdead=7/15
+Hydra: 3/15 (20.0%; Wilson 95% 7.0-45.2%); qdead=14/15
+JalSena: 4/5 (80.0%; Wilson 95% 37.6-96.4%); qdead=4/5
+Jet2Holiday: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=5/5
+Jingling Munmin: 12/20 (60.0%; Wilson 95% 38.7-78.1%); qdead=13/20
+Just Keep Swimming: 15/45 (33.3%; Wilson 95% 21.4-47.9%); qdead=36/45
+Kerwin: 13/20 (65.0%; Wilson 95% 43.3-81.9%); qdead=17/20
+Loremipsum: 10/15 (66.7%; Wilson 95% 41.7-84.8%); qdead=7/15
+Maccas: 1/5 (20.0%; Wilson 95% 3.6-62.4%); qdead=4/5
+Manny: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=4/5
+Martin Shkreli’s Defense Team: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=3/5
+Milk Dragon: 5/5 (100.0%; Wilson 95% 56.6-100.0%); qdead=1/5
+NUSW Battlecode: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=3/5
+NeungzAI: 7/10 (70.0%; Wilson 95% 39.7-89.2%); qdead=4/10
+Nitronics: 4/10 (40.0%; Wilson 95% 16.8-68.7%); qdead=8/10
+Oswald: 7/11 (63.6%; Wilson 95% 35.4-84.8%); qdead=8/11
+POFPOF: 2/5 (40.0%; Wilson 95% 11.8-76.9%); qdead=3/5
+Peanut Butter: 1/5 (20.0%; Wilson 95% 3.6-62.4%); qdead=4/5
+Ravenus: 15/40 (37.5%; Wilson 95% 24.2-53.0%); qdead=30/40
+Ron Squad: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=4/5
+R∞: 5/10 (50.0%; Wilson 95% 23.7-76.3%); qdead=4/10
+STAR: 0/5 (0.0%; Wilson 95% 0.0-43.4%); qdead=4/5
+Sarvottam: 7/10 (70.0%; Wilson 95% 39.7-89.2%); qdead=7/10
+Shannon: 12/15 (80.0%; Wilson 95% 54.8-93.0%); qdead=8/15
+Sieberrsec Industrie: 15/30 (50.0%; Wilson 95% 33.2-66.8%); qdead=16/30
+Spearhead Capital: 2/5 (40.0%; Wilson 95% 11.8-76.9%); qdead=3/5
+Squishy: 5/9 (55.6%; Wilson 95% 26.7-81.1%); qdead=7/9
+StarStruck: 4/10 (40.0%; Wilson 95% 16.8-68.7%); qdead=8/10
+SuitedConnectors: 4/5 (80.0%; Wilson 95% 37.6-96.4%); qdead=2/5
+TheActualPlayer: 3/10 (30.0%; Wilson 95% 10.8-60.3%); qdead=8/10
+Um_nik da real goat: 10/25 (40.0%; Wilson 95% 23.4-59.3%); qdead=17/25
+Z-A: 6/10 (60.0%; Wilson 95% 31.3-83.2%); qdead=5/10
+aisakastrats: 10/20 (50.0%; Wilson 95% 29.9-70.1%); qdead=10/20
+avid coders: 4/15 (26.7%; Wilson 95% 10.9-52.0%); qdead=13/15
+btop: 2/5 (40.0%; Wilson 95% 11.8-76.9%); qdead=4/5
+byte_force: 2/5 (40.0%; Wilson 95% 11.8-76.9%); qdead=3/5
+doofenshmirtz good incorporated: 4/5 (80.0%; Wilson 95% 37.6-96.4%); qdead=2/5
+err404: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=3/5
+f2p: 3/10 (30.0%; Wilson 95% 10.8-60.3%); qdead=10/10
+hm: 2/4 (50.0%; Wilson 95% 15.0-85.0%); qdead=2/4
+life is NP hard: 1/5 (20.0%; Wilson 95% 3.6-62.4%); qdead=5/5
+meowest: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=2/5
+nooberGamer: 4/10 (40.0%; Wilson 95% 16.8-68.7%); qdead=7/10
+okbro: 9/25 (36.0%; Wilson 95% 20.2-55.5%); qdead=15/25
+pizza: 9/20 (45.0%; Wilson 95% 25.8-65.8%); qdead=14/20
+python.io: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=3/5
+risq-v: 2/6 (33.3%; Wilson 95% 9.7-70.0%); qdead=5/6
+solo😎: 5/10 (50.0%; Wilson 95% 23.7-76.3%); qdead=4/10
+sonarstar0: 5/5 (100.0%; Wilson 95% 56.6-100.0%); qdead=3/5
+the uncancelables: 2/5 (40.0%; Wilson 95% 11.8-76.9%); qdead=4/5
+tozoman: 14/23 (60.9%; Wilson 95% 40.8-77.8%); qdead=10/23
+verity: 3/10 (30.0%; Wilson 95% 10.8-60.3%); qdead=9/10
+very creative team name: 2/10 (20.0%; Wilson 95% 5.7-51.0%); qdead=7/10
+we love gru: 1/5 (20.0%; Wilson 95% 3.6-62.4%); qdead=3/5
+y: 2/10 (20.0%; Wilson 95% 5.7-51.0%); qdead=9/10
+zach: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=3/5
+龙虎豹: 1/5 (20.0%; Wilson 95% 3.6-62.4%); qdead=4/5
+🔴🔵⚪️: 4/5 (80.0%; Wilson 95% 37.6-96.4%); qdead=4/5
+BY map
+Around UNSW: 22/50 (44.0%; Wilson 95% 31.2-57.7%); qdead=42/50
+Australia: 29/50 (58.0%; Wilson 95% 44.2-70.6%); qdead=40/50
+Autarky: 23/38 (60.5%; Wilson 95% 44.7-74.4%); qdead=19/38
+Default: 28/42 (66.7%; Wilson 95% 51.6-79.0%); qdead=27/42
+Devil: 18/42 (42.9%; Wilson 95% 29.1-57.8%); qdead=28/42
+Islands: 23/48 (47.9%; Wilson 95% 34.5-61.7%); qdead=41/48
+Maze: 7/45 (15.6%; Wilson 95% 7.7-28.8%); qdead=41/45
+Portals: 27/49 (55.1%; Wilson 95% 41.3-68.1%); qdead=34/49
+Prisoners Dilemma: 21/44 (47.7%; Wilson 95% 33.8-62.1%); qdead=23/44
+Queen Of Spades: 25/44 (56.8%; Wilson 95% 42.2-70.3%); qdead=21/44
+Schooltime: 15/42 (35.7%; Wilson 95% 23.0-50.8%); qdead=0/42
+Slithery Fight: 13/31 (41.9%; Wilson 95% 26.4-59.2%); qdead=22/31
+Stripes: 9/47 (19.1%; Wilson 95% 10.4-32.5%); qdead=43/47
+Tower Defense: 14/45 (31.1%; Wilson 95% 19.5-45.7%); qdead=37/45
+Trauma: 29/50 (58.0%; Wilson 95% 44.2-70.6%); qdead=14/50
+Trophy: 20/38 (52.6%; Wilson 95% 37.3-67.5%); qdead=27/38
+weakhold: 32/47 (68.1%; Wilson 95% 53.8-79.6%); qdead=44/47
+Sv5.3 metadata bot counts {'16106': 19, 'missing': 1, '16863': 5, '16651': 147}
+Replay bot identity exclusions []
+
+Sv5.3 58/147 (39.5%; Wilson 95% 31.9-47.5%)
+Ranked 29/65 (44.6%; Wilson 95% 33.2-56.7%); unranked 29/82 (35.4%; Wilson 95% 25.9-46.2%)
+Draws 0 (strict wins, draws counted in N)
+Queen death 115/147; 95% 70.9-84.1%; round mean=207.2 median=183; causes={'wall': 15, 'headon': 90, 'self': 6, 'body': 4}; <=50=6 <=100=29
+Loss buckets (exclusive, early deficit takes precedence): {'early unit deficit <=80% at r100': 52, 'queen-only tiebreak (our queen dead)': 5, 'equal queens; longest/total deficit or draw': 22, 'elimination without measured early deficit': 9, 'living queen length deficit': 1}
+Loss queen deaths {'wall': 9, 'headon': 66, 'self': 4, 'body': 4}
+Losses our queen dead/enemy living 30
+units@r50: n=147 mean ours/enemy [13.29, 14.07]; mean paired margin=-0.78; early-ended excluded=0
+units@r100: n=145 mean ours/enemy [21.9, 25.01]; mean paired margin=-3.1; early-ended excluded=2
+Validation {}
+Indicators {'QBOX': 31, 'S1[': 4559, 'FEED': 2459, 'AMPUTATE': 32}
+Nonzero replay CPU peak 66162092 (zero means stripped/unavailable, not zero cost)
+BY opp
+1234: 2/5 (40.0%; Wilson 95% 11.8-76.9%); qdead=5/5
+Check Raise: 2/5 (40.0%; Wilson 95% 11.8-76.9%); qdead=3/5
+Delusion Tax: 1/5 (20.0%; Wilson 95% 3.6-62.4%); qdead=4/5
+Jet2Holiday: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=4/5
+Jingling Munmin: 0/5 (0.0%; Wilson 95% 0.0-43.4%); qdead=4/5
+Just Keep Swimming: 7/17 (41.2%; Wilson 95% 21.6-64.0%); qdead=12/17
+Memory?: 5/5 (100.0%; Wilson 95% 56.6-100.0%); qdead=3/5
+Nexus Lab: 4/5 (80.0%; Wilson 95% 37.6-96.4%); qdead=2/5
+No Idea: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=2/5
+Sarvottam: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=4/5
+Vodyanitsa: 5/9 (55.6%; Wilson 95% 26.7-81.1%); qdead=8/9
+avid coders: 6/17 (35.3%; Wilson 95% 17.3-58.7%); qdead=12/17
+btop: 1/5 (20.0%; Wilson 95% 3.6-62.4%); qdead=4/5
+code matters: 9/17 (52.9%; Wilson 95% 31.0-73.8%); qdead=13/17
+hm: 0/5 (0.0%; Wilson 95% 0.0-43.4%); qdead=4/5
+the uncancelables: 2/5 (40.0%; Wilson 95% 11.8-76.9%); qdead=5/5
+tungtung67: 0/17 (0.0%; Wilson 95% -0.0-18.4%); qdead=16/17
+very creative team name: 5/10 (50.0%; Wilson 95% 23.7-76.3%); qdead=10/10
+BY map
+Around UNSW: 7/11 (63.6%; Wilson 95% 35.4-84.8%); qdead=8/11
+Australia: 7/13 (53.8%; Wilson 95% 29.1-76.8%); qdead=11/13
+Autarky: 6/10 (60.0%; Wilson 95% 31.3-83.2%); qdead=8/10
+Default: 6/9 (66.7%; Wilson 95% 35.4-87.9%); qdead=6/9
+Devil: 1/7 (14.3%; Wilson 95% 2.6-51.3%); qdead=6/7
+Islands: 4/10 (40.0%; Wilson 95% 16.8-68.7%); qdead=10/10
+Maze: 4/10 (40.0%; Wilson 95% 16.8-68.7%); qdead=9/10
+Portals: 2/6 (33.3%; Wilson 95% 9.7-70.0%); qdead=6/6
+Prisoners Dilemma: 0/7 (0.0%; Wilson 95% -0.0-35.4%); qdead=6/7
+Queen Of Spades: 2/6 (33.3%; Wilson 95% 9.7-70.0%); qdead=5/6
+Schooltime: 5/9 (55.6%; Wilson 95% 26.7-81.1%); qdead=0/9
+Slithery Fight: 2/8 (25.0%; Wilson 95% 7.1-59.1%); qdead=6/8
+Stripes: 0/9 (0.0%; Wilson 95% -0.0-29.9%); qdead=9/9
+Tower Defense: 2/8 (25.0%; Wilson 95% 7.1-59.1%); qdead=8/8
+Trauma: 3/7 (42.9%; Wilson 95% 15.8-75.0%); qdead=3/7
+Trophy: 2/8 (25.0%; Wilson 95% 7.1-59.1%); qdead=7/8
+weakhold: 5/9 (55.6%; Wilson 95% 26.7-81.1%); qdead=7/9
+Sv5.2 metadata bot counts {'missing': 77}
+Replay bot identity exclusions []
+
+Sv5.2 29/77 (37.7%; Wilson 95% 27.7-48.8%)
+Ranked 0/0; unranked 29/77 (37.7%; Wilson 95% 27.7-48.8%)
+Draws 0 (strict wins, draws counted in N)
+Queen death 61/77; 95% 68.9-86.8%; round mean=243.92 median=199; causes={'headon': 45, 'body': 4, 'wall': 9, 'self': 3}; <=50=2 <=100=10
+Loss buckets (exclusive, early deficit takes precedence): {'early unit deficit <=80% at r100': 30, 'equal queens; longest/total deficit or draw': 14, 'elimination without measured early deficit': 3, 'living queen length deficit': 1}
+Loss queen deaths {'headon': 38, 'body': 4, 'wall': 3, 'self': 1}
+Losses our queen dead/enemy living 4
+units@r50: n=77 mean ours/enemy [12.53, 14.03]; mean paired margin=-1.49; early-ended excluded=0
+units@r100: n=76 mean ours/enemy [19.72, 24.86]; mean paired margin=-5.13; early-ended excluded=1
+Validation {}
+Indicators {'S1[': 2049, 'FEED': 901, 'AMPUTATE': 15, 'QBOX': 11}
+Nonzero replay CPU peak 65131331 (zero means stripped/unavailable, not zero cost)
+BY opp
+Just Keep Swimming: 5/17 (29.4%; Wilson 95% 13.3-53.1%); qdead=15/17
+Memory?: 3/9 (33.3%; Wilson 95% 12.1-64.6%); qdead=9/9
+Quaker Qubits: 5/17 (29.4%; Wilson 95% 13.3-53.1%); qdead=15/17
+btop: 6/17 (35.3%; Wilson 95% 17.3-58.7%); qdead=13/17
+dev test 1 :P: 10/17 (58.8%; Wilson 95% 36.0-78.4%); qdead=9/17
+BY map
+Around UNSW: 2/5 (40.0%; Wilson 95% 11.8-76.9%); qdead=3/5
+Australia: 3/5 (60.0%; Wilson 95% 23.1-88.2%); qdead=5/5
+Autarky: 1/4 (25.0%; Wilson 95% 4.6-69.9%); qdead=3/4
+Default: 1/5 (20.0%; Wilson 95% 3.6-62.4%); qdead=5/5
+Devil: 2/4 (50.0%; Wilson 95% 15.0-85.0%); qdead=3/4
+Islands: 1/5 (20.0%; Wilson 95% 3.6-62.4%); qdead=5/5
+Maze: 1/5 (20.0%; Wilson 95% 3.6-62.4%); qdead=5/5
+Portals: 3/4 (75.0%; Wilson 95% 30.1-95.4%); qdead=3/4
+Prisoners Dilemma: 1/4 (25.0%; Wilson 95% 4.6-69.9%); qdead=3/4
+Queen Of Spades: 1/5 (20.0%; Wilson 95% 3.6-62.4%); qdead=5/5
+Schooltime: 2/4 (50.0%; Wilson 95% 15.0-85.0%); qdead=0/4
+Slithery Fight: 2/4 (50.0%; Wilson 95% 15.0-85.0%); qdead=2/4
+Stripes: 0/5 (0.0%; Wilson 95% 0.0-43.4%); qdead=5/5
+Tower Defense: 0/5 (0.0%; Wilson 95% 0.0-43.4%); qdead=5/5
+Trauma: 2/4 (50.0%; Wilson 95% 15.0-85.0%); qdead=2/4
+Trophy: 2/4 (50.0%; Wilson 95% 15.0-85.0%); qdead=2/4
+weakhold: 5/5 (100.0%; Wilson 95% 56.6-100.0%); qdead=5/5
+
+L10 vs Sv5.3 HISTORICAL SHARED-OPPONENT COMPARISON (not same-seed paired trials)
+Shared pooled L10 53/133 (39.8%; Wilson 95% 31.9-48.3%); Sv5.3 31/84 (36.9%; Wilson 95% 27.4-47.6%)
+1234: L10 2/5 (40.0%; Wilson 95% 11.8-76.9%); Sv5.3 2/5 (40.0%; Wilson 95% 11.8-76.9%)
+  r50 units ours/enemy L10 [11.6, 11]; Sv5.3 [18.8, 20.2]
+  r100 units ours/enemy L10 [21.6, 17]; Sv5.3 [32.2, 31.8]
+  matched map Around UNSW: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+Check Raise: L10 2/9 (22.2%; Wilson 95% 6.3-54.7%); Sv5.3 2/5 (40.0%; Wilson 95% 11.8-76.9%)
+  r50 units ours/enemy L10 [10.44, 12.22]; Sv5.3 [6.8, 8.4]
+  r100 units ours/enemy L10 [18.44, 25.56]; Sv5.3 [9.6, 13.4]
+  matched map Maze: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Stripes: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+Jet2Holiday: L10 3/5 (60.0%; Wilson 95% 23.1-88.2%); Sv5.3 3/5 (60.0%; Wilson 95% 23.1-88.2%)
+  r50 units ours/enemy L10 [18.2, 13]; Sv5.3 [9.4, 6.4]
+  r100 units ours/enemy L10 [30, 21.8]; Sv5.3 [18.6, 10.8]
+  matched map Islands: L10 1/1 (100.0%; Wilson 95% 20.7-100.0%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map Maze: L10 1/1 (100.0%; Wilson 95% 20.7-100.0%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+Jingling Munmin: L10 12/20 (60.0%; Wilson 95% 38.7-78.1%); Sv5.3 0/5 (0.0%; Wilson 95% 0.0-43.4%)
+  r50 units ours/enemy L10 [12.95, 16.45]; Sv5.3 [14, 16.4]
+  r100 units ours/enemy L10 [19.95, 30.05]; Sv5.3 [26.6, 29.2]
+  matched map Devil: L10 0/2 (0.0%; Wilson 95% 0.0-65.8%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Schooltime: L10 2/2 (100.0%; Wilson 95% 34.2-100.0%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+Just Keep Swimming: L10 15/45 (33.3%; Wilson 95% 21.4-47.9%); Sv5.3 7/17 (41.2%; Wilson 95% 21.6-64.0%)
+  r50 units ours/enemy L10 [13.44, 15.04]; Sv5.3 [13.18, 15.53]
+  r100 units ours/enemy L10 [20.38, 24.84]; Sv5.3 [18.41, 28.76]
+  matched map Around UNSW: L10 1/4 (25.0%; Wilson 95% 4.6-69.9%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map Australia: L10 1/4 (25.0%; Wilson 95% 4.6-69.9%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Autarky: L10 2/5 (40.0%; Wilson 95% 11.8-76.9%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map Default: L10 3/4 (75.0%; Wilson 95% 30.1-95.4%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Islands: L10 0/4 (0.0%; Wilson 95% 0.0-49.0%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Maze: L10 0/4 (0.0%; Wilson 95% 0.0-49.0%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Portals: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Prisoners Dilemma: L10 1/5 (20.0%; Wilson 95% 3.6-62.4%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Queen Of Spades: L10 1/1 (100.0%; Wilson 95% 20.7-100.0%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map Tower Defense: L10 0/4 (0.0%; Wilson 95% 0.0-49.0%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Trophy: L10 2/4 (50.0%; Wilson 95% 15.0-85.0%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map weakhold: L10 4/5 (80.0%; Wilson 95% 37.6-96.4%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+Sarvottam: L10 7/10 (70.0%; Wilson 95% 39.7-89.2%); Sv5.3 3/5 (60.0%; Wilson 95% 23.1-88.2%)
+  r50 units ours/enemy L10 [12.5, 13.5]; Sv5.3 [12.2, 12.2]
+  r100 units ours/enemy L10 [20.5, 22.2]; Sv5.3 [24.4, 18]
+  matched map Islands: L10 1/1 (100.0%; Wilson 95% 20.7-100.0%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map Queen Of Spades: L10 1/1 (100.0%; Wilson 95% 20.7-100.0%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Schooltime: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map Stripes: L10 1/1 (100.0%; Wilson 95% 20.7-100.0%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+avid coders: L10 4/15 (26.7%; Wilson 95% 10.9-52.0%); Sv5.3 6/17 (35.3%; Wilson 95% 17.3-58.7%)
+  r50 units ours/enemy L10 [12.93, 14.8]; Sv5.3 [12.24, 13.59]
+  r100 units ours/enemy L10 [18.93, 23.2]; Sv5.3 [20.82, 24.59]
+  matched map Around UNSW: L10 1/2 (50.0%; Wilson 95% 9.5-90.5%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Australia: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Autarky: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map Default: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map Islands: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Prisoners Dilemma: L10 1/3 (33.3%; Wilson 95% 6.1-79.2%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Slithery Fight: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map Stripes: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Tower Defense: L10 0/2 (0.0%; Wilson 95% 0.0-65.8%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Trauma: L10 1/1 (100.0%; Wilson 95% 20.7-100.0%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map weakhold: L10 1/1 (100.0%; Wilson 95% 20.7-100.0%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+btop: L10 2/5 (40.0%; Wilson 95% 11.8-76.9%); Sv5.3 1/5 (20.0%; Wilson 95% 3.6-62.4%)
+  r50 units ours/enemy L10 [12, 13.6]; Sv5.3 [23, 18]
+  r100 units ours/enemy L10 [18.4, 26.2]; Sv5.3 [38, 31.2]
+  matched map Australia: L10 1/1 (100.0%; Wilson 95% 20.7-100.0%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Trophy: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+hm: L10 2/4 (50.0%; Wilson 95% 15.0-85.0%); Sv5.3 0/5 (0.0%; Wilson 95% 0.0-43.4%)
+  r50 units ours/enemy L10 [14, 15.5]; Sv5.3 [19, 19.4]
+  r100 units ours/enemy L10 [19, 24.25]; Sv5.3 [32.4, 36.2]
+the uncancelables: L10 2/5 (40.0%; Wilson 95% 11.8-76.9%); Sv5.3 2/5 (40.0%; Wilson 95% 11.8-76.9%)
+  r50 units ours/enemy L10 [17.6, 13.4]; Sv5.3 [9, 10]
+  r100 units ours/enemy L10 [27.2, 30.6]; Sv5.3 [17.2, 14.8]
+  matched map Default: L10 1/1 (100.0%; Wilson 95% 20.7-100.0%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Prisoners Dilemma: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+very creative team name: L10 2/10 (20.0%; Wilson 95% 5.7-51.0%); Sv5.3 5/10 (50.0%; Wilson 95% 23.7-76.3%)
+  r50 units ours/enemy L10 [16.2, 20.1]; Sv5.3 [14.9, 14]
+  r100 units ours/enemy L10 [21.8, 34.3]; Sv5.3 [22.6, 25.5]
+  matched map Around UNSW: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map Default: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 2/2 (100.0%; Wilson 95% 34.2-100.0%)
+  matched map Slithery Fight: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Tower Defense: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.3 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+Equal-weight 42 shared opponent-map strata: L10 35.7%, Sv5.3 42.9%, delta -7.2pp; descriptive only: sparse shared strata, unmatched seeds/time/versions.
+
+L10 vs Sv5.2 HISTORICAL SHARED-OPPONENT COMPARISON (not same-seed paired trials)
+Shared pooled L10 17/50 (34.0%; Wilson 95% 22.4-47.8%); Sv5.2 11/34 (32.4%; Wilson 95% 19.1-49.2%)
+Just Keep Swimming: L10 15/45 (33.3%; Wilson 95% 21.4-47.9%); Sv5.2 5/17 (29.4%; Wilson 95% 13.3-53.1%)
+  r50 units ours/enemy L10 [13.44, 15.04]; Sv5.2 [11.41, 15.76]
+  r100 units ours/enemy L10 [20.38, 24.84]; Sv5.2 [17.29, 29.18]
+  matched map Around UNSW: L10 1/4 (25.0%; Wilson 95% 4.6-69.9%); Sv5.2 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Australia: L10 1/4 (25.0%; Wilson 95% 4.6-69.9%); Sv5.2 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Autarky: L10 2/5 (40.0%; Wilson 95% 11.8-76.9%); Sv5.2 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Default: L10 3/4 (75.0%; Wilson 95% 30.1-95.4%); Sv5.2 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Islands: L10 0/4 (0.0%; Wilson 95% 0.0-49.0%); Sv5.2 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map Maze: L10 0/4 (0.0%; Wilson 95% 0.0-49.0%); Sv5.2 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Portals: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.2 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Prisoners Dilemma: L10 1/5 (20.0%; Wilson 95% 3.6-62.4%); Sv5.2 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map Queen Of Spades: L10 1/1 (100.0%; Wilson 95% 20.7-100.0%); Sv5.2 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map Tower Defense: L10 0/4 (0.0%; Wilson 95% 0.0-49.0%); Sv5.2 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Trophy: L10 2/4 (50.0%; Wilson 95% 15.0-85.0%); Sv5.2 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map weakhold: L10 4/5 (80.0%; Wilson 95% 37.6-96.4%); Sv5.2 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+btop: L10 2/5 (40.0%; Wilson 95% 11.8-76.9%); Sv5.2 6/17 (35.3%; Wilson 95% 17.3-58.7%)
+  r50 units ours/enemy L10 [12, 13.6]; Sv5.2 [14.41, 13]
+  r100 units ours/enemy L10 [18.4, 26.2]; Sv5.2 [23.06, 21.94]
+  matched map Australia: L10 1/1 (100.0%; Wilson 95% 20.7-100.0%); Sv5.2 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map Islands: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.2 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Portals: L10 1/1 (100.0%; Wilson 95% 20.7-100.0%); Sv5.2 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+  matched map Prisoners Dilemma: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.2 0/1 (0.0%; Wilson 95% 0.0-79.3%)
+  matched map Trophy: L10 0/1 (0.0%; Wilson 95% 0.0-79.3%); Sv5.2 1/1 (100.0%; Wilson 95% 20.7-100.0%)
+Equal-weight 17 shared opponent-map strata: L10 36.2%, Sv5.2 41.2%, delta -5.0pp; descriptive only: sparse shared strata, unmatched seeds/time/versions.
+
+CPU LOCAL LOG EVIDENCE (historical; no L10 identity established)
+u7_qg.log: 28 Australia/Around-UNSW rows; BOTH-SIDE largest recorded peak=73,082,576 points; not attributable to L10 or a side without run manifest. around_unsw_3_A.replay B	500	1	25	19	327	218	63,20,11,174,33	101,31,8,166,40	0	0	22865	37427818/39420191/64519520	24193	33135850/35089242/72222131	276248
+u7_qf.log: 28 Australia/Around-UNSW rows; BOTH-SIDE largest recorded peak=73,001,975 points; not attributable to L10 or a side without run manifest. around_unsw_3_A.replay A	500	1	12	16	184	232	61,26,19,167,36	92,40,14,157,42	0	0	22395	37247267/38963754/64905943	24914	33206923/35692971/72600743	289441
+big_viper_b19_cpu.log: 4 Australia/Around-UNSW rows; BOTH-SIDE largest recorded peak=72,267,842 points; not attributable to L10 or a side without run manifest. australia_1_A.replay A	500	1	34	10	331	110	34,3,3,119,0	29,35,14,141,8	0	0	22683	31593356/33829458/52770908	13184	32566031/33835577/71892722	221119
+big_vB19.log: 4 Australia/Around-UNSW rows; BOTH-SIDE largest recorded peak=98,774,322 points; not attributable to L10 or a side without run manifest. australia_1_A.replay A	500	1	38	9	311	60	30,1,1,129,1	28,33,15,143,12	1	0	22587	31667205/34224733/93902226	13864	32547367/33758020/72210951	201556
+ELO: metadata includes opponent Elo but no eloChange or timestamps; game IDs provide ordering only. Public team snapshot attempted below; one current rating is not a trajectory.
+Unauthenticated Team98 GET: 401; authenticated nested profile/history verified below.
+LIMITS: replay botA/botB identity is required on every included game; this excludes other builds during the upload-to-present window. No historical server activation log; current server active submission verified as 17124 on 2026-10-07, so this verifies actual game participation rather than exact wall-clock activation intervals. Sv5.2 missing metadata bot IDs are accepted ONLY after replay identity verification. All data historical; no contemporaneous randomized control, no unknown qualifier maps; Wilson intervals treat games as independent despite repeated opponents/maps. Units are end-of-round and include all initial drones. Early-ended games are right-censored, not assigned zero units. noaction is not classified as CPU death. No bot modifications/submissions/promotions. The explicitly requested smoke command reused four cached replays; identity and current content hash were checked separately, see verification appendix.
+
+GAME AUDIT: id opponent map side win queens-final bucket r50 r100 CPU
+L10 1263593 risq-v Default a W=True q=[0, 0] win r50=[12, 14] r100=[17, 22] cpu=64451838
+L10 1263594 risq-v Maze a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[15, 14] r100=[22, 24] cpu=53419873
+L10 1263595 risq-v Australia a W=True q=[0, 0] win r50=[19, 18] r100=[40, 25] cpu=65116503
+L10 1263596 risq-v Stripes a W=False q=[0, 3] early unit deficit <=80% at r100 r50=[2, 7] r100=[1, 11] cpu=47210490
+L10 1263597 risq-v weakhold a W=False q=[0, 2] queen-only tiebreak (our queen dead) r50=[4, 7] r100=[14, 10] cpu=47137576
+L10 1262093 🔴🔵⚪️ Stripes a W=True q=[0, 0] win r50=[2, 2] r100=[5, 5] cpu=60838588
+L10 1262094 🔴🔵⚪️ Around UNSW a W=True q=[0, 0] win r50=[34, 42] r100=[49, 57] cpu=64911725
+L10 1262095 🔴🔵⚪️ Portals a W=False q=[4, 23] early unit deficit <=80% at r100 r50=[3, 5] r100=[7, 12] cpu=50152287
+L10 1262096 🔴🔵⚪️ weakhold a W=True q=[0, 0] win r50=[5, 5] r100=[13, 5] cpu=57825875
+L10 1262097 🔴🔵⚪️ Trophy a W=True q=[0, 0] win r50=[20, 8] r100=[32, 5] cpu=40284299
+L10 1260864 hm Slithery Fight b W=True q=[2, 0] win r50=[39, 34] r100=[49, 44] cpu=54244132
+L10 1260865 hm Devil b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[9, 17] r100=[11, 31] cpu=50156472
+L10 1260866 hm Queen Of Spades b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[4, 5] r100=[9, 16] cpu=62771755
+L10 1260867 hm Trauma b W=True q=[20, 0] win r50=[4, 6] r100=[7, 6] cpu=50680887
+L10 1259382 POFPOF Queen Of Spades a W=True q=[4, 0] win r50=[9, 6] r100=[13, 5] cpu=62308523
+L10 1259383 POFPOF Around UNSW a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[28, 29] r100=[53, 60] cpu=64815705
+L10 1259384 POFPOF Tower Defense a W=False q=[0, 3] early unit deficit <=80% at r100 r50=[2, 2] r100=[2, 3] cpu=63880423
+L10 1259385 POFPOF Portals a W=True q=[3, 0] win r50=[2, 17] r100=[2, 27] cpu=7427665
+L10 1259386 POFPOF Prisoners Dilemma a W=False q=[0, 3] early unit deficit <=80% at r100 r50=[9, 13] r100=[3, 15] cpu=49950288
+L10 1257405 STAR Autarky b W=False q=[15, 17] living queen length deficit r50=[16, 6] r100=[21, 13] cpu=63341490
+L10 1257406 STAR weakhold b W=False q=[0, 2] queen-only tiebreak (our queen dead) r50=[5, 4] r100=[11, 4] cpu=49495674
+L10 1257407 STAR Maze b W=False q=[0, 14] queen-only tiebreak (our queen dead) r50=[13, 13] r100=[24, 21] cpu=49455661
+L10 1257408 STAR Australia b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[11, 12] r100=[27, 29] cpu=64899993
+L10 1257409 STAR Queen Of Spades b W=False q=[0, 0] elimination without measured early deficit r50=[5, 5] r100=[9, 10] cpu=63385360
+L10 1256298 R∞ Australia b W=True q=[55, 0] win r50=[16, 19] r100=[31, 48] cpu=64817049
+L10 1256299 R∞ Islands b W=True q=[0, 0] win r50=[26, 16] r100=[52, 39] cpu=63345752
+L10 1256300 R∞ Queen Of Spades b W=False q=[4, 9] early unit deficit <=80% at r100 r50=[2, 5] r100=[1, 11] cpu=31622428
+L10 1256301 R∞ Trauma b W=False q=[3, 22] living queen length deficit r50=[4, 4] r100=[6, 5] cpu=49452430
+L10 1256302 R∞ Stripes b W=False q=[0, 3] early unit deficit <=80% at r100 r50=[2, 7] r100=[1, 13] cpu=25492351
+L10 1254605 Sarvottam weakhold a W=True q=[0, 0] win r50=[5, 3] r100=[15, 3] cpu=40222388
+L10 1254606 Sarvottam Tower Defense a W=True q=[2, 0] win r50=[2, 1] r100=[14, 1] cpu=47980790
+L10 1254607 Sarvottam Around UNSW a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[22, 22] r100=[43, 62] cpu=64894251
+L10 1254608 Sarvottam Queen Of Spades a W=True q=[5, 0] win r50=[5, 5] r100=[10, 4] cpu=52152557
+L10 1254609 Sarvottam Islands a W=True q=[0, 0] win r50=[19, 32] r100=[36, 57] cpu=63527802
+L10 1252787 DIET CODE Schooltime b W=True q=[3, 3] win r50=[6, 9] r100=[11, 18] cpu=36202260
+L10 1252788 DIET CODE Around UNSW b W=True q=[0, 0] win r50=[23, 37] r100=[52, 63] cpu=64838464
+L10 1252789 DIET CODE Autarky b W=True q=[3, 0] win r50=[11, 13] r100=[16, 7] cpu=53243231
+L10 1252790 DIET CODE Portals b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[9, 5] r100=[15, 15] cpu=45463853
+L10 1252791 DIET CODE Stripes b W=False q=[0, 2] early unit deficit <=80% at r100 r50=[2, 2] r100=[2, 3] cpu=47210084
+L10 1251748 R∞ Islands a W=True q=[0, 0] win r50=[21, 16] r100=[40, 27] cpu=64347302
+L10 1251749 R∞ Australia a W=True q=[42, 0] win r50=[15, 17] r100=[23, 44] cpu=64718488
+L10 1251750 R∞ Portals a W=False q=[3, 11] early unit deficit <=80% at r100 r50=[3, 12] r100=[4, 17] cpu=51073286
+L10 1251751 R∞ Trophy a W=True q=[3, 0] win r50=[18, 4] r100=[35, 6] cpu=41886983
+L10 1251752 R∞ Maze a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[11, 12] r100=[17, 20] cpu=63219788
+L10 1250190 All Roads Lead to Makuhari Devil a W=True q=[3, 0] win r50=[16, 6] r100=[27, 6] cpu=50158240
+L10 1250191 All Roads Lead to Makuhari Trauma a W=True q=[18, 2] win r50=[4, 5] r100=[6, 7] cpu=36675759
+L10 1250192 All Roads Lead to Makuhari Prisoners Dilemma a W=False q=[8, 39] living queen length deficit r50=[7, 3] r100=[8, 2] cpu=60649766
+L10 1250193 All Roads Lead to Makuhari Slithery Fight a W=True q=[2, 0] win r50=[46, 30] r100=[50, 56] cpu=55985125
+L10 1250194 All Roads Lead to Makuhari Stripes a W=False q=[0, 3] early unit deficit <=80% at r100 r50=[2, 11] r100=[1, 23] cpu=47209939
+L10 1247848 err404 Islands b W=True q=[0, 0] win r50=[20, 28] r100=[53, 44] cpu=63784174
+L10 1247849 err404 Default b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[9, 11] r100=[10, 21] cpu=53806297
+L10 1247850 err404 Devil b W=True q=[2, 0] win r50=[13, 10] r100=[19, 15] cpu=44776880
+L10 1247851 err404 Slithery Fight b W=False q=[0, 8] queen-only tiebreak (our queen dead) r50=[37, 39] r100=[49, 51] cpu=55948287
+L10 1247852 err404 Trauma b W=True q=[21, 13] win r50=[4, 4] r100=[4, 8] cpu=62713439
+L10 1246347 Squishy Around UNSW a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[24, 41] r100=[35, 64] cpu=64903959
+L10 1246348 Squishy Stripes a W=False q=[0, 0] elimination without measured early deficit r50=[2, 10] r100=None cpu=47209791
+L10 1246349 Squishy Trophy a W=True q=[0, 0] win r50=[12, 10] r100=[32, 7] cpu=39813202
+L10 1246350 Squishy Devil a W=True q=[0, 0] win r50=[14, 6] r100=[23, 3] cpu=50158240
+L10 1244560 Maccas Queen Of Spades b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[5, 7] r100=[12, 7] cpu=35141848
+L10 1244561 Maccas Portals b W=False q=[0, 41] queen-only tiebreak (our queen dead) r50=[10, 10] r100=[17, 19] cpu=50015734
+L10 1244562 Maccas Around UNSW b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[37, 42] r100=[61, 63] cpu=65090898
+L10 1244563 Maccas Australia b W=True q=[3, 0] win r50=[16, 15] r100=[48, 14] cpu=66083242
+L10 1244564 Maccas Prisoners Dilemma b W=False q=[0, 8] early unit deficit <=80% at r100 r50=[7, 7] r100=[7, 9] cpu=29525342
+L10 1240989 CURSEYOUBAYLE Australia b W=True q=[0, 0] win r50=[19, 16] r100=[47, 20] cpu=64909500
+L10 1240990 CURSEYOUBAYLE Default b W=True q=[4, 0] win r50=[12, 8] r100=[21, 11] cpu=59767495
+L10 1240991 CURSEYOUBAYLE Stripes b W=True q=[0, 0] win r50=[2, 3] r100=[2, 5] cpu=64088964
+L10 1240992 CURSEYOUBAYLE Slithery Fight b W=False q=[0, 26] early unit deficit <=80% at r100 r50=[38, 46] r100=[46, 59] cpu=55816876
+L10 1240993 CURSEYOUBAYLE Islands b W=True q=[0, 0] win r50=[29, 20] r100=[44, 29] cpu=64228355
+L10 1240333 ASI Devil a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[11, 15] r100=[13, 29] cpu=64035769
+L10 1240334 ASI Tower Defense a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 4] r100=[4, 6] cpu=47980445
+L10 1240335 ASI Portals a W=True q=[0, 0] win r50=[12, 11] r100=[20, 16] cpu=46531104
+L10 1240336 ASI weakhold a W=True q=[0, 0] win r50=[7, 4] r100=[15, 3] cpu=51385793
+L10 1240337 ASI Prisoners Dilemma a W=True q=[5, 0] win r50=[7, 8] r100=[7, 13] cpu=37202347
+L10 1239565 Jingling Munmin Portals a W=False q=[0, 2] early unit deficit <=80% at r100 r50=[6, 3] r100=[8, 11] cpu=47993105
+L10 1239566 Jingling Munmin Default a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[12, 12] r100=[12, 22] cpu=53798439
+L10 1239567 Jingling Munmin Tower Defense a W=True q=[33, 0] win r50=[2, 2] r100=[3, 4] cpu=63070912
+L10 1239568 Jingling Munmin Around UNSW a W=True q=[0, 0] win r50=[28, 43] r100=[49, 62] cpu=64882197
+L10 1239569 Jingling Munmin Schooltime a W=True q=[3, 0] win r50=[17, 10] r100=[26, 46] cpu=56074975
+L10 1239158 CURSEYOUBAYLE Maze b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[14, 13] r100=[27, 22] cpu=64591667
+L10 1239159 CURSEYOUBAYLE Tower Defense b W=True q=[0, 0] win r50=[3, 3] r100=[6, 5] cpu=64086487
+L10 1239160 CURSEYOUBAYLE Devil b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[4, 12] r100=[1, 32] cpu=29319446
+L10 1239161 CURSEYOUBAYLE Islands b W=True q=[0, 0] win r50=[25, 18] r100=[61, 30] cpu=64729046
+L10 1239162 CURSEYOUBAYLE weakhold b W=True q=[0, 0] win r50=[6, 4] r100=[15, 4] cpu=42161544
+L10 1235772 pizza Maze b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[17, 16] r100=[27, 35] cpu=64343449
+L10 1235773 pizza Autarky b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[11, 23] r100=[9, 38] cpu=53243231
+L10 1235774 pizza Prisoners Dilemma b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[6, 12] r100=[3, 19] cpu=42670454
+L10 1235775 pizza weakhold b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[6, 7] r100=[10, 16] cpu=47747056
+L10 1235776 pizza Australia b W=True q=[69, 0] win r50=[16, 19] r100=[38, 44] cpu=64920442
+L10 1235436 very creative team name Maze b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[11, 10] r100=[18, 25] cpu=52942331
+L10 1235437 very creative team name Default b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[11, 13] r100=[19, 20] cpu=62994241
+L10 1235438 very creative team name Slithery Fight b W=False q=[16, 24] living queen length deficit r50=[42, 35] r100=[52, 57] cpu=53061941
+L10 1235439 very creative team name Islands b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[22, 39] r100=[32, 61] cpu=63479543
+L10 1235440 very creative team name Trauma b W=True q=[16, 13] win r50=[4, 7] r100=[5, 19] cpu=38802270
+L10 1234937 okbro Maze a W=False q=[0, 35] queen-only tiebreak (our queen dead) r50=[14, 14] r100=[18, 22] cpu=60843375
+L10 1234938 okbro Trauma a W=False q=[0, 17] early unit deficit <=80% at r100 r50=[4, 6] r100=[6, 16] cpu=49452430
+L10 1234939 okbro Stripes a W=False q=[0, 2] early unit deficit <=80% at r100 r50=[2, 7] r100=[2, 13] cpu=26249255
+L10 1234940 okbro Prisoners Dilemma a W=True q=[5, 0] win r50=[10, 5] r100=[17, 4] cpu=64632165
+L10 1234941 okbro weakhold a W=False q=[0, 16] elimination without measured early deficit r50=[4, 4] r100=[8, 6] cpu=39550284
+L10 1231162 CookAgent Devil b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[8, 17] r100=[10, 21] cpu=32517424
+L10 1231163 CookAgent Default b W=True q=[66, 0] win r50=[15, 14] r100=[18, 15] cpu=64717111
+L10 1231164 CookAgent Queen Of Spades b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[4, 6] r100=[8, 10] cpu=61591963
+L10 1231165 CookAgent Schooltime b W=False q=[3, 3] early unit deficit <=80% at r100 r50=[7, 5] r100=[9, 16] cpu=36202260
+L10 1231166 CookAgent Autarky b W=True q=[32, 0] win r50=[14, 14] r100=[17, 15] cpu=63968138
+L10 1230947 very creative team name Prisoners Dilemma b W=True q=[3, 0] win r50=[11, 6] r100=[18, 5] cpu=49954156
+L10 1230948 very creative team name Around UNSW b W=False q=[0, 33] early unit deficit <=80% at r100 r50=[30, 40] r100=[43, 61] cpu=64890228
+L10 1230949 very creative team name Islands b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[16, 36] r100=[16, 61] cpu=52509840
+L10 1230950 very creative team name Tower Defense b W=False q=[0, 0] elimination without measured early deficit r50=[2, 2] r100=[5, 6] cpu=56678229
+L10 1230951 very creative team name Devil b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[13, 13] r100=[10, 28] cpu=50162108
+L10 1230167 okbro Default a W=True q=[3, 0] win r50=[11, 8] r100=[23, 5] cpu=35963264
+L10 1230168 okbro Around UNSW a W=True q=[0, 0] win r50=[39, 31] r100=[64, 49] cpu=64950579
+L10 1230169 okbro Devil a W=False q=[0, 9] elimination without measured early deficit r50=[4, 18] r100=None cpu=30206862
+L10 1230170 okbro Stripes a W=False q=[0, 4] elimination without measured early deficit r50=[2, 2] r100=[7, 6] cpu=47209857
+L10 1230171 okbro Prisoners Dilemma a W=False q=[7, 11] living queen length deficit r50=[7, 4] r100=[7, 3] cpu=48347907
+L10 1227264 Hydra Islands b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[17, 22] r100=[31, 46] cpu=64016898
+L10 1227265 Hydra Queen Of Spades b W=True q=[0, 0] win r50=[5, 7] r100=[2, 10] cpu=64589272
+L10 1227266 Hydra Trauma b W=False q=[0, 24] early unit deficit <=80% at r100 r50=[5, 12] r100=[7, 24] cpu=51414057
+L10 1227267 Hydra Autarky b W=True q=[0, 0] win r50=[12, 12] r100=[18, 15] cpu=57964530
+L10 1227268 Hydra Devil b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[11, 17] r100=[11, 27] cpu=29646129
+L10 1226490 Deer Park Australia b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[16, 17] r100=[22, 50] cpu=63374104
+L10 1226491 Deer Park Trophy b W=False q=[0, 3] early unit deficit <=80% at r100 r50=[11, 17] r100=[3, 41] cpu=51567611
+L10 1226492 Deer Park Autarky b W=False q=[0, 3] early unit deficit <=80% at r100 r50=[10, 16] r100=[11, 26] cpu=50617343
+L10 1226493 Deer Park Stripes b W=True q=[3, 0] win r50=[3, 2] r100=[11, 3] cpu=47210084
+L10 1226494 Deer Park weakhold b W=True q=[0, 0] win r50=[5, 5] r100=[13, 5] cpu=46994855
+L10 1226236 Z-A Tower Defense b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 2] r100=[3, 15] cpu=64604269
+L10 1226237 Z-A Trauma b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[5, 14] r100=[8, 29] cpu=52938865
+L10 1226238 Z-A Schooltime b W=False q=[3, 3] early unit deficit <=80% at r100 r50=[5, 9] r100=[12, 17] cpu=21619582
+L10 1226239 Z-A weakhold b W=True q=[0, 0] win r50=[6, 4] r100=[9, 8] cpu=60267087
+L10 1226240 Z-A Portals b W=True q=[3, 0] win r50=[2, 13] r100=[2, 22] cpu=6272842
+L10 1225599 pizza Australia a W=True q=[73, 0] win r50=[11, 19] r100=[29, 46] cpu=64803102
+L10 1225600 pizza Trauma a W=True q=[25, 0] win r50=[4, 5] r100=[5, 4] cpu=64082212
+L10 1225601 pizza Portals a W=True q=[0, 0] win r50=[6, 15] r100=[18, 30] cpu=49340801
+L10 1225602 pizza Devil a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[9, 14] r100=[7, 28] cpu=50158240
+L10 1225603 pizza Islands a W=True q=[0, 0] win r50=[10, 41] r100=[6, 64] cpu=64569036
+L10 1222400 CookAgent Devil b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[9, 16] r100=[8, 25] cpu=29549573
+L10 1222401 CookAgent Maze b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[12, 15] r100=[20, 23] cpu=53310675
+L10 1222402 CookAgent Trophy b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[4, 18] r100=[2, 45] cpu=31131919
+L10 1222403 CookAgent Schooltime b W=False q=[3, 3] early unit deficit <=80% at r100 r50=[5, 4] r100=[5, 11] cpu=36202260
+L10 1222404 CookAgent weakhold b W=True q=[0, 0] win r50=[6, 5] r100=[13, 5] cpu=48248176
+L10 1222187 tozoman Maze b W=True q=[2, 0] win r50=[8, 3] r100=[21, 3] cpu=49454961
+L10 1222188 tozoman Trauma b W=True q=[0, 0] win r50=[4, 4] r100=[6, 12] cpu=42969560
+L10 1222189 tozoman weakhold b W=True q=[0, 0] win r50=[6, 4] r100=[16, 3] cpu=47747056
+L10 1221736 Oswald Tower Defense b W=True q=[0, 0] win r50=[2, 3] r100=[7, 7] cpu=27467033
+L10 1221737 Oswald Around UNSW b W=True q=[0, 0] win r50=[29, 28] r100=[48, 50] cpu=64909034
+L10 1221738 Oswald Portals b W=True q=[0, 0] win r50=[15, 11] r100=[24, 22] cpu=47503285
+L10 1221739 Oswald Islands b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[18, 35] r100=[27, 63] cpu=62681619
+L10 1221740 Oswald Default b W=True q=[0, 0] win r50=[10, 11] r100=[11, 14] cpu=64713929
+L10 1221180 doofenshmirtz good incorporated Trophy b W=True q=[2, 0] win r50=[16, 5] r100=[34, 1] cpu=39220466
+L10 1221181 doofenshmirtz good incorporated Australia b W=True q=[0, 0] win r50=[13, 11] r100=[42, 14] cpu=64870310
+L10 1221182 doofenshmirtz good incorporated Slithery Fight b W=True q=[0, 0] win r50=[45, 41] r100=[45, 52] cpu=55937513
+L10 1221183 doofenshmirtz good incorporated Around UNSW b W=True q=[3, 0] win r50=[30, 18] r100=[64, 33] cpu=64926257
+L10 1221184 doofenshmirtz good incorporated Trauma b W=False q=[17, 25] living queen length deficit r50=[4, 3] r100=[6, 4] cpu=41034283
+L10 1220857 verity Islands a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[15, 24] r100=[35, 47] cpu=61020775
+L10 1220858 verity Default a W=True q=[0, 0] win r50=[12, 13] r100=[22, 13] cpu=64644163
+L10 1220859 verity Portals a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[7, 19] r100=[14, 26] cpu=48924871
+L10 1220860 verity Schooltime a W=False q=[3, 3] early unit deficit <=80% at r100 r50=[13, 15] r100=[30, 44] cpu=55759100
+L10 1220861 verity Trophy a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[4, 21] r100=[7, 53] cpu=39197171
+L10 1216475 Oswald Queen Of Spades b W=True q=[2, 0] win r50=[7, 3] r100=[6, 5] cpu=52159453
+L10 1216476 Oswald Around UNSW b W=True q=[0, 0] win r50=[27, 32] r100=[49, 57] cpu=64895773
+L10 1216477 Oswald Islands b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[17, 34] r100=[24, 62] cpu=59916392
+L10 1216478 Oswald Schooltime b W=False q=[3, 3] equal queens; longest/total deficit or draw r50=[6, 5] r100=[14, 12] cpu=61356282
+L10 1216479 Oswald Trauma b W=True q=[19, 16] win r50=[4, 2] r100=[6, 2] cpu=49737100
+L10 1216480 Oswald Stripes b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[1, 2] r100=[1, 7] cpu=26293948
+L10 1216113 Ravenus Trophy b W=True q=[0, 0] win r50=[15, 3] r100=[37, 9] cpu=51565542
+L10 1216114 Ravenus Maze b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[13, 15] r100=[21, 28] cpu=63894249
+L10 1216115 Ravenus Autarky b W=True q=[0, 0] win r50=[20, 7] r100=[25, 5] cpu=63547021
+L10 1216116 Ravenus Slithery Fight b W=True q=[21, 0] win r50=[43, 31] r100=[52, 45] cpu=55742879
+L10 1216117 Ravenus Islands b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[30, 12] r100=[64, 22] cpu=63309577
+L10 1215891 pizza Slithery Fight b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[40, 32] r100=[47, 43] cpu=55927036
+L10 1215892 pizza Trauma b W=True q=[18, 0] win r50=[5, 6] r100=[6, 7] cpu=35766074
+L10 1215893 pizza Maze b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[11, 13] r100=[23, 33] cpu=61589237
+L10 1215894 pizza Australia b W=True q=[0, 0] win r50=[13, 18] r100=[25, 44] cpu=64906464
+L10 1215895 pizza Devil b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[4, 18] r100=[4, 37] cpu=50158197
+L10 1215666 Milk Dragon Stripes b W=True q=[2, 0] win r50=[2, 2] r100=[7, 2] cpu=27381644
+L10 1215667 Milk Dragon Australia b W=True q=[63, 0] win r50=[18, 16] r100=[41, 23] cpu=64923562
+L10 1215668 Milk Dragon Queen Of Spades b W=True q=[4, 0] win r50=[8, 2] r100=[15, 3] cpu=64572581
+L10 1215669 Milk Dragon Trauma b W=True q=[20, 7] win r50=[5, 3] r100=[6, 6] cpu=49452430
+L10 1215670 Milk Dragon Slithery Fight b W=True q=[0, 0] win r50=[42, 32] r100=[53, 44] cpu=51667181
+L10 1213575 Hydra Australia b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[15, 20] r100=[23, 42] cpu=64819910
+L10 1213576 Hydra Islands b W=True q=[0, 0] win r50=[18, 22] r100=[37, 40] cpu=64096005
+L10 1213577 Hydra Trophy b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 16] r100=[4, 36] cpu=51566427
+L10 1213578 Hydra Around UNSW b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[37, 30] r100=[62, 38] cpu=64843459
+L10 1213579 Hydra Trauma b W=False q=[0, 26] early unit deficit <=80% at r100 r50=[4, 12] r100=[6, 25] cpu=49452430
+L10 1211646 Citadel Insecurities weakhold b W=True q=[0, 0] win r50=[4, 4] r100=[17, 5] cpu=46679940
+L10 1211647 Citadel Insecurities Slithery Fight b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[36, 47] r100=[45, 63] cpu=55799140
+L10 1211648 Citadel Insecurities Trophy b W=False q=[0, 2] early unit deficit <=80% at r100 r50=[10, 15] r100=[8, 39] cpu=37084811
+L10 1211649 Citadel Insecurities Devil b W=True q=[2, 0] win r50=[19, 8] r100=[33, 2] cpu=50157695
+L10 1211650 Citadel Insecurities Portals b W=True q=[0, 0] win r50=[5, 8] r100=[12, 29] cpu=48369271
+L10 1211415 aisakastrats Maze b W=True q=[3, 0] win r50=[13, 11] r100=[23, 14] cpu=64516395
+L10 1211416 aisakastrats Slithery Fight b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[34, 49] r100=[48, 63] cpu=54667306
+L10 1211417 aisakastrats Portals b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 12] r100=[4, 23] cpu=48992803
+L10 1211418 aisakastrats Autarky b W=True q=[52, 0] win r50=[11, 11] r100=[12, 7] cpu=63986930
+L10 1211419 aisakastrats Schooltime b W=False q=[3, 3] equal queens; longest/total deficit or draw r50=[17, 7] r100=[23, 27] cpu=56097061
+L10 1211241 sonarstar0 Queen Of Spades b W=True q=[2, 0] win r50=[12, 3] r100=[18, 7] cpu=52159383
+L10 1211242 sonarstar0 Portals b W=True q=[0, 0] win r50=[9, 8] r100=[21, 19] cpu=50315029
+L10 1211243 sonarstar0 weakhold b W=True q=[0, 0] win r50=[4, 6] r100=[7, 11] cpu=64030271
+L10 1211244 sonarstar0 Islands b W=True q=[0, 0] win r50=[19, 8] r100=[47, 16] cpu=64262076
+L10 1211245 sonarstar0 Trauma b W=True q=[22, 16] win r50=[4, 4] r100=[6, 5] cpu=56423927
+L10 1207277 avid coders Prisoners Dilemma b W=True q=[3, 0] win r50=[13, 7] r100=[16, 5] cpu=49954156
+L10 1207278 avid coders Slithery Fight b W=False q=[0, 3] queen-only tiebreak (our queen dead) r50=[38, 36] r100=[58, 47] cpu=55845422
+L10 1207279 avid coders Trauma b W=True q=[18, 0] win r50=[4, 5] r100=[6, 6] cpu=49452430
+L10 1207280 avid coders Autarky b W=False q=[0, 3] early unit deficit <=80% at r100 r50=[12, 16] r100=[13, 19] cpu=39008299
+L10 1207281 avid coders Tower Defense b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 3] r100=[4, 14] cpu=63318873
+L10 1207054 tozoman Trophy a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[7, 18] r100=[4, 39] cpu=51561833
+L10 1207055 tozoman Slithery Fight a W=True q=[26, 0] win r50=[43, 50] r100=[43, 58] cpu=55952977
+L10 1207056 tozoman Schooltime a W=False q=[2, 3] early unit deficit <=80% at r100 r50=[25, 17] r100=[31, 40] cpu=56006382
+L10 1207057 tozoman Maze a W=True q=[3, 0] win r50=[13, 5] r100=[25, 4] cpu=63069578
+L10 1207058 tozoman Queen Of Spades a W=True q=[8, 0] win r50=[7, 9] r100=[8, 10] cpu=52152375
+L10 1206791 aisakastrats Maze a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[12, 9] r100=[19, 19] cpu=62160964
+L10 1206792 aisakastrats Slithery Fight a W=False q=[0, 15] early unit deficit <=80% at r100 r50=[31, 53] r100=[48, 62] cpu=56008016
+L10 1206793 aisakastrats Schooltime a W=True q=[2, 0] win r50=[18, 13] r100=[26, 51] cpu=56266799
+L10 1206794 aisakastrats Stripes a W=False q=[0, 2] early unit deficit <=80% at r100 r50=[1, 7] r100=[1, 11] cpu=47210161
+L10 1206795 aisakastrats Trauma a W=True q=[17, 0] win r50=[5, 4] r100=[5, 4] cpu=35412329
+L10 1205197 risq-v Prisoners Dilemma b W=False q=[7, 11] living queen length deficit r50=[7, 4] r100=[7, 3] cpu=49954086
+L10 1202654 okbro Queen Of Spades a W=False q=[0, 0] elimination without measured early deficit r50=[5, 4] r100=[8, 7] cpu=53955200
+L10 1202655 okbro Stripes a W=False q=[0, 3] early unit deficit <=80% at r100 r50=[2, 6] r100=[2, 12] cpu=25753786
+L10 1202656 okbro Default a W=True q=[2, 0] win r50=[11, 12] r100=[23, 12] cpu=61129807
+L10 1202657 okbro Trophy a W=True q=[0, 0] win r50=[8, 10] r100=[19, 9] cpu=39126394
+L10 1202658 okbro Australia a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[20, 15] r100=[46, 21] cpu=64893446
+L10 1202503 tozoman Slithery Fight a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[44, 43] r100=[56, 44] cpu=55890191
+L10 1202504 tozoman Prisoners Dilemma a W=True q=[3, 0] win r50=[4, 7] r100=[5, 6] cpu=49950218
+L10 1202505 tozoman Portals a W=True q=[3, 0] win r50=[2, 15] r100=[2, 24] cpu=6282243
+L10 1202506 tozoman Islands a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[34, 20] r100=[50, 40] cpu=64298533
+L10 1202507 tozoman Around UNSW a W=True q=[34, 0] win r50=[43, 27] r100=[64, 36] cpu=65071464
+L10 1202444 Kerwin Portals b W=True q=[3, 0] win r50=[2, 10] r100=[2, 21] cpu=6278877
+L10 1202445 Kerwin Tower Defense b W=True q=[3, 0] win r50=[2, 3] r100=[6, 4] cpu=47980740
+L10 1202446 Kerwin Autarky b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[13, 13] r100=[17, 23] cpu=40014366
+L10 1202447 Kerwin Stripes b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 10] r100=[2, 15] cpu=47210070
+L10 1202448 Kerwin Queen Of Spades b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[6, 4] r100=[6, 10] cpu=30882043
+L10 1198270 okbro Trophy a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 19] r100=[7, 42] cpu=51559676
+L10 1198271 okbro Default a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[8, 9] r100=[7, 20] cpu=49662178
+L10 1198272 okbro Islands a W=True q=[72, 0] win r50=[26, 5] r100=[54, 15] cpu=64675614
+L10 1198273 okbro Schooltime a W=False q=[3, 3] early unit deficit <=80% at r100 r50=[19, 15] r100=[26, 57] cpu=56393146
+L10 1198274 okbro Devil a W=False q=[0, 5] early unit deficit <=80% at r100 r50=[7, 17] r100=[5, 39] cpu=50153870
+L10 1198046 EternalWisdom Schooltime a W=False q=[3, 3] early unit deficit <=80% at r100 r50=[15, 12] r100=[26, 44] cpu=55754888
+L10 1198047 EternalWisdom Default a W=True q=[25, 0] win r50=[14, 12] r100=[22, 10] cpu=63727986
+L10 1198048 EternalWisdom Slithery Fight a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[41, 29] r100=[48, 38] cpu=55910609
+L10 1198049 EternalWisdom Australia a W=True q=[0, 0] win r50=[16, 14] r100=[29, 38] cpu=64812360
+L10 1198050 EternalWisdom Queen Of Spades a W=True q=[7, 0] win r50=[8, 5] r100=[11, 8] cpu=52152670
+L10 1197823 TheActualPlayer Australia b W=True q=[0, 0] win r50=[17, 15] r100=[36, 10] cpu=64924058
+L10 1197824 TheActualPlayer Maze b W=False q=[0, 67] queen-only tiebreak (our queen dead) r50=[14, 14] r100=[24, 25] cpu=47835092
+L10 1197825 TheActualPlayer Schooltime b W=False q=[3, 3] early unit deficit <=80% at r100 r50=[5, 6] r100=[8, 10] cpu=36202260
+L10 1197826 TheActualPlayer Trauma b W=False q=[20, 20] equal queens; longest/total deficit or draw r50=[4, 5] r100=[6, 5] cpu=57864784
+L10 1197827 TheActualPlayer Around UNSW b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[45, 26] r100=[64, 45] cpu=64867248
+L10 1195877 TheActualPlayer Autarky b W=True q=[0, 0] win r50=[16, 12] r100=[24, 12] cpu=53243231
+L10 1195878 TheActualPlayer Portals b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[6, 17] r100=[17, 28] cpu=47018755
+L10 1195879 TheActualPlayer Default b W=False q=[0, 26] early unit deficit <=80% at r100 r50=[8, 13] r100=[10, 18] cpu=53807448
+L10 1195880 TheActualPlayer Islands b W=False q=[0, 76] early unit deficit <=80% at r100 r50=[15, 29] r100=[26, 50] cpu=54869545
+L10 1195881 TheActualPlayer Around UNSW b W=True q=[0, 0] win r50=[29, 35] r100=[58, 53] cpu=64888618
+L10 1194085 Ravenus weakhold b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[5, 4] r100=[8, 8] cpu=62109233
+L10 1194086 Ravenus Maze b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[15, 15] r100=[22, 25] cpu=62090470
+L10 1194087 Ravenus Slithery Fight b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[38, 35] r100=[50, 58] cpu=55782853
+L10 1194088 Ravenus Devil b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[25, 11] r100=[36, 13] cpu=41408940
+L10 1194089 Ravenus Trauma b W=True q=[0, 0] win r50=[4, 4] r100=[6, 5] cpu=53881702
+L10 1193669 EternalWisdom Devil b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[11, 16] r100=[12, 26] cpu=50157731
+L10 1193670 EternalWisdom Islands b W=True q=[0, 0] win r50=[19, 30] r100=[44, 36] cpu=64261811
+L10 1193671 EternalWisdom Maze b W=True q=[6, 0] win r50=[13, 9] r100=[22, 15] cpu=63731688
+L10 1193672 EternalWisdom weakhold b W=True q=[0, 0] win r50=[5, 4] r100=[15, 4] cpu=59531652
+L10 1193673 EternalWisdom Slithery Fight b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[34, 34] r100=[40, 49] cpu=55678670
+L10 1193292 meowest weakhold b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[5, 8] r100=[15, 8] cpu=43568781
+L10 1193293 meowest Australia b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[17, 16] r100=[30, 34] cpu=64915308
+L10 1193294 meowest Tower Defense b W=True q=[3, 0] win r50=[2, 2] r100=[11, 2] cpu=34888797
+L10 1193295 meowest Slithery Fight b W=True q=[2, 0] win r50=[39, 43] r100=[39, 63] cpu=55930136
+L10 1193296 meowest Trauma b W=True q=[17, 5] win r50=[4, 4] r100=[5, 4] cpu=35972976
+L10 1189558 Ravenus Islands b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[22, 12] r100=[46, 29] cpu=64221497
+L10 1189559 Ravenus Australia b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[21, 15] r100=[49, 18] cpu=64895902
+L10 1189560 Ravenus Maze b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[14, 15] r100=[26, 29] cpu=62171398
+L10 1189561 Ravenus Queen Of Spades b W=True q=[3, 0] win r50=[4, 8] r100=[9, 14] cpu=52159230
+L10 1189562 Ravenus Trophy b W=True q=[3, 0] win r50=[11, 15] r100=[25, 23] cpu=46744165
+L10 1189157 JalSena weakhold a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[6, 8] r100=[11, 12] cpu=55413854
+L10 1189158 JalSena Default a W=True q=[0, 0] win r50=[7, 9] r100=[12, 17] cpu=63302291
+L10 1189159 JalSena Stripes a W=True q=[0, 0] win r50=[4, 5] r100=[11, 3] cpu=34045566
+L10 1189160 JalSena Portals a W=True q=[0, 0] win r50=[8, 10] r100=[24, 15] cpu=49414623
+L10 1189161 JalSena Trauma a W=True q=[11, 7] win r50=[6, 6] r100=[7, 7] cpu=36776867
+L10 1188691 Hydra Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[1, 5] r100=[1, 9] cpu=27367244
+L10 1188692 Hydra Maze a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[16, 15] r100=[16, 27] cpu=64330734
+L10 1188693 Hydra Schooltime a W=False q=[2, 3] early unit deficit <=80% at r100 r50=[17, 11] r100=[24, 56] cpu=56032936
+L10 1188694 Hydra Portals a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[5, 18] r100=[11, 34] cpu=49308844
+L10 1188695 Hydra Islands a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[21, 19] r100=[34, 41] cpu=64537148
+L10 1185401 Ravenus Default b W=False q=[0, 0] elimination without measured early deficit r50=[12, 12] r100=[24, 14] cpu=63557873
+L10 1185402 Ravenus Autarky b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[18, 10] r100=[23, 15] cpu=62093449
+L10 1185403 Ravenus Slithery Fight b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[41, 38] r100=[55, 57] cpu=55831704
+L10 1185404 Ravenus weakhold b W=False q=[0, 9] early unit deficit <=80% at r100 r50=[4, 7] r100=[4, 16] cpu=27971323
+L10 1185405 Ravenus Portals b W=True q=[2, 0] win r50=[3, 16] r100=[8, 36] cpu=38762555
+L10 1185035 pizza Schooltime b W=False q=[3, 3] early unit deficit <=80% at r100 r50=[6, 7] r100=[8, 17] cpu=47686841
+L10 1185036 pizza Australia b W=True q=[0, 0] win r50=[13, 18] r100=[22, 53] cpu=64926160
+L10 1185037 pizza Islands b W=True q=[39, 0] win r50=[19, 31] r100=[26, 54] cpu=64319694
+L10 1185038 pizza Devil b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[13, 19] r100=[14, 31] cpu=57202821
+L10 1185039 pizza Maze b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[14, 15] r100=[22, 31] cpu=63642237
+L10 1184583 f2p Prisoners Dilemma a W=False q=[0, 3] elimination without measured early deficit r50=[4, 13] r100=None cpu=31395290
+L10 1184584 f2p Portals a W=True q=[0, 0] win r50=[13, 6] r100=[24, 21] cpu=46672487
+L10 1184585 f2p Maze a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[16, 16] r100=[24, 26] cpu=63577810
+L10 1184586 f2p Tower Defense a W=False q=[0, 3] early unit deficit <=80% at r100 r50=[3, 4] r100=[2, 16] cpu=47980871
+L10 1184587 f2p Stripes a W=False q=[0, 3] elimination without measured early deficit r50=[6, 5] r100=[9, 11] cpu=26809851
+L10 1181511 Ravenus weakhold b W=True q=[0, 0] win r50=[5, 5] r100=[8, 8] cpu=53138284
+L10 1181512 Ravenus Tower Defense b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 3] r100=[2, 5] cpu=27274529
+L10 1181513 Ravenus Queen Of Spades b W=True q=[4, 0] win r50=[4, 7] r100=[6, 11] cpu=52159230
+L10 1181514 Ravenus Prisoners Dilemma b W=True q=[3, 0] win r50=[11, 6] r100=[15, 4] cpu=64316631
+L10 1181515 Ravenus Islands b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[29, 12] r100=[54, 28] cpu=64774741
+L10 1181149 tozoman Trauma a W=True q=[14, 0] win r50=[4, 4] r100=[7, 6] cpu=60223815
+L10 1181150 tozoman Queen Of Spades a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[6, 3] r100=[8, 13] cpu=52152756
+L10 1181151 tozoman Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 6] r100=[2, 12] cpu=26592630
+L10 1181152 tozoman Portals a W=True q=[9, 0] win r50=[7, 14] r100=[20, 21] cpu=46897394
+L10 1181153 tozoman weakhold a W=True q=[0, 0] win r50=[5, 4] r100=[13, 3] cpu=44662203
+L10 1180831 Akatsuki Tower Defense a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 2] r100=[4, 13] cpu=28734301
+L10 1180832 Akatsuki Maze a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[14, 13] r100=[23, 20] cpu=52753637
+L10 1180833 Akatsuki Devil a W=True q=[12, 0] win r50=[9, 19] r100=[10, 34] cpu=51383760
+L10 1180834 Akatsuki weakhold a W=True q=[0, 0] win r50=[6, 4] r100=[17, 4] cpu=47747056
+L10 1180835 Akatsuki Islands a W=True q=[72, 0] win r50=[23, 26] r100=[52, 39] cpu=64611523
+L10 1178034 Nitronics Trophy b W=True q=[3, 0] win r50=[12, 9] r100=[27, 3] cpu=40754801
+L10 1178035 Nitronics Trauma b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[5, 6] r100=[9, 12] cpu=64294108
+L10 1178036 Nitronics weakhold b W=True q=[0, 0] win r50=[5, 4] r100=[12, 4] cpu=63060663
+L10 1178037 Nitronics Tower Defense b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 3] r100=[3, 6] cpu=49200021
+L10 1178038 Nitronics Autarky b W=True q=[49, 37] win r50=[15, 7] r100=[22, 9] cpu=62313052
+L10 1177649 we love gru Trauma a W=True q=[0, 0] win r50=[5, 7] r100=[8, 8] cpu=40221149
+L10 1177650 we love gru Autarky a W=False q=[43, 49] living queen length deficit r50=[17, 6] r100=[25, 12] cpu=64666447
+L10 1177651 we love gru Prisoners Dilemma a W=False q=[6, 30] living queen length deficit r50=[9, 5] r100=[14, 2] cpu=63808376
+L10 1177652 we love gru Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 9] r100=[1, 15] cpu=47210025
+L10 1177653 we love gru Maze a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[12, 12] r100=[24, 35] cpu=54854831
+L10 1177221 NeungzAI Autarky a W=True q=[3, 0] win r50=[16, 5] r100=[25, 4] cpu=47560282
+L10 1177222 NeungzAI Slithery Fight a W=True q=[25, 0] win r50=[40, 38] r100=[51, 51] cpu=55844835
+L10 1177223 NeungzAI Queen Of Spades a W=False q=[0, 0] elimination without measured early deficit r50=[8, 6] r100=[9, 6] cpu=32243223
+L10 1177224 NeungzAI Schooltime a W=True q=[3, 2] win r50=[5, 7] r100=[9, 18] cpu=47630611
+L10 1177225 NeungzAI Australia a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[15, 17] r100=[42, 23] cpu=64608747
+L10 1174345 Deer Park Portals b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[10, 10] r100=[20, 24] cpu=48654780
+L10 1174346 Deer Park Maze b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[12, 15] r100=[16, 25] cpu=64305781
+L10 1174347 Deer Park Stripes b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[1, 11] r100=[1, 18] cpu=47209761
+L10 1174348 Deer Park Schooltime b W=False q=[2, 3] early unit deficit <=80% at r100 r50=[14, 11] r100=[23, 57] cpu=55794534
+L10 1174349 Deer Park Slithery Fight b W=True q=[25, 0] win r50=[32, 38] r100=[53, 61] cpu=53657249
+L10 1173842 Squishy Around UNSW b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[29, 40] r100=[41, 61] cpu=64795082
+L10 1173843 Squishy Default b W=True q=[14, 0] win r50=[13, 9] r100=[13, 13] cpu=58049263
+L10 1173844 Squishy weakhold b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[5, 6] r100=[7, 9] cpu=41823346
+L10 1173845 Squishy Queen Of Spades b W=True q=[0, 0] win r50=[6, 4] r100=[9, 11] cpu=56501166
+L10 1173846 Squishy Schooltime b W=True q=[3, 0] win r50=[5, 8] r100=[12, 26] cpu=48267970
+L10 1173519 NeungzAI Queen Of Spades a W=False q=[0, 0] elimination without measured early deficit r50=[7, 2] r100=[10, 6] cpu=43820783
+L10 1173520 NeungzAI Autarky a W=True q=[41, 8] win r50=[18, 6] r100=[23, 8] cpu=64385582
+L10 1173521 NeungzAI Schooltime a W=True q=[3, 2] win r50=[16, 8] r100=[25, 58] cpu=55911860
+L10 1173522 NeungzAI Islands a W=True q=[0, 0] win r50=[24, 19] r100=[48, 21] cpu=64610169
+L10 1173523 NeungzAI Trauma a W=True q=[7, 3] win r50=[5, 4] r100=[8, 5] cpu=41504563
+L10 1170457 龙虎豹 Trauma b W=False q=[17, 31] living queen length deficit r50=[5, 4] r100=[9, 6] cpu=49452430
+L10 1170458 龙虎豹 Tower Defense b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 3] r100=[3, 4] cpu=33181589
+L10 1170459 龙虎豹 Islands b W=True q=[0, 0] win r50=[27, 12] r100=[38, 29] cpu=64218615
+L10 1170460 龙虎豹 Queen Of Spades b W=False q=[0, 0] elimination without measured early deficit r50=[7, 6] r100=[7, 5] cpu=52427704
+L10 1170461 龙虎豹 Around UNSW b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[17, 29] r100=[42, 61] cpu=64838720
+L10 1170201 Spearhead Capital Trauma b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[5, 3] r100=[5, 7] cpu=63358682
+L10 1170202 Spearhead Capital Prisoners Dilemma b W=True q=[0, 0] win r50=[11, 3] r100=None cpu=32705384
+L10 1170203 Spearhead Capital Schooltime b W=False q=[3, 3] early unit deficit <=80% at r100 r50=[16, 10] r100=[25, 57] cpu=55917285
+L10 1170204 Spearhead Capital Slithery Fight b W=False q=[0, 20] queen-only tiebreak (our queen dead) r50=[42, 44] r100=[52, 56] cpu=55520826
+L10 1170205 Spearhead Capital Devil b W=True q=[2, 0] win r50=[15, 6] r100=None cpu=50162108
+L10 1169681 byte_force Around UNSW b W=False q=[0, 7] early unit deficit <=80% at r100 r50=[27, 42] r100=[47, 61] cpu=64912878
+L10 1169682 byte_force Schooltime b W=True q=[3, 3] win r50=[7, 7] r100=[10, 10] cpu=56055277
+L10 1169683 byte_force Trauma b W=False q=[2, 3] early unit deficit <=80% at r100 r50=[6, 9] r100=[9, 19] cpu=64317522
+L10 1169684 byte_force Autarky b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[18, 10] r100=[22, 13] cpu=55646863
+L10 1169685 byte_force Islands b W=True q=[0, 0] win r50=[24, 24] r100=[41, 41] cpu=65002608
+L10 1167005 aisakastrats Trauma b W=True q=[19, 0] win r50=[4, 4] r100=[5, 4] cpu=49452430
+L10 1167006 aisakastrats Prisoners Dilemma b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[9, 13] r100=[5, 16] cpu=37527271
+L10 1167007 aisakastrats Autarky b W=True q=[2, 0] win r50=[15, 11] r100=[21, 11] cpu=53243231
+L10 1167008 aisakastrats Tower Defense b W=False q=[0, 0] elimination without measured early deficit r50=[4, 1] r100=[4, 1] cpu=64271939
+L10 1167009 aisakastrats Australia b W=True q=[0, 0] win r50=[15, 16] r100=[48, 18] cpu=64903792
+L10 1166990 aisakastrats Slithery Fight b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[44, 48] r100=[52, 56] cpu=52971622
+L10 1166991 aisakastrats Trauma b W=True q=[17, 0] win r50=[5, 4] r100=[6, 5] cpu=49452430
+L10 1166992 aisakastrats Prisoners Dilemma b W=True q=[3, 0] win r50=[7, 4] r100=[7, 2] cpu=30161824
+L10 1166993 aisakastrats Tower Defense b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 2] r100=[2, 19] cpu=47981410
+L10 1166994 aisakastrats weakhold b W=True q=[3, 0] win r50=[7, 4] r100=[17, 4] cpu=41333300
+L10 1166627 avid coders Australia b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[17, 16] r100=[25, 36] cpu=64576208
+L10 1166628 avid coders Prisoners Dilemma b W=False q=[0, 3] elimination without measured early deficit r50=[6, 6] r100=[6, 7] cpu=30737861
+L10 1166629 avid coders Default b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[8, 9] r100=[11, 19] cpu=53807662
+L10 1166630 avid coders Around UNSW b W=True q=[0, 0] win r50=[30, 27] r100=[36, 62] cpu=64905264
+L10 1166631 avid coders Tower Defense b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[3, 3] r100=[4, 4] cpu=59963964
+L10 1166208 Shannon Default a W=True q=[3, 0] win r50=[14, 10] r100=[28, 13] cpu=53798230
+L10 1166209 Shannon Australia a W=True q=[0, 0] win r50=[16, 18] r100=[26, 45] cpu=64416938
+L10 1166210 Shannon Autarky a W=True q=[0, 0] win r50=[14, 7] r100=[16, 8] cpu=64525247
+L10 1166211 Shannon Islands a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[21, 29] r100=[33, 53] cpu=63410678
+L10 1166212 Shannon Portals a W=True q=[0, 0] win r50=[5, 11] r100=[15, 25] cpu=50269546
+L10 1165857 okbro Trauma b W=True q=[26, 21] win r50=[5, 7] r100=[10, 16] cpu=49452430
+L10 1165858 okbro Trophy b W=False q=[0, 4] early unit deficit <=80% at r100 r50=[2, 23] r100=[1, 50] cpu=31390016
+L10 1165859 okbro Tower Defense b W=True q=[4, 0] win r50=[3, 4] r100=[3, 5] cpu=47980921
+L10 1165860 okbro Schooltime b W=False q=[3, 3] early unit deficit <=80% at r100 r50=[6, 7] r100=[8, 15] cpu=64779836
+L10 1165861 okbro Queen Of Spades b W=True q=[2, 0] win r50=[12, 3] r100=[12, 1] cpu=52159230
+L10 1162760 Ron Squad Default b W=True q=[0, 0] win r50=[18, 11] r100=[30, 17] cpu=64677318
+L10 1162761 Ron Squad Portals b W=False q=[0, 55] queen-only tiebreak (our queen dead) r50=[12, 13] r100=[24, 21] cpu=50148964
+L10 1162762 Ron Squad Devil b W=True q=[3, 0] win r50=[13, 5] r100=[38, 1] cpu=39410751
+L10 1162763 Ron Squad Prisoners Dilemma b W=True q=[0, 0] win r50=[10, 8] r100=[17, 1] cpu=49954156
+L10 1162764 Ron Squad weakhold b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[6, 3] r100=[10, 8] cpu=57933148
+L10 1162426 Kerwin Portals a W=True q=[0, 0] win r50=[9, 10] r100=[21, 23] cpu=46105095
+L10 1162427 Kerwin Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 10] r100=[2, 20] cpu=26916103
+L10 1162428 Kerwin weakhold a W=False q=[0, 3] queen-only tiebreak (our queen dead) r50=[6, 5] r100=[10, 8] cpu=47747056
+L10 1162429 Kerwin Around UNSW a W=True q=[0, 0] win r50=[35, 38] r100=[55, 64] cpu=64860163
+L10 1162430 Kerwin Tower Defense a W=True q=[0, 0] win r50=[4, 4] r100=[5, 5] cpu=61573077
+L10 1162052 777 Prisoners Dilemma b W=True q=[2, 0] win r50=[10, 12] r100=[10, 11] cpu=37385848
+L10 1162053 777 Portals b W=True q=[0, 0] win r50=[11, 4] r100=[18, 19] cpu=48660543
+L10 1162054 777 weakhold b W=True q=[2, 0] win r50=[6, 3] r100=[18, 1] cpu=33698553
+L10 1162055 777 Around UNSW b W=True q=[26, 0] win r50=[43, 28] r100=[64, 39] cpu=64882006
+L10 1162056 777 Trophy b W=True q=[2, 0] win r50=[18, 2] r100=None cpu=32199315
+L10 1158327 Ravenus Maze b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[12, 11] r100=[26, 30] cpu=52378473
+L10 1158328 Ravenus Slithery Fight b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[50, 26] r100=[56, 40] cpu=55822543
+L10 1158329 Ravenus Stripes b W=False q=[0, 3] early unit deficit <=80% at r100 r50=[1, 7] r100=[1, 18] cpu=47209906
+L10 1158330 Ravenus Devil b W=True q=[2, 0] win r50=[21, 9] r100=[31, 4] cpu=40641535
+L10 1158331 Ravenus Queen Of Spades b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[2, 3] r100=[6, 6] cpu=52161238
+L10 1157975 Loremipsum Tower Defense a W=False q=[0, 6] early unit deficit <=80% at r100 r50=[3, 3] r100=[4, 10] cpu=28964247
+L10 1157976 Loremipsum weakhold a W=False q=[0, 2] queen-only tiebreak (our queen dead) r50=[4, 3] r100=[11, 3] cpu=50620465
+L10 1157977 Loremipsum Portals a W=True q=[3, 0] win r50=[2, 7] r100=[2, 13] cpu=6277980
+L10 1157978 Loremipsum Australia a W=True q=[26, 0] win r50=[18, 14] r100=[51, 14] cpu=64925400
+L10 1157979 Loremipsum Schooltime a W=False q=[3, 3] early unit deficit <=80% at r100 r50=[5, 7] r100=[9, 14] cpu=31308149
+L10 1157554 Jingling Munmin Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 8] r100=[1, 13] cpu=47210019
+L10 1157555 Jingling Munmin Portals a W=True q=[3, 0] win r50=[3, 7] r100=[3, 16] cpu=6281861
+L10 1157556 Jingling Munmin Devil a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[8, 16] r100=[4, 35] cpu=50158240
+L10 1157557 Jingling Munmin Australia a W=True q=[0, 0] win r50=[17, 20] r100=[40, 27] cpu=64746673
+L10 1157558 Jingling Munmin Around UNSW a W=True q=[0, 0] win r50=[28, 46] r100=[34, 64] cpu=64817694
+L10 1153924 Ravenus Trauma b W=True q=[25, 0] win r50=[5, 4] r100=[7, 3] cpu=41978075
+L10 1153925 Ravenus Maze b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[9, 8] r100=[19, 16] cpu=52026277
+L10 1153926 Ravenus Tower Defense b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[2, 2] r100=[6, 7] cpu=63195407
+L10 1153927 Ravenus Default b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[10, 10] r100=[18, 15] cpu=62834544
+L10 1153928 Ravenus weakhold b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[4, 5] r100=[9, 9] cpu=42032051
+L10 1153560 Jet2Holiday Tower Defense a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 4] r100=[3, 7] cpu=47980966
+L10 1153561 Jet2Holiday Around UNSW a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[34, 37] r100=[50, 55] cpu=64899008
+L10 1153562 Jet2Holiday Devil a W=True q=[0, 0] win r50=[20, 4] r100=[35, 6] cpu=50158240
+L10 1153563 Jet2Holiday Islands a W=True q=[0, 0] win r50=[18, 12] r100=[39, 26] cpu=64725380
+L10 1153564 Jet2Holiday Maze a W=True q=[0, 0] win r50=[16, 8] r100=[23, 15] cpu=64031290
+L10 1153199 DeepSeek-V4.1-Flash Around UNSW a W=True q=[0, 0] win r50=[32, 35] r100=[60, 52] cpu=64911924
+L10 1153200 DeepSeek-V4.1-Flash Portals a W=False q=[0, 2] queen-only tiebreak (our queen dead) r50=[8, 1] r100=[16, 1] cpu=48086702
+L10 1153201 DeepSeek-V4.1-Flash Australia a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[14, 14] r100=[38, 19] cpu=64825958
+L10 1153202 DeepSeek-V4.1-Flash Tower Defense a W=False q=[0, 3] queen-only tiebreak (our queen dead) r50=[2, 2] r100=[3, 3] cpu=52796870
+L10 1153203 DeepSeek-V4.1-Flash Devil a W=False q=[0, 20] early unit deficit <=80% at r100 r50=[9, 12] r100=[12, 21] cpu=49512609
+L10 1149177 Sieberrsec Industrie Queen Of Spades b W=True q=[3, 0] win r50=[6, 2] r100=[19, 3] cpu=52160919
+L10 1149178 Sieberrsec Industrie Schooltime b W=True q=[3, 0] win r50=[5, 2] r100=[10, 2] cpu=21316766
+L10 1149179 Sieberrsec Industrie Islands b W=True q=[12, 0] win r50=[29, 6] r100=[64, 4] cpu=64203531
+L10 1149180 Sieberrsec Industrie Prisoners Dilemma b W=True q=[12, 0] win r50=[10, 2] r100=[10, 2] cpu=64600353
+L10 1149181 Sieberrsec Industrie Devil b W=True q=[2, 0] win r50=[16, 2] r100=None cpu=50162108
+L10 1148886 Shannon Schooltime a W=False q=[3, 3] equal queens; longest/total deficit or draw r50=[5, 7] r100=[9, 11] cpu=36184232
+L10 1148887 Shannon Portals a W=True q=[0, 0] win r50=[13, 10] r100=[22, 16] cpu=51205563
+L10 1148888 Shannon Devil a W=True q=[2, 0] win r50=[15, 10] r100=[28, 2] cpu=50158240
+L10 1148889 Shannon Trophy a W=True q=[0, 0] win r50=[13, 10] r100=[20, 12] cpu=42205753
+L10 1148890 Shannon Trauma a W=False q=[14, 33] living queen length deficit r50=[5, 5] r100=[8, 6] cpu=49452430
+L10 1148185 y weakhold b W=True q=[0, 0] win r50=[4, 5] r100=[7, 13] cpu=63006893
+L10 1148186 y Tower Defense b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 2] r100=[4, 8] cpu=27791147
+L10 1148187 y Prisoners Dilemma b W=True q=[0, 0] win r50=[9, 3] r100=[15, 2] cpu=49954156
+L10 1148188 y Maze b W=False q=[0, 57] early unit deficit <=80% at r100 r50=[12, 16] r100=[16, 33] cpu=51940161
+L10 1148189 y Schooltime b W=False q=[3, 3] early unit deficit <=80% at r100 r50=[5, 6] r100=[8, 16] cpu=36203116
+L10 1144742 tozoman Prisoners Dilemma b W=True q=[3, 0] win r50=[5, 12] r100=[5, 18] cpu=31742717
+L10 1144743 tozoman Queen Of Spades b W=True q=[29, 0] win r50=[3, 3] r100=[10, 9] cpu=63355714
+L10 1144744 tozoman Tower Defense b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 3] r100=[3, 9] cpu=31546271
+L10 1144745 tozoman Trophy b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[8, 17] r100=[3, 39] cpu=51567681
+L10 1144746 tozoman Schooltime b W=False q=[3, 3] early unit deficit <=80% at r100 r50=[6, 9] r100=[12, 17] cpu=30224044
+L10 1144321 life is NP hard Portals a W=True q=[0, 0] win r50=[7, 21] r100=[18, 32] cpu=50278068
+L10 1144322 life is NP hard Australia a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[14, 26] r100=[18, 63] cpu=64913873
+L10 1144323 life is NP hard Default a W=False q=[0, 0] elimination without measured early deficit r50=[10, 11] r100=[17, 20] cpu=61192291
+L10 1144324 life is NP hard Prisoners Dilemma a W=False q=[0, 3] early unit deficit <=80% at r100 r50=[3, 9] r100=[1, 19] cpu=49950288
+L10 1144325 life is NP hard Stripes a W=False q=[0, 2] early unit deficit <=80% at r100 r50=[2, 2] r100=[3, 8] cpu=47860011
+L10 1144195 Jingling Munmin Default a W=False q=[0, 2] early unit deficit <=80% at r100 r50=[7, 18] r100=[3, 28] cpu=34529248
+L10 1144196 Jingling Munmin Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[1, 3] r100=[1, 12] cpu=47210518
+L10 1144197 Jingling Munmin Around UNSW a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[30, 39] r100=[59, 64] cpu=65001541
+L10 1144198 Jingling Munmin Trophy a W=True q=[3, 0] win r50=[17, 6] r100=[34, 7] cpu=51563502
+L10 1144199 Jingling Munmin Devil a W=False q=[0, 3] early unit deficit <=80% at r100 r50=[16, 15] r100=[8, 26] cpu=30129789
+L10 1143657 solo😎 Around UNSW b W=True q=[15, 0] win r50=[23, 38] r100=[49, 60] cpu=64873332
+L10 1143658 solo😎 Tower Defense b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[2, 2] r100=[6, 4] cpu=30808433
+L10 1143659 solo😎 Trauma b W=False q=[21, 24] living queen length deficit r50=[4, 4] r100=[7, 5] cpu=51416235
+L10 1143660 solo😎 Slithery Fight b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[43, 47] r100=[60, 57] cpu=53823303
+L10 1143661 solo😎 Prisoners Dilemma b W=True q=[3, 0] win r50=[6, 6] r100=[3, 7] cpu=49954086
+L10 1140137 NUSW Battlecode Schooltime b W=False q=[3, 3] early unit deficit <=80% at r100 r50=[7, 9] r100=[14, 18] cpu=37439982
+L10 1140138 NUSW Battlecode Australia b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[15, 16] r100=[47, 22] cpu=64784411
+L10 1140139 NUSW Battlecode Around UNSW b W=True q=[0, 0] win r50=[35, 32] r100=[51, 57] cpu=64910467
+L10 1140140 NUSW Battlecode Portals b W=True q=[6, 0] win r50=[3, 14] r100=[3, 30] cpu=48516862
+L10 1140141 NUSW Battlecode Devil b W=True q=[0, 0] win r50=[14, 10] r100=[32, 3] cpu=50162108
+L10 1139941 Um_nik da real goat Stripes b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 5] r100=[1, 11] cpu=47210084
+L10 1139942 Um_nik da real goat Maze b W=False q=[0, 5] early unit deficit <=80% at r100 r50=[12, 16] r100=[18, 32] cpu=63617631
+L10 1139943 Um_nik da real goat Trophy b W=True q=[2, 0] win r50=[20, 6] r100=[32, 6] cpu=51570503
+L10 1139944 Um_nik da real goat Around UNSW b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[37, 30] r100=[64, 49] cpu=64903238
+L10 1139945 Um_nik da real goat Portals b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[6, 14] r100=[20, 23] cpu=48858880
+L10 1139564 Nitronics Tower Defense a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 2] r100=[4, 8] cpu=47980434
+L10 1139565 Nitronics Australia a W=True q=[0, 0] win r50=[23, 11] r100=[45, 10] cpu=64900509
+L10 1139566 Nitronics Trauma a W=False q=[0, 61] early unit deficit <=80% at r100 r50=[6, 8] r100=[7, 17] cpu=49452430
+L10 1139567 Nitronics Queen Of Spades a W=False q=[0, 0] elimination without measured early deficit r50=[5, 5] r100=[8, 4] cpu=52020360
+L10 1139568 Nitronics Portals a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[11, 24] r100=[20, 37] cpu=49799696
+L10 1138861 :3 Portals b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[7, 19] r100=[15, 37] cpu=48111423
+L10 1138862 :3 Autarky b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[13, 13] r100=[14, 23] cpu=49184173
+L10 1138863 :3 Trauma b W=False q=[2, 9] early unit deficit <=80% at r100 r50=[4, 9] r100=[5, 24] cpu=49452430
+L10 1138864 :3 Islands b W=True q=[18, 0] win r50=[15, 29] r100=[28, 57] cpu=63807533
+L10 1138865 :3 Devil b W=False q=[0, 0] elimination without measured early deficit r50=[7, 7] r100=[16, 10] cpu=50162108
+L10 1137965 Martin Shkreli’s Defense Team Schooltime b W=True q=[2, 0] win r50=[15, 8] r100=[25, 63] cpu=55927596
+L10 1137966 Martin Shkreli’s Defense Team Portals b W=True q=[5, 0] win r50=[10, 14] r100=[8, 18] cpu=46193911
+L10 1137967 Martin Shkreli’s Defense Team Tower Defense b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[1, 2] r100=[2, 9] cpu=47980797
+L10 1137968 Martin Shkreli’s Defense Team weakhold b W=True q=[0, 0] win r50=[5, 3] r100=[14, 1] cpu=38348309
+L10 1137969 Martin Shkreli’s Defense Team Default b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[7, 19] r100=[9, 31] cpu=53806588
+L10 1137025 CookAgent Autarky b W=True q=[47, 0] win r50=[12, 12] r100=[16, 13] cpu=64312488
+L10 1137026 CookAgent Tower Defense b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 2] r100=[3, 17] cpu=52887718
+L10 1137027 CookAgent Trophy b W=True q=[2, 0] win r50=[11, 14] r100=[20, 13] cpu=51572523
+L10 1137028 CookAgent Stripes b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 10] r100=[2, 15] cpu=26220569
+L10 1137029 CookAgent Trauma b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[4, 10] r100=[4, 26] cpu=49452430
+L10 1135368 Sieberrsec Industrie Islands a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[22, 10] r100=[46, 8] cpu=64563557
+L10 1135369 Sieberrsec Industrie Australia a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[14, 13] r100=[28, 23] cpu=64869477
+L10 1135370 Sieberrsec Industrie Prisoners Dilemma a W=True q=[15, 3] win r50=[12, 5] r100=[17, 3] cpu=63636175
+L10 1135371 Sieberrsec Industrie Queen Of Spades a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[4, 3] r100=[9, 6] cpu=57733443
+L10 1135372 Sieberrsec Industrie Devil a W=True q=[3, 0] win r50=[17, 11] r100=[22, 7] cpu=50154892
+L10 1134965 EternalWisdom Trophy b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[4, 21] r100=[4, 37] cpu=51564256
+L10 1134966 EternalWisdom Around UNSW b W=True q=[18, 0] win r50=[40, 26] r100=[64, 31] cpu=64877569
+L10 1134967 EternalWisdom Islands b W=True q=[34, 0] win r50=[26, 25] r100=[47, 34] cpu=64516507
+L10 1134968 EternalWisdom Portals b W=True q=[3, 0] win r50=[11, 16] r100=[19, 31] cpu=47319042
+L10 1134969 EternalWisdom Tower Defense b W=True q=[3, 0] win r50=[2, 3] r100=[3, 4] cpu=47980928
+L10 1134014 Manny Autarky b W=True q=[0, 0] win r50=[14, 13] r100=[17, 10] cpu=40024798
+L10 1134015 Manny Prisoners Dilemma b W=False q=[0, 3] early unit deficit <=80% at r100 r50=[8, 8] r100=[7, 12] cpu=49954156
+L10 1134016 Manny Australia b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[12, 17] r100=[24, 43] cpu=64840986
+L10 1134017 Manny Maze b W=True q=[0, 0] win r50=[16, 10] r100=[23, 17] cpu=62914115
+L10 1134018 Manny Queen Of Spades b W=True q=[6, 0] win r50=[6, 4] r100=[10, 1] cpu=48963280
+L10 1130957 Sieberrsec Industrie Trauma a W=True q=[15, 2] win r50=[4, 6] r100=[7, 6] cpu=38742246
+L10 1130958 Sieberrsec Industrie Autarky a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[19, 15] r100=[19, 13] cpu=63270730
+L10 1130959 Sieberrsec Industrie Tower Defense a W=True q=[2, 0] win r50=[3, 3] r100=[14, 4] cpu=27909914
+L10 1130960 Sieberrsec Industrie Australia a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[13, 14] r100=[19, 39] cpu=64799892
+L10 1130961 Sieberrsec Industrie Prisoners Dilemma a W=True q=[6, 3] win r50=[7, 4] r100=[7, 3] cpu=40832899
+L10 1130743 Deer Park Default b W=True q=[6, 0] win r50=[13, 8] r100=[24, 13] cpu=53806187
+L10 1130744 Deer Park Queen Of Spades b W=True q=[2, 0] win r50=[4, 4] r100=[17, 3] cpu=31435978
+L10 1130745 Deer Park Trauma b W=True q=[6, 0] win r50=[4, 7] r100=[7, 21] cpu=49452430
+L10 1130746 Deer Park Schooltime b W=False q=[3, 3] early unit deficit <=80% at r100 r50=[6, 6] r100=[9, 15] cpu=21204446
+L10 1130747 Deer Park Australia b W=True q=[44, 0] win r50=[16, 12] r100=[49, 14] cpu=64911432
+L10 1129783 StarStruck Tower Defense a W=False q=[0, 25] early unit deficit <=80% at r100 r50=[2, 2] r100=[5, 15] cpu=46870915
+L10 1129784 StarStruck Prisoners Dilemma a W=False q=[0, 2] early unit deficit <=80% at r100 r50=[5, 10] r100=[3, 14] cpu=49950288
+L10 1129785 StarStruck Australia a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[13, 16] r100=[30, 41] cpu=64930905
+L10 1129786 StarStruck Trauma a W=True q=[11, 7] win r50=[4, 6] r100=[5, 9] cpu=49452430
+L10 1129787 StarStruck Maze a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[9, 8] r100=[21, 21] cpu=44135536
+L10 1126606 Um_nik da real goat Slithery Fight a W=False q=[0, 58] queen-only tiebreak (our queen dead) r50=[35, 37] r100=[49, 60] cpu=55640485
+L10 1126607 Um_nik da real goat Tower Defense a W=True q=[0, 0] win r50=[2, 2] r100=[3, 4] cpu=63590565
+L10 1126608 Um_nik da real goat Queen Of Spades a W=True q=[46, 13] win r50=[9, 3] r100=[11, 5] cpu=64580849
+L10 1126609 Um_nik da real goat Trauma a W=True q=[18, 12] win r50=[5, 4] r100=[8, 7] cpu=37208673
+L10 1126610 Um_nik da real goat Portals a W=True q=[3, 0] win r50=[2, 14] r100=[2, 23] cpu=27914862
+L10 1126169 Deer Park Devil b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[8, 9] r100=[8, 17] cpu=50162108
+L10 1126170 Deer Park Prisoners Dilemma b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 4] r100=[2, 7] cpu=30067681
+L10 1126171 Deer Park Around UNSW b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[27, 31] r100=[52, 59] cpu=64834479
+L10 1126172 Deer Park Queen Of Spades b W=False q=[0, 0] elimination without measured early deficit r50=[7, 4] r100=[9, 5] cpu=31298530
+L10 1126173 Deer Park Stripes b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[6, 7] r100=[5, 14] cpu=47196514
+L10 1125145 DeepSeek-V4.1-Flash Autarky b W=True q=[21, 0] win r50=[16, 15] r100=[21, 15] cpu=64767097
+L10 1125146 DeepSeek-V4.1-Flash weakhold b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[5, 8] r100=[7, 11] cpu=42575384
+L10 1125147 DeepSeek-V4.1-Flash Around UNSW b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[28, 37] r100=[52, 63] cpu=64927690
+L10 1125148 DeepSeek-V4.1-Flash Devil b W=False q=[0, 2] early unit deficit <=80% at r100 r50=[13, 16] r100=[12, 23] cpu=39540454
+L10 1125149 DeepSeek-V4.1-Flash Stripes b W=False q=[0, 2] early unit deficit <=80% at r100 r50=[2, 3] r100=[1, 10] cpu=47210825
+L10 1122109 Sieberrsec Industrie Stripes a W=True q=[0, 0] win r50=[2, 1] r100=[2, 1] cpu=25690972
+L10 1122110 Sieberrsec Industrie Maze a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[17, 6] r100=[26, 6] cpu=62102647
+L10 1122111 Sieberrsec Industrie Devil a W=True q=[2, 0] win r50=[15, 7] r100=[28, 10] cpu=29822221
+L10 1122112 Sieberrsec Industrie Portals a W=False q=[0, 3] queen-only tiebreak (our queen dead) r50=[11, 6] r100=[26, 6] cpu=48265884
+L10 1122113 Sieberrsec Industrie Around UNSW a W=False q=[0, 5] queen-only tiebreak (our queen dead) r50=[27, 28] r100=[42, 42] cpu=64904359
+L10 1121908 Just Keep Swimming Prisoners Dilemma a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[6, 9] r100=[4, 17] cpu=49950288
+L10 1121909 Just Keep Swimming weakhold a W=True q=[0, 0] win r50=[5, 4] r100=[18, 5] cpu=40325874
+L10 1121910 Just Keep Swimming Autarky a W=True q=[21, 0] win r50=[12, 16] r100=[15, 13] cpu=56755952
+L10 1121911 Just Keep Swimming Portals a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[13, 14] r100=[27, 18] cpu=47625412
+L10 1121912 Just Keep Swimming Queen Of Spades a W=True q=[6, 0] win r50=[6, 2] r100=[16, 3] cpu=62204457
+L10 1120788 StarStruck Stripes b W=False q=[0, 2] elimination without measured early deficit r50=[1, 7] r100=None cpu=25457440
+L10 1120789 StarStruck Prisoners Dilemma b W=True q=[0, 0] win r50=[6, 3] r100=[7, 3] cpu=61009389
+L10 1120790 StarStruck Trauma b W=False q=[0, 7] early unit deficit <=80% at r100 r50=[4, 7] r100=[8, 12] cpu=44514484
+L10 1120791 StarStruck Default b W=True q=[0, 0] win r50=[9, 13] r100=[17, 14] cpu=53807149
+L10 1120792 StarStruck Schooltime b W=True q=[3, 3] win r50=[15, 11] r100=[24, 54] cpu=56065721
+L10 1117689 Check Raise Maze b W=False q=[0, 67] queen-only tiebreak (our queen dead) r50=[8, 10] r100=[26, 23] cpu=59781406
+L10 1117690 Check Raise Devil b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[10, 19] r100=[9, 37] cpu=38684965
+L10 1117691 Check Raise Stripes b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 6] r100=[1, 21] cpu=47209859
+L10 1117692 Check Raise Default b W=False q=[0, 57] early unit deficit <=80% at r100 r50=[11, 15] r100=[11, 25] cpu=36848772
+L10 1117693 Check Raise Australia b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[16, 22] r100=[28, 47] cpu=64832586
+L10 1117471 the uncancelables Slithery Fight a W=True q=[0, 0] win r50=[45, 31] r100=[60, 51] cpu=55951900
+L10 1117472 the uncancelables Default a W=True q=[0, 0] win r50=[8, 8] r100=[16, 9] cpu=62013097
+L10 1117473 the uncancelables Schooltime a W=False q=[3, 3] early unit deficit <=80% at r100 r50=[16, 11] r100=[27, 56] cpu=55858737
+L10 1117474 the uncancelables Maze a W=False q=[0, 75] early unit deficit <=80% at r100 r50=[12, 12] r100=[24, 32] cpu=62347702
+L10 1117475 the uncancelables Prisoners Dilemma a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[7, 5] r100=[9, 5] cpu=31147958
+L10 1116763 Jingling Munmin Schooltime b W=True q=[3, 0] win r50=[11, 12] r100=[29, 50] cpu=55474213
+L10 1116764 Jingling Munmin Autarky b W=True q=[20, 0] win r50=[11, 13] r100=[15, 18] cpu=57469141
+L10 1116765 Jingling Munmin Islands b W=True q=[0, 0] win r50=[25, 34] r100=[29, 61] cpu=64398436
+L10 1116766 Jingling Munmin Australia b W=True q=[0, 0] win r50=[13, 17] r100=[34, 30] cpu=64857447
+L10 1116767 Jingling Munmin Trauma b W=True q=[19, 0] win r50=[5, 5] r100=[7, 5] cpu=49452430
+L10 1116188 f2p Stripes b W=False q=[0, 2] early unit deficit <=80% at r100 r50=[2, 6] r100=[1, 15] cpu=25801307
+L10 1116189 f2p Tower Defense b W=False q=[0, 3] early unit deficit <=80% at r100 r50=[2, 3] r100=[3, 17] cpu=47981120
+L10 1116190 f2p Default b W=True q=[0, 0] win r50=[11, 9] r100=[13, 9] cpu=35472727
+L10 1116191 f2p Trophy b W=False q=[0, 3] early unit deficit <=80% at r100 r50=[5, 13] r100=[1, 41] cpu=51561780
+L10 1116192 f2p Maze b W=True q=[0, 0] win r50=[15, 15] r100=[24, 28] cpu=59491042
+L10 1114753 Sieberrsec Industrie Trauma b W=True q=[11, 0] win r50=[4, 4] r100=[7, 5] cpu=49452430
+L10 1114754 Sieberrsec Industrie Maze b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[10, 7] r100=[25, 9] cpu=64319154
+L10 1114755 Sieberrsec Industrie Default b W=True q=[0, 0] win r50=[10, 9] r100=[11, 20] cpu=64423814
+L10 1114756 Sieberrsec Industrie Queen Of Spades b W=False q=[0, 3] early unit deficit <=80% at r100 r50=[2, 5] r100=[1, 15] cpu=30405706
+L10 1114757 Sieberrsec Industrie Australia b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[17, 18] r100=[35, 39] cpu=64782936
+L10 1112983 Um_nik da real goat Trophy a W=True q=[0, 0] win r50=[20, 10] r100=[36, 5] cpu=45732354
+L10 1112984 Um_nik da real goat Devil a W=True q=[3, 0] win r50=[14, 7] r100=[34, 2] cpu=50158240
+L10 1112985 Um_nik da real goat Default a W=True q=[2, 0] win r50=[15, 8] r100=[27, 8] cpu=43450923
+L10 1112986 Um_nik da real goat Portals a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 10] r100=[13, 17] cpu=42775138
+L10 1112987 Um_nik da real goat Maze a W=False q=[0, 30] queen-only tiebreak (our queen dead) r50=[10, 15] r100=[22, 25] cpu=64512058
+L10 1112727 Kerwin Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 5] r100=[5, 10] cpu=32756034
+L10 1112728 Kerwin Queen Of Spades a W=True q=[3, 0] win r50=[10, 5] r100=[13, 6] cpu=52154554
+L10 1112729 Kerwin Around UNSW a W=True q=[0, 0] win r50=[34, 37] r100=[52, 63] cpu=65056671
+L10 1112730 Kerwin weakhold a W=True q=[0, 0] win r50=[4, 5] r100=[10, 3] cpu=51708286
+L10 1112731 Kerwin Default a W=True q=[0, 0] win r50=[12, 17] r100=[23, 19] cpu=53072161
+L10 1111508 CookAgent Around UNSW b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[35, 39] r100=[63, 52] cpu=64907664
+L10 1111509 CookAgent Maze b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[15, 14] r100=[25, 26] cpu=62813566
+L10 1111510 CookAgent Autarky b W=True q=[20, 0] win r50=[13, 12] r100=[14, 12] cpu=58475149
+L10 1111511 CookAgent Portals b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[4, 15] r100=[3, 28] cpu=45890712
+L10 1111512 CookAgent Trophy b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[7, 16] r100=[2, 48] cpu=32112855
+L10 1111379 python.io Australia b W=True q=[0, 0] win r50=[16, 16] r100=[30, 36] cpu=64874415
+L10 1111380 python.io Islands b W=True q=[0, 0] win r50=[16, 36] r100=[29, 57] cpu=64671384
+L10 1111381 python.io Autarky b W=True q=[3, 0] win r50=[15, 10] r100=[24, 13] cpu=53243231
+L10 1111382 python.io Schooltime b W=False q=[3, 3] early unit deficit <=80% at r100 r50=[4, 5] r100=[6, 12] cpu=29964768
+L10 1111383 python.io Around UNSW b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[36, 26] r100=[53, 43] cpu=64901246
+L10 1108305 Um_nik da real goat Australia a W=True q=[0, 0] win r50=[14, 17] r100=[32, 36] cpu=64897965
+L10 1108306 Um_nik da real goat Schooltime a W=False q=[3, 3] early unit deficit <=80% at r100 r50=[15, 8] r100=[22, 31] cpu=55989884
+L10 1108307 Um_nik da real goat Around UNSW a W=False q=[31, 62] living queen length deficit r50=[36, 20] r100=[64, 33] cpu=64876503
+L10 1108308 Um_nik da real goat Portals a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[11, 10] r100=[20, 17] cpu=50045407
+L10 1108309 Um_nik da real goat Stripes a W=False q=[0, 2] early unit deficit <=80% at r100 r50=[3, 5] r100=[2, 14] cpu=26392137
+L10 1108072 Shannon Islands a W=True q=[49, 0] win r50=[24, 19] r100=[37, 23] cpu=64344433
+L10 1108073 Shannon Australia a W=True q=[0, 0] win r50=[16, 12] r100=[54, 10] cpu=64929613
+L10 1108074 Shannon Schooltime a W=True q=[3, 3] win r50=[5, 6] r100=[8, 8] cpu=63593976
+L10 1108075 Shannon Stripes a W=True q=[3, 3] win r50=[2, 1] r100=[2, 1] cpu=27576503
+L10 1108076 Shannon weakhold a W=True q=[0, 0] win r50=[5, 4] r100=[12, 3] cpu=59055969
+L10 1106730 Peanut Butter Trophy b W=True q=[0, 0] win r50=[12, 8] r100=[12, 15] cpu=63389445
+L10 1106731 Peanut Butter Schooltime b W=False q=[3, 3] early unit deficit <=80% at r100 r50=[5, 6] r100=[6, 18] cpu=36202260
+L10 1106732 Peanut Butter Islands b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[17, 39] r100=[30, 61] cpu=60431683
+L10 1106733 Peanut Butter Autarky b W=False q=[0, 0] elimination without measured early deficit r50=[14, 13] r100=[17, 20] cpu=53243231
+L10 1106734 Peanut Butter Prisoners Dilemma b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[4, 6] r100=[2, 5] cpu=29548088
+L10 1105706 Sieberrsec Industrie Maze b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[9, 6] r100=[19, 6] cpu=63470549
+L10 1105707 Sieberrsec Industrie Stripes b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 2] r100=[2, 4] cpu=47209874
+L10 1105708 Sieberrsec Industrie Around UNSW b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[30, 28] r100=[57, 27] cpu=65239199
+L10 1105709 Sieberrsec Industrie Trauma b W=False q=[18, 19] living queen length deficit r50=[6, 4] r100=[7, 6] cpu=58550633
+L10 1105710 Sieberrsec Industrie Queen Of Spades b W=True q=[3, 0] win r50=[6, 1] r100=[8, 1] cpu=32515689
+L10 1104079 Ravenus Portals b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[8, 15] r100=[23, 26] cpu=51213259
+L10 1104080 Ravenus Islands b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[21, 14] r100=[47, 23] cpu=64189723
+L10 1104081 Ravenus weakhold b W=True q=[0, 0] win r50=[4, 5] r100=[8, 9] cpu=55416224
+L10 1104082 Ravenus Queen Of Spades b W=True q=[12, 0] win r50=[7, 8] r100=[7, 14] cpu=57209012
+L10 1104083 Ravenus Prisoners Dilemma b W=True q=[9, 0] win r50=[8, 7] r100=[10, 7] cpu=64220081
+L10 1103783 verity Trauma a W=False q=[0, 28] queen-only tiebreak (our queen dead) r50=[5, 4] r100=[8, 3] cpu=43141563
+L10 1103784 verity Islands a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[24, 22] r100=[43, 34] cpu=64712284
+L10 1103785 verity Stripes a W=False q=[0, 13] elimination without measured early deficit r50=[1, 3] r100=None cpu=28712390
+L10 1103786 verity Australia a W=True q=[0, 0] win r50=[18, 15] r100=[54, 20] cpu=64896070
+L10 1103787 verity weakhold a W=True q=[0, 0] win r50=[7, 3] r100=[19, 2] cpu=35839081
+L10 1102486 Sarvottam Schooltime a W=False q=[3, 3] early unit deficit <=80% at r100 r50=[7, 8] r100=[9, 16] cpu=52356506
+L10 1102487 Sarvottam Tower Defense a W=False q=[0, 0] elimination without measured early deficit r50=[3, 3] r100=[3, 3] cpu=45551987
+L10 1102488 Sarvottam Autarky a W=True q=[0, 0] win r50=[15, 16] r100=[15, 18] cpu=61628276
+L10 1102489 Sarvottam Slithery Fight a W=True q=[0, 0] win r50=[42, 43] r100=[49, 57] cpu=55705974
+L10 1102490 Sarvottam Stripes a W=True q=[0, 0] win r50=[5, 2] r100=[11, 1] cpu=47210084
+L10 1100335 Um_nik da real goat Islands b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[28, 32] r100=[39, 55] cpu=64230362
+L10 1100336 Um_nik da real goat Trauma b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[4, 3] r100=[4, 3] cpu=45353754
+L10 1100337 Um_nik da real goat Autarky b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[11, 14] r100=[7, 12] cpu=53243231
+L10 1100338 Um_nik da real goat weakhold b W=True q=[0, 0] win r50=[5, 8] r100=[13, 8] cpu=39798378
+L10 1100339 Um_nik da real goat Stripes b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[5, 7] r100=[3, 13] cpu=47209878
+L10 1099504 nooberGamer Stripes b W=False q=[0, 0] elimination without measured early deficit r50=[2, 2] r100=[2, 2] cpu=52610047
+L10 1099505 nooberGamer Queen Of Spades b W=False q=[0, 4] early unit deficit <=80% at r100 r50=[6, 8] r100=[2, 12] cpu=52159230
+L10 1099506 nooberGamer Australia b W=True q=[0, 0] win r50=[21, 13] r100=[49, 13] cpu=64906436
+L10 1099507 nooberGamer Portals b W=True q=[0, 0] win r50=[7, 15] r100=[18, 32] cpu=48592306
+L10 1099508 nooberGamer Trauma b W=False q=[2, 32] living queen length deficit r50=[4, 4] r100=[6, 6] cpu=36433935
+L10 1099044 Kerwin Slithery Fight a W=True q=[0, 0] win r50=[45, 37] r100=[45, 56] cpu=55939621
+L10 1099045 Kerwin Around UNSW a W=True q=[0, 0] win r50=[30, 49] r100=[40, 64] cpu=64848915
+L10 1099046 Kerwin Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 8] r100=[1, 17] cpu=47209849
+L10 1099047 Kerwin Tower Defense a W=True q=[0, 0] win r50=[3, 3] r100=[3, 4] cpu=31905969
+L10 1099048 Kerwin weakhold a W=True q=[0, 0] win r50=[6, 5] r100=[15, 3] cpu=60084374
+L10 1097873 Z-A Schooltime b W=True q=[3, 3] win r50=[16, 9] r100=[22, 53] cpu=56019170
+L10 1097874 Z-A Default b W=True q=[0, 0] win r50=[11, 14] r100=[16, 16] cpu=63184577
+L10 1097875 Z-A Tower Defense b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[2, 2] r100=[3, 2] cpu=63049129
+L10 1097876 Z-A Prisoners Dilemma b W=True q=[2, 0] win r50=[7, 4] r100=[7, 3] cpu=60564225
+L10 1097877 Z-A Australia b W=True q=[80, 0] win r50=[15, 16] r100=[37, 15] cpu=64915305
+L10 1094838 SuitedConnectors Stripes a W=False q=[0, 2] early unit deficit <=80% at r100 r50=[2, 3] r100=[2, 10] cpu=47209859
+L10 1094839 SuitedConnectors Devil a W=True q=[0, 0] win r50=[9, 9] r100=[19, 16] cpu=48467708
+L10 1094840 SuitedConnectors Default a W=True q=[8, 0] win r50=[10, 12] r100=[18, 15] cpu=53797708
+L10 1094841 SuitedConnectors Schooltime a W=True q=[3, 3] win r50=[15, 15] r100=[24, 60] cpu=56038998
+L10 1094842 SuitedConnectors Trauma a W=True q=[15, 3] win r50=[5, 4] r100=[6, 4] cpu=49452430
+L10 1094545 1234 Queen Of Spades b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 5] r100=[7, 9] cpu=52161058
+L10 1094546 1234 Around UNSW b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[36, 29] r100=[60, 44] cpu=65039401
+L10 1094547 1234 weakhold b W=True q=[0, 0] win r50=[6, 5] r100=[14, 5] cpu=47747056
+L10 1094548 1234 Default b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[11, 14] r100=[12, 23] cpu=35767171
+L10 1094549 1234 Tower Defense b W=True q=[2, 0] win r50=[2, 2] r100=[15, 4] cpu=47980660
+L10 1093984 Just Keep Swimming weakhold b W=False q=[0, 2] early unit deficit <=80% at r100 r50=[5, 5] r100=[4, 15] cpu=30692452
+L10 1093985 Just Keep Swimming Maze b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[14, 14] r100=[25, 23] cpu=63637722
+L10 1093986 Just Keep Swimming Prisoners Dilemma b W=False q=[0, 0] elimination without measured early deficit r50=[8, 8] r100=[10, 8] cpu=42060441
+L10 1093987 Just Keep Swimming Australia b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[20, 16] r100=[31, 35] cpu=64749819
+L10 1093988 Just Keep Swimming Autarky b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[14, 15] r100=[14, 17] cpu=62050872
+L10 1093994 Just Keep Swimming weakhold b W=True q=[0, 0] win r50=[6, 4] r100=[16, 3] cpu=41194001
+L10 1093995 Just Keep Swimming Maze b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[15, 12] r100=[26, 24] cpu=61881686
+L10 1093996 Just Keep Swimming Prisoners Dilemma b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[7, 7] r100=[5, 6] cpu=32125103
+L10 1093997 Just Keep Swimming Australia b W=True q=[33, 0] win r50=[18, 17] r100=[32, 34] cpu=64795371
+L10 1093998 Just Keep Swimming Autarky b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[11, 13] r100=[11, 12] cpu=62337294
+L10 1093989 Just Keep Swimming weakhold b W=True q=[0, 0] win r50=[5, 5] r100=[14, 4] cpu=47747056
+L10 1093990 Just Keep Swimming Maze b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[12, 12] r100=[24, 23] cpu=64398516
+L10 1093991 Just Keep Swimming Prisoners Dilemma b W=False q=[0, 0] elimination without measured early deficit r50=[7, 7] r100=[5, 6] cpu=49954086
+L10 1093992 Just Keep Swimming Australia b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[20, 16] r100=[41, 22] cpu=64862615
+L10 1093993 Just Keep Swimming Autarky b W=True q=[3, 0] win r50=[14, 16] r100=[16, 16] cpu=53243231
+L10 1093999 Just Keep Swimming weakhold b W=True q=[0, 0] win r50=[5, 5] r100=[17, 4] cpu=49732797
+L10 1094000 Just Keep Swimming Maze b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[13, 12] r100=[20, 21] cpu=61729820
+L10 1094001 Just Keep Swimming Prisoners Dilemma b W=True q=[3, 0] win r50=[11, 9] r100=[14, 5] cpu=49954156
+L10 1094002 Just Keep Swimming Australia b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[16, 19] r100=[29, 35] cpu=64905633
+L10 1094003 Just Keep Swimming Autarky b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[19, 18] r100=[21, 19] cpu=57526028
+L10 1093433 Loremipsum Devil b W=True q=[2, 0] win r50=[20, 3] r100=None cpu=50158015
+L10 1093434 Loremipsum weakhold b W=True q=[2, 0] win r50=[7, 3] r100=[17, 3] cpu=43175102
+L10 1093435 Loremipsum Default b W=True q=[0, 0] win r50=[12, 7] r100=[23, 4] cpu=53805890
+L10 1093436 Loremipsum Around UNSW b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[39, 22] r100=[64, 29] cpu=64921985
+L10 1093437 Loremipsum Maze b W=False q=[0, 24] queen-only tiebreak (our queen dead) r50=[10, 3] r100=[20, 11] cpu=62904263
+L10 1090700 Citadel Insecurities Queen Of Spades a W=True q=[0, 0] win r50=[10, 8] r100=[10, 7] cpu=52152722
+L10 1090701 Citadel Insecurities Default a W=True q=[2, 0] win r50=[12, 10] r100=[20, 12] cpu=35158198
+L10 1090702 Citadel Insecurities Australia a W=True q=[0, 0] win r50=[19, 13] r100=[41, 23] cpu=64909607
+L10 1090703 Citadel Insecurities Prisoners Dilemma a W=True q=[5, 2] win r50=[12, 6] r100=[16, 4] cpu=64512885
+L10 1090704 Citadel Insecurities Autarky a W=True q=[2, 0] win r50=[15, 12] r100=[16, 12] cpu=53235867
+L10 1090321 avid coders Prisoners Dilemma a W=False q=[0, 3] elimination without measured early deficit r50=[6, 6] r100=[6, 7] cpu=30737861
+L10 1090322 avid coders Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 6] r100=[2, 10] cpu=47210019
+L10 1090323 avid coders weakhold a W=True q=[0, 0] win r50=[5, 5] r100=[15, 5] cpu=53415519
+L10 1090324 avid coders Islands a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[20, 31] r100=[29, 46] cpu=58224504
+L10 1090325 avid coders Around UNSW a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[28, 46] r100=[53, 61] cpu=64903616
+L10 1089412 solo😎 Islands b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[15, 24] r100=[34, 58] cpu=63709127
+L10 1089413 solo😎 Queen Of Spades b W=True q=[2, 0] win r50=[8, 3] r100=[9, 2] cpu=52156993
+L10 1089414 solo😎 Prisoners Dilemma b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[7, 6] r100=[4, 11] cpu=31267653
+L10 1089415 solo😎 Around UNSW b W=True q=[66, 0] win r50=[26, 32] r100=[36, 60] cpu=64856535
+L10 1089416 solo😎 Schooltime b W=True q=[3, 3] win r50=[17, 12] r100=[20, 59] cpu=55964904
+L10 1087018 nooberGamer Portals b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[12, 13] r100=[16, 31] cpu=50689695
+L10 1087019 nooberGamer Stripes b W=False q=[0, 5] elimination without measured early deficit r50=[1, 7] r100=None cpu=47209881
+L10 1087020 nooberGamer Devil b W=True q=[2, 0] win r50=[15, 8] r100=[33, 1] cpu=29025055
+L10 1087021 nooberGamer Slithery Fight b W=True q=[11, 0] win r50=[40, 43] r100=[42, 61] cpu=53830803
+L10 1087022 nooberGamer Trophy b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[11, 5] r100=[8, 23] cpu=40634249
+L10 1086655 btop Prisoners Dilemma b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[7, 7] r100=[4, 10] cpu=49954156
+L10 1086656 btop Portals b W=True q=[3, 0] win r50=[2, 3] r100=[2, 3] cpu=6274301
+L10 1086657 btop Trophy b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[10, 21] r100=[1, 57] cpu=51569788
+L10 1086658 btop Australia b W=True q=[0, 0] win r50=[13, 14] r100=[42, 18] cpu=64875239
+L10 1086659 btop Islands b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[28, 23] r100=[43, 43] cpu=63138311
+L10 1085497 Loremipsum Around UNSW b W=True q=[0, 0] win r50=[42, 18] r100=[64, 22] cpu=64932521
+L10 1085498 Loremipsum Queen Of Spades b W=True q=[2, 0] win r50=[6, 4] r100=[10, 4] cpu=49527764
+L10 1085499 Loremipsum Trophy b W=True q=[0, 0] win r50=[19, 5] r100=[41, 4] cpu=51563852
+L10 1085500 Loremipsum Stripes b W=True q=[2, 0] win r50=[3, 2] r100=[10, 2] cpu=30068985
+L10 1085501 Loremipsum Autarky b W=True q=[42, 0] win r50=[18, 8] r100=[22, 9] cpu=64554519
+L10 1083240 Citadel Insecurities Devil a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[11, 13] r100=[12, 21] cpu=50158240
+L10 1083241 Citadel Insecurities Default a W=True q=[8, 0] win r50=[14, 10] r100=[24, 15] cpu=44192259
+L10 1083242 Citadel Insecurities Queen Of Spades a W=True q=[11, 0] win r50=[5, 3] r100=[7, 7] cpu=64050208
+L10 1083243 Citadel Insecurities Autarky a W=True q=[2, 0] win r50=[15, 13] r100=[17, 9] cpu=39998980
+L10 1083244 Citadel Insecurities Around UNSW a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[27, 24] r100=[50, 63] cpu=64885528
+L10 1082701 y Queen Of Spades b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[7, 9] r100=[6, 16] cpu=52159230
+L10 1082702 y Around UNSW b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[20, 46] r100=[44, 63] cpu=65003803
+L10 1082703 y Maze b W=False q=[0, 7] early unit deficit <=80% at r100 r50=[13, 16] r100=[22, 41] cpu=63558810
+L10 1082704 y Australia b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[19, 22] r100=[32, 42] cpu=64856902
+L10 1082705 y Devil b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[9, 14] r100=[11, 29] cpu=50156516
+L10 1081878 zach Default b W=True q=[2, 0] win r50=[12, 7] r100=[24, 7] cpu=35718115
+L10 1081879 zach Tower Defense b W=True q=[0, 0] win r50=[2, 1] r100=[4, 1] cpu=47980772
+L10 1081880 zach Devil b W=False q=[0, 5] queen-only tiebreak (our queen dead) r50=[14, 10] r100=[30, 7] cpu=62573618
+L10 1081881 zach Portals b W=True q=[0, 0] win r50=[16, 11] r100=[22, 11] cpu=49775448
+L10 1081882 zach Schooltime b W=False q=[3, 3] early unit deficit <=80% at r100 r50=[6, 7] r100=[12, 18] cpu=52695059
+L10 1081303 Just Keep Swimming Default b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[15, 13] r100=[20, 20] cpu=53806179
+L10 1081304 Just Keep Swimming Tower Defense b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 5] r100=[3, 22] cpu=27325475
+L10 1081305 Just Keep Swimming Islands b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[26, 32] r100=[35, 54] cpu=59975352
+L10 1081306 Just Keep Swimming Around UNSW b W=True q=[33, 0] win r50=[34, 33] r100=[55, 59] cpu=64840668
+L10 1081307 Just Keep Swimming Trophy b W=False q=[0, 2] early unit deficit <=80% at r100 r50=[8, 20] r100=[3, 45] cpu=51563706
+L10 1081270 Just Keep Swimming Default b W=True q=[36, 0] win r50=[10, 12] r100=[21, 15] cpu=64069292
+L10 1081271 Just Keep Swimming Tower Defense b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 2] r100=[3, 17] cpu=47980739
+L10 1081272 Just Keep Swimming Islands b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[16, 36] r100=[21, 64] cpu=64426794
+L10 1081273 Just Keep Swimming Around UNSW b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[31, 44] r100=[41, 64] cpu=65107001
+L10 1081274 Just Keep Swimming Trophy b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[1, 20] r100=[2, 53] cpu=30570226
+L10 1081275 Just Keep Swimming Default b W=True q=[0, 0] win r50=[12, 13] r100=[13, 13] cpu=63327196
+L10 1081276 Just Keep Swimming Tower Defense b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 3] r100=[3, 22] cpu=27296362
+L10 1081277 Just Keep Swimming Islands b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[27, 33] r100=[38, 48] cpu=58070211
+L10 1081278 Just Keep Swimming Around UNSW b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[37, 36] r100=[63, 46] cpu=64885450
+L10 1081279 Just Keep Swimming Trophy b W=True q=[3, 0] win r50=[12, 13] r100=[31, 14] cpu=51563508
+L10 1081297 Just Keep Swimming Default b W=True q=[2, 0] win r50=[10, 9] r100=[16, 12] cpu=64414504
+L10 1081298 Just Keep Swimming Tower Defense b W=False q=[0, 2] early unit deficit <=80% at r100 r50=[3, 3] r100=[5, 21] cpu=27908881
+L10 1081299 Just Keep Swimming Islands b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[28, 36] r100=[24, 64] cpu=63509841
+L10 1081300 Just Keep Swimming Around UNSW b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[31, 28] r100=[44, 64] cpu=64927349
+L10 1081301 Just Keep Swimming Trophy b W=True q=[0, 0] win r50=[15, 11] r100=[21, 13] cpu=51569801
+L10 1080583 Check Raise Trophy a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[5, 17] r100=[4, 43] cpu=44556771
+L10 1080567 Check Raise Trophy a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[7, 6] r100=[7, 28] cpu=32561888
+L10 1080531 Check Raise Trophy a W=True q=[2, 0] win r50=[23, 8] r100=[53, 2] cpu=34149979
+L10 1080515 Check Raise Trophy a W=True q=[3, 0] win r50=[11, 7] r100=[27, 4] cpu=33401823
+Sv5.3 1055022 Check Raise Tower Defense a W=False q=[0, 5] early unit deficit <=80% at r100 r50=[3, 4] r100=[3, 7] cpu=48065721
+Sv5.3 1055023 Check Raise Autarky a W=True q=[3, 0] win r50=[13, 13] r100=[18, 15] cpu=38779282
+Sv5.3 1055024 Check Raise Trauma a W=True q=[15, 14] win r50=[4, 4] r100=[5, 7] cpu=49537279
+Sv5.3 1055025 Check Raise Maze a W=False q=[0, 40] queen-only tiebreak (our queen dead) r50=[12, 14] r100=[21, 24] cpu=56998902
+Sv5.3 1055026 Check Raise Stripes a W=False q=[0, 4] early unit deficit <=80% at r100 r50=[2, 7] r100=[1, 14] cpu=47295112
+Sv5.3 1055005 Jingling Munmin Schooltime b W=False q=[3, 3] equal queens; longest/total deficit or draw r50=[12, 13] r100=[40, 26] cpu=55877543
+Sv5.3 1055006 Jingling Munmin Maze b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[9, 13] r100=[20, 27] cpu=62080442
+Sv5.3 1055007 Jingling Munmin weakhold b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[9, 8] r100=[18, 10] cpu=54035551
+Sv5.3 1055008 Jingling Munmin Slithery Fight b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[31, 33] r100=[44, 51] cpu=55764265
+Sv5.3 1055009 Jingling Munmin Devil b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[9, 15] r100=[11, 32] cpu=50238376
+Sv5.3 1051262 hm Around UNSW a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[41, 26] r100=[64, 49] cpu=64428527
+Sv5.3 1051263 hm Schooltime a W=False q=[3, 3] equal queens; longest/total deficit or draw r50=[23, 11] r100=[50, 33] cpu=55730078
+Sv5.3 1051264 hm Maze a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[12, 13] r100=[19, 23] cpu=60953540
+Sv5.3 1051265 hm Islands a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[16, 33] r100=[28, 54] cpu=64116150
+Sv5.3 1051266 hm Prisoners Dilemma a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 14] r100=[1, 22] cpu=50031172
+Sv5.3 1051077 very creative team name Stripes b W=False q=[0, 0] elimination without measured early deficit r50=[5, 5] r100=[8, 6] cpu=47295057
+Sv5.3 1051078 very creative team name Default b W=True q=[0, 0] win r50=[11, 10] r100=[19, 10] cpu=63563816
+Sv5.3 1051079 very creative team name Autarky b W=False q=[0, 19] queen-only tiebreak (our queen dead) r50=[14, 10] r100=[17, 17] cpu=63967504
+Sv5.3 1051080 very creative team name Queen Of Spades b W=False q=[0, 3] elimination without measured early deficit r50=[6, 7] r100=[10, 12] cpu=33996131
+Sv5.3 1051081 very creative team name Around UNSW b W=True q=[0, 0] win r50=[38, 30] r100=[63, 51] cpu=66162092
+Sv5.3 1050559 btop Around UNSW a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[31, 26] r100=[54, 51] cpu=64433355
+Sv5.3 1050560 btop Schooltime a W=False q=[3, 3] equal queens; longest/total deficit or draw r50=[6, 5] r100=[10, 11] cpu=56022386
+Sv5.3 1050561 btop Australia a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[14, 14] r100=[37, 28] cpu=64413357
+Sv5.3 1050562 btop Trophy a W=True q=[0, 0] win r50=[20, 9] r100=[33, 18] cpu=51643387
+Sv5.3 1050563 btop Slithery Fight a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[44, 36] r100=[56, 48] cpu=55426252
+Sv5.3 1046878 Delusion Tax Australia b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[18, 21] r100=[36, 42] cpu=64433632
+Sv5.3 1046879 Delusion Tax Maze b W=True q=[46, 0] win r50=[18, 14] r100=[28, 20] cpu=64110432
+Sv5.3 1046880 Delusion Tax Autarky b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[9, 16] r100=[6, 24] cpu=40097752
+Sv5.3 1046881 Delusion Tax weakhold b W=False q=[0, 0] elimination without measured early deficit r50=[5, 5] r100=[9, 10] cpu=47823841
+Sv5.3 1046882 Delusion Tax Slithery Fight b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[37, 38] r100=[40, 60] cpu=54236758
+Sv5.3 1046656 No Idea Trauma a W=False q=[3, 16] early unit deficit <=80% at r100 r50=[4, 7] r100=[5, 8] cpu=58326505
+Sv5.3 1046657 No Idea Default a W=True q=[11, 0] win r50=[10, 13] r100=[9, 16] cpu=62769372
+Sv5.3 1046658 No Idea Australia a W=True q=[52, 0] win r50=[13, 20] r100=[41, 31] cpu=64273366
+Sv5.3 1046659 No Idea Devil a W=False q=[0, 2] early unit deficit <=80% at r100 r50=[7, 18] r100=[6, 33] cpu=34927672
+Sv5.3 1046660 No Idea Around UNSW a W=True q=[0, 0] win r50=[41, 22] r100=[64, 45] cpu=64658590
+Sv5.3 1046081 Sarvottam Stripes a W=False q=[0, 3] elimination without measured early deficit r50=[5, 3] r100=[7, 7] cpu=35060574
+Sv5.3 1046082 Sarvottam Islands a W=True q=[0, 0] win r50=[28, 26] r100=[48, 37] cpu=64227722
+Sv5.3 1046083 Sarvottam Schooltime a W=True q=[3, 3] win r50=[8, 7] r100=[17, 10] cpu=55579847
+Sv5.3 1046084 Sarvottam Australia a W=True q=[0, 0] win r50=[18, 17] r100=[47, 22] cpu=64407319
+Sv5.3 1046085 Sarvottam Queen Of Spades a W=False q=[0, 7] early unit deficit <=80% at r100 r50=[2, 8] r100=[3, 14] cpu=30622990
+Sv5.3 1045322 tungtung67 Around UNSW a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[28, 34] r100=[49, 47] cpu=64401266
+Sv5.3 1045323 tungtung67 Australia a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[15, 18] r100=[14, 59] cpu=64626724
+Sv5.3 1045324 tungtung67 Autarky a W=False q=[0, 7] early unit deficit <=80% at r100 r50=[16, 16] r100=[16, 22] cpu=53308892
+Sv5.3 1045325 tungtung67 Default a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[16, 11] r100=[24, 17] cpu=63945560
+Sv5.3 1045326 tungtung67 Devil a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[10, 12] r100=[13, 20] cpu=50239153
+Sv5.3 1045327 tungtung67 Islands a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[23, 18] r100=[43, 37] cpu=63985924
+Sv5.3 1045328 tungtung67 Maze a W=False q=[0, 19] early unit deficit <=80% at r100 r50=[11, 11] r100=[16, 22] cpu=58143899
+Sv5.3 1045329 tungtung67 Portals a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[7, 13] r100=[22, 29] cpu=50996119
+Sv5.3 1045330 tungtung67 Prisoners Dilemma a W=False q=[0, 3] early unit deficit <=80% at r100 r50=[8, 12] r100=[1, 24] cpu=50031172
+Sv5.3 1045331 tungtung67 Queen Of Spades a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[4, 6] r100=[7, 9] cpu=62635133
+Sv5.3 1045332 tungtung67 Schooltime a W=False q=[3, 3] equal queens; longest/total deficit or draw r50=[8, 6] r100=[16, 12] cpu=44110257
+Sv5.3 1045333 tungtung67 Slithery Fight a W=False q=[0, 31] early unit deficit <=80% at r100 r50=[34, 49] r100=[35, 63] cpu=54881298
+Sv5.3 1045334 tungtung67 Stripes a W=False q=[0, 2] elimination without measured early deficit r50=[2, 10] r100=None cpu=47295048
+Sv5.3 1045335 tungtung67 Tower Defense a W=False q=[0, 6] early unit deficit <=80% at r100 r50=[2, 5] r100=[4, 9] cpu=31915257
+Sv5.3 1045336 tungtung67 Trauma a W=False q=[0, 24] early unit deficit <=80% at r100 r50=[4, 9] r100=[6, 13] cpu=49537279
+Sv5.3 1045337 tungtung67 Trophy a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[8, 10] r100=[13, 34] cpu=41455919
+Sv5.3 1045338 tungtung67 weakhold a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[6, 5] r100=[12, 6] cpu=47823841
+Sv5.3 1043033 1234 Portals b W=True q=[0, 0] win r50=[7, 17] r100=[20, 24] cpu=51202505
+Sv5.3 1043034 1234 Around UNSW b W=True q=[0, 0] win r50=[38, 29] r100=[62, 43] cpu=64488234
+Sv5.3 1043035 1234 Autarky b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[9, 15] r100=[13, 20] cpu=53316235
+Sv5.3 1043036 1234 Australia b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[15, 17] r100=[28, 35] cpu=64402192
+Sv5.3 1043037 1234 Islands b W=False q=[0, 0] elimination without measured early deficit r50=[25, 23] r100=[38, 37] cpu=59169873
+Sv5.3 1042863 Memory? Schooltime a W=True q=[3, 3] win r50=[6, 5] r100=[15, 8] cpu=43533144
+Sv5.3 1042864 Memory? weakhold a W=True q=[5, 5] win r50=[4, 3] r100=[14, 2] cpu=61209944
+Sv5.3 1042865 Memory? Islands a W=True q=[0, 0] win r50=[18, 24] r100=[29, 55] cpu=63172332
+Sv5.3 1042866 Memory? Default a W=True q=[0, 0] win r50=[10, 8] r100=[14, 11] cpu=64109156
+Sv5.3 1042867 Memory? Tower Defense a W=True q=[0, 0] win r50=[3, 2] r100=[5, 3] cpu=62927577
+Sv5.3 1042159 Jet2Holiday Portals a W=True q=[0, 0] win r50=[6, 7] r100=[14, 14] cpu=49269863
+Sv5.3 1042160 Jet2Holiday Prisoners Dilemma a W=False q=[3, 7] living queen length deficit r50=[7, 4] r100=[7, 3] cpu=50031102
+Sv5.3 1042161 Jet2Holiday Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 2] r100=[2, 3] cpu=26047364
+Sv5.3 1042162 Jet2Holiday Maze a W=True q=[0, 0] win r50=[14, 4] r100=[19, 7] cpu=62526230
+Sv5.3 1042163 Jet2Holiday Islands a W=True q=[0, 0] win r50=[18, 15] r100=[51, 27] cpu=63357124
+Sv5.3 1039193 very creative team name Default b W=True q=[0, 0] win r50=[8, 9] r100=[18, 17] cpu=60004085
+Sv5.3 1039194 very creative team name Slithery Fight b W=False q=[0, 23] early unit deficit <=80% at r100 r50=[45, 38] r100=[49, 62] cpu=55565218
+Sv5.3 1039195 very creative team name Australia b W=True q=[0, 0] win r50=[13, 13] r100=[34, 31] cpu=64458084
+Sv5.3 1039196 very creative team name Tower Defense b W=True q=[0, 0] win r50=[2, 2] r100=[3, 3] cpu=60902884
+Sv5.3 1039197 very creative team name Trophy b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[7, 16] r100=[5, 46] cpu=51654642
+Sv5.3 1038590 the uncancelables Autarky b W=True q=[0, 0] win r50=[12, 10] r100=[22, 12] cpu=64078056
+Sv5.3 1038591 the uncancelables Default b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[10, 9] r100=[13, 14] cpu=54482459
+Sv5.3 1038592 the uncancelables Australia b W=True q=[0, 0] win r50=[14, 12] r100=[39, 19] cpu=64448095
+Sv5.3 1038593 the uncancelables Prisoners Dilemma b W=False q=[0, 0] early unit deficit <=80% at r100 r50=[4, 13] r100=[4, 21] cpu=50035040
+Sv5.3 1038594 the uncancelables weakhold b W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[5, 6] r100=[8, 8] cpu=35418111
+Sv5.3 1037745 Nexus Lab Around UNSW a W=True q=[29, 0] win r50=[39, 34] r100=[58, 62] cpu=64456489
+Sv5.3 1037746 Nexus Lab Trauma a W=False q=[0, 5] early unit deficit <=80% at r100 r50=[4, 5] r100=[5, 9] cpu=49537279
+Sv5.3 1037747 Nexus Lab Autarky a W=True q=[0, 0] win r50=[13, 12] r100=[17, 18] cpu=60927601
+Sv5.3 1037748 Nexus Lab Trophy a W=True q=[3, 0] win r50=[20, 7] r100=[40, 3] cpu=51650989
+Sv5.3 1037749 Nexus Lab Australia a W=True q=[85, 0] win r50=[18, 12] r100=[45, 20] cpu=64436495
+Sv5.3 1035494 Vodyanitsa Around UNSW a W=True q=[48, 0] win r50=[33, 40] r100=[41, 58] cpu=64641960
+Sv5.3 1035495 Vodyanitsa Australia a W=True q=[0, 0] win r50=[17, 19] r100=[35, 50] cpu=64353398
+Sv5.3 1035496 Vodyanitsa Devil a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[7, 22] r100=[3, 50] cpu=50234754
+Sv5.3 1035497 Vodyanitsa Islands a W=True q=[0, 0] win r50=[14, 38] r100=[23, 58] cpu=62189400
+Sv5.3 1035498 Vodyanitsa Maze a W=True q=[0, 0] win r50=[11, 11] r100=[23, 25] cpu=61635917
+Sv5.3 1035499 Vodyanitsa Stripes a W=False q=[0, 2] elimination without measured early deficit r50=[2, 6] r100=None cpu=25852529
+Sv5.3 1035500 Vodyanitsa Tower Defense a W=False q=[0, 7] early unit deficit <=80% at r100 r50=[2, 4] r100=[3, 25] cpu=48065717
+Sv5.3 1035501 Vodyanitsa Trophy a W=False q=[0, 8] early unit deficit <=80% at r100 r50=[4, 18] r100=[1, 57] cpu=34106277
+Sv5.3 1035502 Vodyanitsa weakhold a W=True q=[0, 0] win r50=[6, 4] r100=[15, 5] cpu=63967425
+Sv5.3 1035446 Just Keep Swimming Around UNSW a W=True q=[20, 0] win r50=[40, 42] r100=[64, 56] cpu=64414971
+Sv5.3 1035447 Just Keep Swimming Australia a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[17, 18] r100=[28, 47] cpu=64301363
+Sv5.3 1035448 Just Keep Swimming Autarky a W=True q=[0, 0] win r50=[12, 16] r100=[18, 17] cpu=63983126
+Sv5.3 1035449 Just Keep Swimming Default a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[8, 9] r100=[10, 16] cpu=51308727
+Sv5.3 1035450 Just Keep Swimming Devil a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[8, 15] r100=[9, 27] cpu=50233531
+Sv5.3 1035451 Just Keep Swimming Islands a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[19, 38] r100=[22, 64] cpu=61178203
+Sv5.3 1035452 Just Keep Swimming Maze a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[16, 13] r100=[27, 31] cpu=54685612
+Sv5.3 1035453 Just Keep Swimming Portals a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[8, 5] r100=[21, 11] cpu=46066653
+Sv5.3 1035454 Just Keep Swimming Prisoners Dilemma a W=False q=[0, 0] elimination without measured early deficit r50=[10, 8] r100=[10, 8] cpu=50031172
+Sv5.3 1035455 Just Keep Swimming Queen Of Spades a W=True q=[2, 0] win r50=[11, 4] r100=[16, 3] cpu=40544140
+Sv5.3 1035456 Just Keep Swimming Schooltime a W=True q=[3, 0] win r50=[10, 12] r100=[19, 56] cpu=37073487
+Sv5.3 1035457 Just Keep Swimming Slithery Fight a W=True q=[19, 0] win r50=[41, 44] r100=[38, 63] cpu=54811746
+Sv5.3 1035458 Just Keep Swimming Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 6] r100=[1, 13] cpu=47294890
+Sv5.3 1035459 Just Keep Swimming Tower Defense a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 4] r100=[2, 21] cpu=28226584
+Sv5.3 1035460 Just Keep Swimming Trauma a W=True q=[3, 0] win r50=[4, 4] r100=[6, 8] cpu=49537279
+Sv5.3 1035461 Just Keep Swimming Trophy a W=False q=[0, 3] early unit deficit <=80% at r100 r50=[10, 21] r100=[5, 43] cpu=44818485
+Sv5.3 1035462 Just Keep Swimming weakhold a W=True q=[0, 0] win r50=[6, 5] r100=[17, 5] cpu=47823841
+Sv5.3 1035429 code matters Around UNSW a W=True q=[0, 0] win r50=[46, 19] r100=[64, 32] cpu=64335907
+Sv5.3 1035430 code matters Australia a W=True q=[0, 0] win r50=[20, 15] r100=[58, 27] cpu=64460636
+Sv5.3 1035431 code matters Autarky a W=True q=[0, 0] win r50=[13, 14] r100=[20, 19] cpu=64134148
+Sv5.3 1035432 code matters Default a W=True q=[75, 0] win r50=[13, 9] r100=[24, 13] cpu=63653513
+Sv5.3 1035433 code matters Devil a W=True q=[2, 0] win r50=[12, 9] r100=[14, 7] cpu=33091696
+Sv5.3 1035434 code matters Islands a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[17, 30] r100=[29, 49] cpu=63274813
+Sv5.3 1035435 code matters Maze a W=True q=[0, 0] win r50=[10, 11] r100=[24, 21] cpu=63673491
+Sv5.3 1035436 code matters Portals a W=False q=[0, 4] queen-only tiebreak (our queen dead) r50=[6, 2] r100=[18, 2] cpu=49288982
+Sv5.3 1035437 code matters Prisoners Dilemma a W=False q=[0, 23] early unit deficit <=80% at r100 r50=[6, 9] r100=[4, 14] cpu=33878021
+Sv5.3 1035438 code matters Queen Of Spades a W=True q=[0, 0] win r50=[4, 4] r100=[6, 7] cpu=52229487
+Sv5.3 1035439 code matters Schooltime a W=True q=[3, 3] win r50=[7, 8] r100=[12, 16] cpu=63088311
+Sv5.3 1035440 code matters Slithery Fight a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[44, 20] r100=[55, 29] cpu=55622016
+Sv5.3 1035441 code matters Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 6] r100=[2, 13] cpu=26908832
+Sv5.3 1035442 code matters Tower Defense a W=False q=[0, 12] early unit deficit <=80% at r100 r50=[3, 4] r100=[5, 9] cpu=61842056
+Sv5.3 1035443 code matters Trauma a W=False q=[0, 23] queen-only tiebreak (our queen dead) r50=[4, 4] r100=[6, 5] cpu=48044586
+Sv5.3 1035444 code matters Trophy a W=False q=[0, 10] early unit deficit <=80% at r100 r50=[5, 18] r100=[12, 39] cpu=51646517
+Sv5.3 1035445 code matters weakhold a W=True q=[3, 0] win r50=[5, 4] r100=[14, 4] cpu=64040268
+Sv5.3 1035372 avid coders Around UNSW a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[26, 37] r100=[41, 62] cpu=64439887
+Sv5.3 1035373 avid coders Australia a W=False q=[0, 2] early unit deficit <=80% at r100 r50=[18, 18] r100=[23, 31] cpu=64440602
+Sv5.3 1035374 avid coders Autarky a W=True q=[25, 3] win r50=[16, 10] r100=[21, 15] cpu=63980427
+Sv5.3 1035375 avid coders Default a W=True q=[5, 0] win r50=[12, 10] r100=[17, 17] cpu=62796918
+Sv5.3 1035376 avid coders Devil a W=False q=[0, 2] queen-only tiebreak (our queen dead) r50=[23, 9] r100=[33, 11] cpu=61659264
+Sv5.3 1035377 avid coders Islands a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[13, 23] r100=[28, 55] cpu=56796944
+Sv5.3 1035378 avid coders Maze a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[12, 15] r100=[23, 23] cpu=61648502
+Sv5.3 1035379 avid coders Portals a W=False q=[0, 3] early unit deficit <=80% at r100 r50=[6, 17] r100=[9, 25] cpu=49137370
+Sv5.3 1035380 avid coders Prisoners Dilemma a W=False q=[0, 3] early unit deficit <=80% at r100 r50=[10, 8] r100=[7, 16] cpu=50031172
+Sv5.3 1035381 avid coders Queen Of Spades a W=False q=[0, 0] elimination without measured early deficit r50=[3, 3] r100=[11, 10] cpu=31444575
+Sv5.3 1035382 avid coders Schooltime a W=True q=[3, 3] win r50=[12, 8] r100=[44, 25] cpu=55821583
+Sv5.3 1035383 avid coders Slithery Fight a W=True q=[8, 0] win r50=[37, 39] r100=[64, 49] cpu=55693766
+Sv5.3 1035384 avid coders Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 7] r100=[2, 15] cpu=47295041
+Sv5.3 1035385 avid coders Tower Defense a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 2] r100=[3, 8] cpu=29852918
+Sv5.3 1035386 avid coders Trauma a W=True q=[6, 0] win r50=[4, 5] r100=[6, 7] cpu=49537279
+Sv5.3 1035387 avid coders Trophy a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[6, 15] r100=[5, 41] cpu=43670714
+Sv5.3 1035388 avid coders weakhold a W=True q=[0, 0] win r50=[5, 5] r100=[17, 8] cpu=62791713
+Sv5.2 985794 Just Keep Swimming Around UNSW a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[23, 23] r100=[38, 64] cpu=64764337
+Sv5.2 985795 Just Keep Swimming Australia a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[23, 20] r100=[35, 35] cpu=64683491
+Sv5.2 985796 Just Keep Swimming Autarky a W=False q=[0, 0] elimination without measured early deficit r50=[13, 14] r100=[15, 18] cpu=53235867
+Sv5.2 985797 Just Keep Swimming Default a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[12, 11] r100=[15, 24] cpu=63235215
+Sv5.2 985798 Just Keep Swimming Devil a W=False q=[0, 3] early unit deficit <=80% at r100 r50=[5, 18] r100=[7, 39] cpu=50152651
+Sv5.2 985799 Just Keep Swimming Islands a W=True q=[0, 0] win r50=[19, 35] r100=[26, 64] cpu=63627411
+Sv5.2 985800 Just Keep Swimming Maze a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[15, 14] r100=[20, 23] cpu=49454465
+Sv5.2 985801 Just Keep Swimming Portals a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 13] r100=[13, 28] cpu=50982592
+Sv5.2 985802 Just Keep Swimming Prisoners Dilemma a W=True q=[4, 0] win r50=[9, 10] r100=[11, 9] cpu=49950288
+Sv5.2 985803 Just Keep Swimming Queen Of Spades a W=True q=[0, 0] win r50=[2, 12] r100=[6, 9] cpu=42333913
+Sv5.2 985804 Just Keep Swimming Schooltime a W=True q=[2, 0] win r50=[10, 9] r100=[40, 22] cpu=56038430
+Sv5.2 985805 Just Keep Swimming Slithery Fight a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[39, 47] r100=[40, 64] cpu=55507282
+Sv5.2 985806 Just Keep Swimming Stripes a W=False q=[0, 0] elimination without measured early deficit r50=[2, 3] r100=[5, 3] cpu=47209802
+Sv5.2 985807 Just Keep Swimming Tower Defense a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 5] r100=[4, 21] cpu=29973936
+Sv5.2 985808 Just Keep Swimming Trauma a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[4, 11] r100=[4, 24] cpu=63719697
+Sv5.2 985809 Just Keep Swimming Trophy a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[7, 18] r100=[1, 45] cpu=31302122
+Sv5.2 985810 Just Keep Swimming weakhold a W=True q=[0, 0] win r50=[6, 5] r100=[14, 4] cpu=47747056
+Sv5.2 985868 dev test 1 :P Around UNSW a W=True q=[60, 0] win r50=[44, 29] r100=[64, 54] cpu=64876645
+Sv5.2 985869 dev test 1 :P Australia a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[17, 17] r100=[18, 47] cpu=64738202
+Sv5.2 985870 dev test 1 :P Autarky a W=True q=[5, 0] win r50=[14, 20] r100=[14, 25] cpu=53235867
+Sv5.2 985871 dev test 1 :P Default a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[9, 12] r100=[14, 24] cpu=35699009
+Sv5.2 985872 dev test 1 :P Devil a W=True q=[2, 0] win r50=[8, 15] r100=[10, 30] cpu=50152848
+Sv5.2 985873 dev test 1 :P Islands a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[19, 33] r100=[28, 46] cpu=64767347
+Sv5.2 985874 dev test 1 :P Maze a W=True q=[0, 0] win r50=[13, 11] r100=[24, 19] cpu=62145241
+Sv5.2 985875 dev test 1 :P Portals a W=True q=[3, 0] win r50=[3, 16] r100=[3, 30] cpu=7511114
+Sv5.2 985876 dev test 1 :P Prisoners Dilemma a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 10] r100=[2, 17] cpu=49950288
+Sv5.2 985877 dev test 1 :P Queen Of Spades a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 5] r100=[1, 17] cpu=31093412
+Sv5.2 985878 dev test 1 :P Schooltime a W=True q=[2, 0] win r50=[8, 9] r100=[28, 50] cpu=53422528
+Sv5.2 985879 dev test 1 :P Slithery Fight a W=True q=[4, 0] win r50=[40, 44] r100=[45, 60] cpu=53528902
+Sv5.2 985880 dev test 1 :P Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 5] r100=[1, 15] cpu=47210020
+Sv5.2 985881 dev test 1 :P Tower Defense a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[2, 3] r100=[4, 4] cpu=63900663
+Sv5.2 985882 dev test 1 :P Trauma a W=True q=[16, 0] win r50=[4, 7] r100=[6, 16] cpu=57678385
+Sv5.2 985883 dev test 1 :P Trophy a W=True q=[2, 0] win r50=[24, 3] r100=[48, 3] cpu=35181981
+Sv5.2 985884 dev test 1 :P weakhold a W=True q=[0, 0] win r50=[5, 4] r100=[15, 4] cpu=58399324
+Sv5.2 985910 Memory? Around UNSW a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[19, 39] r100=[47, 62] cpu=64907275
+Sv5.2 985911 Memory? Australia a W=True q=[0, 0] win r50=[16, 21] r100=[44, 19] cpu=65131331
+Sv5.2 985912 Memory? Default a W=True q=[0, 0] win r50=[14, 9] r100=[22, 12] cpu=57333036
+Sv5.2 985913 Memory? Islands a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[12, 26] r100=[15, 58] cpu=37650929
+Sv5.2 985914 Memory? Maze a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[13, 11] r100=[22, 19] cpu=64092355
+Sv5.2 985915 Memory? Queen Of Spades a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[1, 7] r100=[1, 17] cpu=53449795
+Sv5.2 985916 Memory? Stripes a W=False q=[0, 4] early unit deficit <=80% at r100 r50=[2, 2] r100=[1, 6] cpu=47209984
+Sv5.2 985917 Memory? Tower Defense a W=False q=[0, 21] early unit deficit <=80% at r100 r50=[3, 3] r100=[2, 9] cpu=27019081
+Sv5.2 985918 Memory? weakhold a W=True q=[0, 0] win r50=[5, 3] r100=[13, 3] cpu=47788102
+Sv5.2 985836 btop Around UNSW a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[47, 26] r100=[64, 36] cpu=64910041
+Sv5.2 985837 btop Australia a W=True q=[0, 0] win r50=[12, 15] r100=[42, 28] cpu=64920711
+Sv5.2 985838 btop Autarky a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[17, 18] r100=[18, 19] cpu=53235867
+Sv5.2 985839 btop Default a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[6, 11] r100=[17, 17] cpu=64288355
+Sv5.2 985840 btop Devil a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[8, 8] r100=[5, 24] cpu=50158240
+Sv5.2 985841 btop Islands a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[25, 34] r100=[48, 60] cpu=64061287
+Sv5.2 985842 btop Maze a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[11, 11] r100=[17, 21] cpu=63935312
+Sv5.2 985843 btop Portals a W=True q=[0, 0] win r50=[9, 10] r100=[21, 17] cpu=48657594
+Sv5.2 985844 btop Prisoners Dilemma a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[5, 8] r100=[4, 7] cpu=49950218
+Sv5.2 985845 btop Queen Of Spades a W=False q=[0, 3] early unit deficit <=80% at r100 r50=[2, 6] r100=[1, 19] cpu=30890014
+Sv5.2 985846 btop Schooltime a W=False q=[2, 3] living queen length deficit r50=[11, 8] r100=[46, 8] cpu=56025560
+Sv5.2 985847 btop Slithery Fight a W=True q=[17, 0] win r50=[51, 38] r100=[60, 54] cpu=55964763
+Sv5.2 985848 btop Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 9] r100=[1, 10] cpu=47210019
+Sv5.2 985849 btop Tower Defense a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[2, 4] r100=[3, 23] cpu=35564092
+Sv5.2 985850 btop Trauma a W=True q=[18, 0] win r50=[5, 4] r100=[9, 4] cpu=49452430
+Sv5.2 985851 btop Trophy a W=True q=[2, 0] win r50=[25, 5] r100=None cpu=38885887
+Sv5.2 985852 btop weakhold a W=True q=[0, 0] win r50=[6, 6] r100=[13, 4] cpu=62402916
+Sv5.2 985777 Quaker Qubits Around UNSW a W=True q=[14, 0] win r50=[35, 33] r100=[62, 61] cpu=64889736
+Sv5.2 985778 Quaker Qubits Australia a W=True q=[0, 0] win r50=[17, 11] r100=[28, 37] cpu=64941943
+Sv5.2 985779 Quaker Qubits Autarky a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[10, 16] r100=[12, 19] cpu=39217801
+Sv5.2 985780 Quaker Qubits Default a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[10, 9] r100=[14, 14] cpu=53798550
+Sv5.2 985781 Quaker Qubits Devil a W=True q=[0, 0] win r50=[17, 7] r100=[35, 4] cpu=32999379
+Sv5.2 985782 Quaker Qubits Islands a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[31, 30] r100=[41, 48] cpu=64366827
+Sv5.2 985783 Quaker Qubits Maze a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[16, 12] r100=[25, 22] cpu=59458224
+Sv5.2 985784 Quaker Qubits Portals a W=True q=[0, 0] win r50=[3, 11] r100=[5, 17] cpu=51187628
+Sv5.2 985785 Quaker Qubits Prisoners Dilemma a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 11] r100=[1, 17] cpu=30650474
+Sv5.2 985786 Quaker Qubits Queen Of Spades a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[8, 5] r100=[11, 12] cpu=64727845
+Sv5.2 985787 Quaker Qubits Schooltime a W=False q=[3, 3] equal queens; longest/total deficit or draw r50=[8, 6] r100=[18, 12] cpu=53461228
+Sv5.2 985788 Quaker Qubits Slithery Fight a W=False q=[0, 0] equal queens; longest/total deficit or draw r50=[37, 39] r100=[49, 49] cpu=55899860
+Sv5.2 985789 Quaker Qubits Stripes a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[3, 7] r100=[5, 13] cpu=26455850
+Sv5.2 985790 Quaker Qubits Tower Defense a W=False q=[0, 0] elimination without measured early deficit r50=[2, 2] r100=[3, 2] cpu=47980761
+Sv5.2 985791 Quaker Qubits Trauma a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[4, 8] r100=[5, 17] cpu=36950686
+Sv5.2 985792 Quaker Qubits Trophy a W=False q=[0, 0] early unit deficit <=80% at r100 r50=[14, 16] r100=[15, 29] cpu=51569626
+Sv5.2 985793 Quaker Qubits weakhold a W=True q=[0, 0] win r50=[5, 4] r100=[15, 3] cpu=63262351
+
+VERIFICATION APPENDIX AND QUALIFIER RECOMMENDATION -- 2026-10-07
+Legacy forward-sonar echo/radar and ROW/QROOM adjacency avoidance remain in L10; what is absent is Sv5.3 Bayesian laneEcho and guardZone introduced-exit logic. Other search/model defaults are otherwise inherited; no network retraining is implicated by the source differences.
+Independent cross-check: game1051078 Default/Sv5.3 compact audit matches tools/sv53_loss_dive.py full-state reconstruction: units r50=[11,10], r100=[19,10], final queen lengths=[0,0], no validation errors.
+AGGR1 contested-pearl multipliers affect queens too, including early rounds; URISK19 excludes true queens and COMPASS excludes true/elected queens.
+L10 vs Sv5.2 normalized main.cpp differs only in contested-pearl weights (.55/.8 -> .85/1), compass weight (.8 -> 1.6), compass eligibility (id%3==0 and >=6 units -> every small drone and >=2 units), and drone threat discount .6. QSAFE, QROOM, QFLEE and other queen heuristics are inherited from Sv5.2, not L10 inventions. No further hidden flag change found.
+L10 mean historical opponent Elo=1697.1. Ranked/unranked mix differs; pooled advantage is confounded by easier opponents for L10.
+Sv5.3 mean historical opponent Elo=1780.1. Ranked/unranked mix differs; pooled advantage is confounded by easier opponents for L10.
+Sv5.2 mean historical opponent Elo=1759.3. Ranked/unranked mix differs; pooled advantage is confounded by easier opponents for L10.
+PER-OPPONENT OPENING COUNTS: means ours/enemy; n excludes games ended before snapshot.
+L10 1234 r50 n=5 units=[11.6, 11]; margin=0.6
+L10 1234 r100 n=5 units=[21.6, 17]; margin=4.6
+L10 777 r50 n=5 units=[17.6, 9.8]; margin=7.8
+L10 777 r100 n=4 units=[27.5, 17.5]; margin=10
+L10 :3 r50 n=5 units=[9.2, 15.4]; margin=-6.2
+L10 :3 r100 n=5 units=[15.6, 30.2]; margin=-14.6
+L10 ASI r50 n=5 units=[8, 8.4]; margin=-0.4
+L10 ASI r100 n=5 units=[11.8, 13.4]; margin=-1.6
+L10 Akatsuki r50 n=5 units=[11, 12.8]; margin=-1.8
+L10 Akatsuki r100 n=5 units=[21.2, 22]; margin=-0.8
+L10 All Roads Lead to Makuhari r50 n=5 units=[15, 11]; margin=4
+L10 All Roads Lead to Makuhari r100 n=5 units=[18.4, 18.8]; margin=-0.4
+L10 CURSEYOUBAYLE r50 n=10 units=[15.2, 14.3]; margin=0.9
+L10 CURSEYOUBAYLE r100 n=10 units=[27, 21.7]; margin=5.3
+L10 Check Raise r50 n=9 units=[10.44, 12.22]; margin=-1.78
+L10 Check Raise r100 n=9 units=[18.44, 25.56]; margin=-7.11
+L10 Citadel Insecurities r50 n=15 units=[14.27, 12.93]; margin=1.33
+L10 Citadel Insecurities r100 n=15 units=[21.87, 20.73]; margin=1.13
+L10 CookAgent r50 n=20 units=[9.45, 12.9]; margin=-3.45
+L10 CookAgent r100 n=20 units=[13.1, 21.8]; margin=-8.7
+L10 DIET CODE r50 n=5 units=[10.2, 13.2]; margin=-3
+L10 DIET CODE r100 n=5 units=[19.2, 21.2]; margin=-2
+L10 DeepSeek-V4.1-Flash r50 n=10 units=[12.9, 14.3]; margin=-1.4
+L10 DeepSeek-V4.1-Flash r100 n=10 units=[22.2, 21.8]; margin=0.4
+L10 Deer Park r50 n=20 units=[10.35, 11.7]; margin=-1.35
+L10 Deer Park r100 n=20 units=[17.75, 23.9]; margin=-6.15
+L10 EternalWisdom r50 n=15 units=[17.27, 17.07]; margin=0.2
+L10 EternalWisdom r100 n=15 units=[27.07, 27]; margin=0.07
+L10 Hydra r50 n=15 units=[12.47, 15.87]; margin=-3.4
+L10 Hydra r100 n=15 units=[19.13, 31.33]; margin=-12.2
+L10 JalSena r50 n=5 units=[6.2, 7.6]; margin=-1.4
+L10 JalSena r100 n=5 units=[13, 10.8]; margin=2.2
+L10 Jet2Holiday r50 n=5 units=[18.2, 13]; margin=5.2
+L10 Jet2Holiday r100 n=5 units=[30, 21.8]; margin=8.2
+L10 Jingling Munmin r50 n=20 units=[12.95, 16.45]; margin=-3.5
+L10 Jingling Munmin r100 n=20 units=[19.95, 30.05]; margin=-10.1
+L10 Just Keep Swimming r50 n=45 units=[13.44, 15.04]; margin=-1.6
+L10 Just Keep Swimming r100 n=45 units=[20.38, 24.84]; margin=-4.47
+L10 Kerwin r50 n=20 units=[11.6, 13.9]; margin=-2.3
+L10 Kerwin r100 n=20 units=[16.65, 21.9]; margin=-5.25
+L10 Loremipsum r50 n=15 units=[13.87, 7.27]; margin=6.6
+L10 Loremipsum r100 n=14 units=[24.86, 10.14]; margin=14.71
+L10 Maccas r50 n=5 units=[15, 16.2]; margin=-1.2
+L10 Maccas r100 n=5 units=[29, 22.4]; margin=6.6
+L10 Manny r50 n=5 units=[11.2, 10.4]; margin=0.8
+L10 Manny r100 n=5 units=[16.2, 16.6]; margin=-0.4
+L10 Martin Shkreli’s Defense Team r50 n=5 units=[7.6, 9.2]; margin=-1.6
+L10 Martin Shkreli’s Defense Team r100 n=5 units=[11.6, 24.4]; margin=-12.8
+L10 Milk Dragon r50 n=5 units=[15, 11]; margin=4
+L10 Milk Dragon r100 n=5 units=[24.4, 15.6]; margin=8.8
+L10 NUSW Battlecode r50 n=5 units=[14.8, 16.2]; margin=-1.4
+L10 NUSW Battlecode r100 n=5 units=[29.4, 26]; margin=3.4
+L10 NeungzAI r50 n=10 units=[15.4, 11.2]; margin=4.2
+L10 NeungzAI r100 n=10 units=[25, 20]; margin=5
+L10 Nitronics r50 n=10 units=[8.7, 7.9]; margin=0.8
+L10 Nitronics r100 n=10 units=[15.7, 11]; margin=4.7
+L10 Oswald r50 n=11 units=[12.36, 15.09]; margin=-2.73
+L10 Oswald r100 n=11 units=[19.73, 27.36]; margin=-7.64
+L10 POFPOF r50 n=5 units=[10, 13.4]; margin=-3.4
+L10 POFPOF r100 n=5 units=[14.6, 22]; margin=-7.4
+L10 Peanut Butter r50 n=5 units=[10.4, 14.4]; margin=-4
+L10 Peanut Butter r100 n=5 units=[13.4, 23.8]; margin=-10.4
+L10 Ravenus r50 n=40 units=[14.35, 11.3]; margin=3.05
+L10 Ravenus r100 n=40 units=[23.73, 18.8]; margin=4.92
+L10 Ron Squad r50 n=5 units=[11.8, 8]; margin=3.8
+L10 Ron Squad r100 n=5 units=[23.8, 9.6]; margin=14.2
+L10 R∞ r50 n=10 units=[11.8, 11.2]; margin=0.6
+L10 R∞ r100 n=10 units=[21, 23]; margin=-2
+L10 STAR r50 n=5 units=[10, 8]; margin=2
+L10 STAR r100 n=5 units=[18.4, 15.4]; margin=3
+L10 Sarvottam r50 n=10 units=[12.5, 13.5]; margin=-1
+L10 Sarvottam r100 n=10 units=[20.5, 22.2]; margin=-1.7
+L10 Shannon r50 n=15 units=[11.53, 10.6]; margin=0.93
+L10 Shannon r100 n=15 units=[21.2, 15.73]; margin=5.47
+L10 Sieberrsec Industrie r50 n=30 units=[11.63, 7.67]; margin=3.97
+L10 Sieberrsec Industrie r100 n=29 units=[20.24, 11.03]; margin=9.21
+L10 Spearhead Capital r50 n=5 units=[17.8, 13.2]; margin=4.6
+L10 Spearhead Capital r100 n=3 units=[27.33, 40]; margin=-12.67
+L10 Squishy r50 n=9 units=[12.22, 14.89]; margin=-2.67
+L10 Squishy r100 n=8 units=[21.5, 24.25]; margin=-2.75
+L10 StarStruck r50 n=10 units=[6.8, 8.3]; margin=-1.5
+L10 StarStruck r100 n=9 units=[13.33, 20.33]; margin=-7
+L10 SuitedConnectors r50 n=5 units=[8.2, 8.6]; margin=-0.4
+L10 SuitedConnectors r100 n=5 units=[13.8, 21]; margin=-7.2
+L10 TheActualPlayer r50 n=10 units=[15.9, 17.2]; margin=-1.3
+L10 TheActualPlayer r100 n=10 units=[27.3, 25.6]; margin=1.7
+L10 Um_nik da real goat r50 n=25 units=[12.96, 12.2]; margin=0.76
+L10 Um_nik da real goat r100 n=25 units=[21.84, 19.96]; margin=1.88
+L10 Z-A r50 n=10 units=[7.1, 8.7]; margin=-1.6
+L10 Z-A r100 n=10 units=[11.9, 18]; margin=-6.1
+L10 aisakastrats r50 n=20 units=[12.85, 14.15]; margin=-1.3
+L10 aisakastrats r100 n=20 units=[18.8, 20.85]; margin=-2.05
+L10 avid coders r50 n=15 units=[12.93, 14.8]; margin=-1.87
+L10 avid coders r100 n=15 units=[18.93, 23.2]; margin=-4.27
+L10 btop r50 n=5 units=[12, 13.6]; margin=-1.6
+L10 btop r100 n=5 units=[18.4, 26.2]; margin=-7.8
+L10 byte_force r50 n=5 units=[16.4, 18.4]; margin=-2
+L10 byte_force r100 n=5 units=[25.8, 28.8]; margin=-3
+L10 doofenshmirtz good incorporated r50 n=5 units=[21.6, 15.6]; margin=6
+L10 doofenshmirtz good incorporated r100 n=5 units=[38.2, 20.8]; margin=17.4
+L10 err404 r50 n=5 units=[16.6, 18.4]; margin=-1.8
+L10 err404 r100 n=5 units=[27, 27.8]; margin=-0.8
+L10 f2p r50 n=10 units=[7.7, 9]; margin=-1.3
+L10 f2p r100 n=9 units=[11.22, 20.44]; margin=-9.22
+L10 hm r50 n=4 units=[14, 15.5]; margin=-1.5
+L10 hm r100 n=4 units=[19, 24.25]; margin=-5.25
+L10 life is NP hard r50 n=5 units=[7.2, 13.8]; margin=-6.6
+L10 life is NP hard r100 n=5 units=[11.4, 28.4]; margin=-17
+L10 meowest r50 n=5 units=[13.4, 14.6]; margin=-1.2
+L10 meowest r100 n=5 units=[20, 22.2]; margin=-2.2
+L10 nooberGamer r50 n=10 units=[11.9, 11.8]; margin=0.1
+L10 nooberGamer r100 n=9 units=[19.56, 20.11]; margin=-0.56
+L10 okbro r50 n=25 units=[9.36, 10.2]; margin=-0.84
+L10 okbro r100 n=24 units=[15.96, 18.54]; margin=-2.58
+L10 pizza r50 n=20 units=[11.7, 17.4]; margin=-5.7
+L10 pizza r100 n=20 units=[17.45, 33.7]; margin=-16.25
+L10 python.io r50 n=5 units=[17.4, 18.6]; margin=-1.2
+L10 python.io r100 n=5 units=[28.4, 32.2]; margin=-3.8
+L10 risq-v r50 n=6 units=[9.83, 10.67]; margin=-0.83
+L10 risq-v r100 n=6 units=[16.83, 15.83]; margin=1
+L10 solo😎 r50 n=10 units=[15.1, 17.4]; margin=-2.3
+L10 solo😎 r100 n=10 units=[22.8, 32.3]; margin=-9.5
+L10 sonarstar0 r50 n=5 units=[9.6, 5.8]; margin=3.8
+L10 sonarstar0 r100 n=5 units=[19.8, 11.6]; margin=8.2
+L10 the uncancelables r50 n=5 units=[17.6, 13.4]; margin=4.2
+L10 the uncancelables r100 n=5 units=[27.2, 30.6]; margin=-3.4
+L10 tozoman r50 n=23 units=[12.57, 12.91]; margin=-0.35
+L10 tozoman r100 n=23 units=[18, 20.26]; margin=-2.26
+L10 verity r50 n=10 units=[10.6, 13.9]; margin=-3.3
+L10 verity r100 n=9 units=[25.78, 26.89]; margin=-1.11
+L10 very creative team name r50 n=10 units=[16.2, 20.1]; margin=-3.9
+L10 very creative team name r100 n=10 units=[21.8, 34.3]; margin=-12.5
+L10 we love gru r50 n=5 units=[9, 7.8]; margin=1.2
+L10 we love gru r100 n=5 units=[14.4, 14.4]; margin=0
+L10 y r50 n=10 units=[10, 13.9]; margin=-3.9
+L10 y r100 n=10 units=[16.5, 26.3]; margin=-9.8
+L10 zach r50 n=5 units=[10, 7.2]; margin=2.8
+L10 zach r100 n=5 units=[18.4, 8.8]; margin=9.6
+L10 龙虎豹 r50 n=5 units=[11.6, 10.8]; margin=0.8
+L10 龙虎豹 r100 n=5 units=[19.8, 21]; margin=-1.2
+L10 🔴🔵⚪️ r50 n=5 units=[12.8, 12.4]; margin=0.4
+L10 🔴🔵⚪️ r100 n=5 units=[21.2, 16.8]; margin=4.4
+Sv5.3 1234 r50 n=5 units=[18.8, 20.2]; margin=-1.4
+Sv5.3 1234 r100 n=5 units=[32.2, 31.8]; margin=0.4
+Sv5.3 Check Raise r50 n=5 units=[6.8, 8.4]; margin=-1.6
+Sv5.3 Check Raise r100 n=5 units=[9.6, 13.4]; margin=-3.8
+Sv5.3 Delusion Tax r50 n=5 units=[17.4, 18.8]; margin=-1.4
+Sv5.3 Delusion Tax r100 n=5 units=[23.8, 31.2]; margin=-7.4
+Sv5.3 Jet2Holiday r50 n=5 units=[9.4, 6.4]; margin=3
+Sv5.3 Jet2Holiday r100 n=5 units=[18.6, 10.8]; margin=7.8
+Sv5.3 Jingling Munmin r50 n=5 units=[14, 16.4]; margin=-2.4
+Sv5.3 Jingling Munmin r100 n=5 units=[26.6, 29.2]; margin=-2.6
+Sv5.3 Just Keep Swimming r50 n=17 units=[13.18, 15.53]; margin=-2.35
+Sv5.3 Just Keep Swimming r100 n=17 units=[18.41, 28.76]; margin=-10.35
+Sv5.3 Memory? r50 n=5 units=[8.2, 8.4]; margin=-0.2
+Sv5.3 Memory? r100 n=5 units=[15.4, 15.8]; margin=-0.4
+Sv5.3 Nexus Lab r50 n=5 units=[18.8, 14]; margin=4.8
+Sv5.3 Nexus Lab r100 n=5 units=[33, 22.4]; margin=10.6
+Sv5.3 No Idea r50 n=5 units=[15, 16]; margin=-1
+Sv5.3 No Idea r100 n=5 units=[25, 26.6]; margin=-1.6
+Sv5.3 Sarvottam r50 n=5 units=[12.2, 12.2]; margin=0
+Sv5.3 Sarvottam r100 n=5 units=[24.4, 18]; margin=6.4
+Sv5.3 Vodyanitsa r50 n=9 units=[10.67, 18]; margin=-7.33
+Sv5.3 Vodyanitsa r100 n=8 units=[18, 41]; margin=-23
+Sv5.3 avid coders r50 n=17 units=[12.24, 13.59]; margin=-1.35
+Sv5.3 avid coders r100 n=17 units=[20.82, 24.59]; margin=-3.76
+Sv5.3 btop r50 n=5 units=[23, 18]; margin=5
+Sv5.3 btop r100 n=5 units=[38, 31.2]; margin=6.8
+Sv5.3 code matters r50 n=17 units=[12.76, 10.94]; margin=1.82
+Sv5.3 code matters r100 n=17 units=[21.59, 18]; margin=3.59
+Sv5.3 hm r50 n=5 units=[19, 19.4]; margin=-0.4
+Sv5.3 hm r100 n=5 units=[32.4, 36.2]; margin=-3.8
+Sv5.3 the uncancelables r50 n=5 units=[9, 10]; margin=-1
+Sv5.3 the uncancelables r100 n=5 units=[17.2, 14.8]; margin=2.4
+Sv5.3 tungtung67 r50 n=17 units=[11.88, 14.41]; margin=-2.53
+Sv5.3 tungtung67 r100 n=16 units=[18.19, 26.44]; margin=-8.25
+Sv5.3 very creative team name r50 n=10 units=[14.9, 14]; margin=0.9
+Sv5.3 very creative team name r100 n=10 units=[22.6, 25.5]; margin=-2.9
+Sv5.2 Just Keep Swimming r50 n=17 units=[11.41, 15.76]; margin=-4.35
+Sv5.2 Just Keep Swimming r100 n=17 units=[17.29, 29.18]; margin=-11.88
+Sv5.2 Memory? r50 n=9 units=[9.44, 13.44]; margin=-4
+Sv5.2 Memory? r100 n=9 units=[18.56, 22.78]; margin=-4.22
+Sv5.2 Quaker Qubits r50 n=17 units=[13.12, 13.35]; margin=-0.24
+Sv5.2 Quaker Qubits r100 n=17 units=[20.24, 22.12]; margin=-1.88
+Sv5.2 btop r50 n=17 units=[14.41, 13]; margin=1.41
+Sv5.2 btop r100 n=16 units=[23.06, 21.94]; margin=1.12
+Sv5.2 dev test 1 :P r50 n=17 units=[12.82, 14.29]; margin=-1.47
+Sv5.2 dev test 1 :P r100 n=17 units=[19.12, 27.12]; margin=-8
+Shared opponents vs Sv5.3: L10 queen dead=102/133; early queen <=100=19/133.
+Shared opponents vs Sv5.3: Sv5.3 queen dead=67/84; early queen <=100=13/84.
+Shared-opponent raw win-rate delta L10 minus Sv5.3=+2.9pp; Newcombe/Wilson independent-samples 95% [-10.4,+15.7]pp. This is NOT a same-seed paired estimate.
+Equal-weight shared opponent/map delta, exploratory opponent-cluster bootstrap 95% percentile range [-28.6,+13.6]pp (10 opponent clusters). Resamples opponent clusters, not seeds; small clusters and historical version drift limit inference. A plug-in binomial variance would be anti-conservative for sparse 0/1 strata, so no such interval is used.
+Shared opponents vs Sv5.2: L10 queen dead=40/50; early queen <=100=6/50.
+Shared opponents vs Sv5.2: Sv5.2 queen dead=28/34; early queen <=100=3/34.
+Shared-opponent raw win-rate delta L10 minus Sv5.2=+1.6pp; Newcombe/Wilson independent-samples 95% [-18.8,+20.8]pp. This is NOT a same-seed paired estimate.
+Equal-weight shared opponent/map delta, exploratory opponent-cluster bootstrap 95% percentile range [-20.0,+1.3]pp (2 opponent clusters). Resamples opponent clusters, not seeds; small clusters and historical version drift limit inference. A plug-in binomial variance would be anti-conservative for sparse 0/1 strata, so no such interval is used.
+LIVE REPLAY CPU: nonzero point fields were present in ALL 752 L10 / 147 Sv5.3 / 77 Sv5.2 games, unlike the older stripped-replay history. L10 largest recorded turn=66.083242M on 64x64 Australia game1244563; Around UNSW peak=65.239199M game1105708. Sv5.3 overall peak=66.162092M Around UNSW game1051081 (Australia64.626724M game1045323); Sv5.2 peak=65.131331M Australia game985911 (Around UNSW64.910041M game985836). These are attributable to replay-verified bot IDs, but historical opponent/board/length mix differs. The L10 live peak exceeds the 65M target by1.083M; it remains below100M on recorded actions. Missing/invalid-action instruction records can censor failures; noaction is not assumed CPU exhaustion. No hard worst-case bound is established.
+Requested smoke: panel_zig.py baselines/L10 baselines/Y9_6 out/l10_smoke --maps australia,around_unsw --seeds 3 -j 1. --seeds 3 means ONLY seed 3, both sides: four games, all cached, zero failures, L10 0/4; Wilson 95% win interval 0-49.0%. Cache itself does not bind bot identity; replay headers separately verified L10-00050c6e6cb67eae.wasm vs Y9_6-237782e315b0ca3c.wasm, matching currently built content-hash artifact names.
+Smoke australia seed=3 side=A: L10 peak 64.899739M; Y9_6 72.281473M; W=0.
+Smoke australia seed=3 side=B: L10 peak 64.608687M; Y9_6 72.360335M; W=0.
+Smoke around_unsw seed=3 side=A: L10 peak 64.862078M; Y9_6 72.982291M; W=0.
+Smoke around_unsw seed=3 side=B: L10 peak 64.925890M; Y9_6 72.564929M; W=0.
+Australia is 64x64: observed L10 peak 64.899739M. Around UNSW is 60x40: peak 64.925890M. These are below 100M and near the repo 65M target; four games cannot bound rare late/big-body peaks or unknown topology; the live Australia audit actually reaches66.083242M, above these smoke peaks. No guard hard cap proves that evaluation/NN can never overshoot. All four smoke queens died head-on: r395/193 on Australia A/B, r382/418 Around UNSW A/B. Both enemy queens also died; losses therefore reached longest/total tiebreak. CPU survival alone did not make the build competitive in this smoke.
+Historical local comparison out/u7_qf.log: Sv5.2 54.5/98 score points (55.6%, draws half); out/u7_qg.log: Sv5.3 50/98 (51.0%) vs Y9_6. Maze 10.5/14 vs 4/14, Stripes 9/14 vs 13/14, Tower Defense 5/14 vs 2/14, weakhold 9/14 vs 8/14; Australia 6/14 vs 8/14 and Around UNSW 7/14 vs 6/14 (Sv5.2 vs Sv5.3 throughout). Do not mix half-draw local scores with strict ladder wins. Opponent/seed sets appear matched in logs but no fresh sealed-control proof or independent causal isolation was performed here.
+ELO VERIFICATION: authenticated /submissions returned id17124 name L.10 status active. /teams/98 exposes a nested team object: team.elo=1660, rank122, peak1911. Team history last before upload: 1682 at Oct04 21:21:23Z; day-end Oct04 1679, Oct05 1680, latest Oct06 21:55:30Z 1660 (-22 from pre-upload), post-upload range1585-1732 across144 history entries. This is team-level history, not exclusively replay-verified L10 games. /battles?limit=200 returned eloChange; join to the replay-verified L10 metadata battle IDs yields 155 series (140 ranked), net -15 Elo: Oct04 UTC -3 (14 series, 21:40:46Z-23:27:19Z), Oct05 +1 (84 series, 00:08:56Z-23:17:07Z), Oct06 -13 (57 series, 00:07:44Z-17:21:45Z). Seventeen later series since upload are outside the completed pull; not assigned to L10 without replay IDs. These are a partial relative trajectory, not exclusively attributable full-period L10 performance or evidence of individual-game Elo changes.
+RECOMMENDATION: freeze Sv5.2 (viper_y96qf/id16106 source) for 2026-10-09 unknown-map qualifiers, as a conservative choice, not a proven best build. It has the same v6 weights, CPU1 guards, FSPRINT, SEARCH1, queenAmputate/QBOX and updated tables as L10, without L10 aggression changes or Sv5.3 extra guard/status/echo machinery. L10 raw win advantage mostly disappears after matching opponents and turns negative with equal-weight shared map groups; its mean opponent Elo is ~83 below Sv5.3. L10 live peak66.083M is modestly above the 65M target (Sv5.2 observed65.131M); L10 0/4 big-map smoke and recurring both-dead-queen tiebreaks do not support replacing the older conservative baseline. Sv5.3 extra guard system has no convincing ladder gain and the local Maze regression is adverse. The data cannot causally rank the three; the preference uses simplicity, historical unknown-map safety evidence and uncertainty.
+What changes this recommendation: a fresh same-time randomized A/B across strong shared opponents and unseen representative maps, balanced sides/seeds, demonstrating an opening/queen-survival improvement with intervals excluding a material regression; repeat late 64x64 CPU stress with long queens/allied congestion/portals and attributable peak points, including noaction diagnostics. Prefer L10 if it wins that comparison while keeping CPU headroom; prefer Sv5.3 if guard protection beats both on queen survival without the observed Maze/opening costs. Do not tune on the held-out maps or infer causality from one map flip.
+Unverified: unseen Oct09 map distribution, actual live ladder opponent source/version, seed pairing/activation timeline, L10 causal feature benefit, hard worst-case CPU bound, intentional feeding vs noaction, exclusive L10 attribution of the full team Elo history and post-pull games. No source/build was changed or activated; this is advice only. No independent second-agent critique was performed.

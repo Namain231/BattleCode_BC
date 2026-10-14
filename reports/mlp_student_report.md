@@ -1,0 +1,40 @@
+# mlp_student ? FAIL (fix round 2)
+- Candidate viper_y96qm; parent viper_y96qg; no submissions or remote publishing.
+- Files: ml/v6/{train,parity,bench,resume,check}_mlp_student.py; viper_y96qm/main.cpp, policy_nn_mlp.hpp, policy_weights_mlp.hpp.
+- Input 19x15x15 + 6 scalars; hidden 256/128; 7 logits; CE + KL(T=2).
+- Bot logic, nnInput6 and wNN preserved; Params::nnKind=1 selects MLP, 0 restores conv.
+- Sparse export retains 3831 inputs; reserved zero planes 8/18 omitted; int32 coefficients +/-16777215, float scales, double accumulation.
+- CPU sample: 64 real states evenly spaced across first two new shards; sampled maximum is not a universal bound.
+- Streaming shard loading, two torch CPU threads; newest 60-game holdout (582,515 states), zero overlap with teacher training games.
+- First epoch trial failed 47/98; follow-up uses the same safety seeds. Eight-epoch checkpoint selection uses held-out accuracy only.
+- Safety concurrency reduced from 4 to 2 after observed free RAM fell to 650MB; partial games restarted, no results mixed.
+- Data: 21,644,077 old + 8,893,206 new samples; globally excluded held-out games.
+- Artifacts/logs/checkpoints: F:\BattleCode_data\ladder\scout_v6\train_out\mlp_student_fix2.
+- Best epoch 7: student 68.628%, teacher 68.579%; gap +0.049 pp.
+- Classes student/teacher (%): fwd 77.59/75.91, side 61.49/62.25, back 8.77/43.97, split 56.17/55.31, other 0.33/0.79, stop 82.99/84.16.
+- parity: {   "states": 1600,   "max_logit_error": 0.00067138671875,   "argmax_agreement": 1.0,   "pass": true }
+- cpu: {   "states": 64,   "conv_mean": 21136975,   "conv_max": 21136975,   "mlp_mean": 1658790,   "mlp_max": 2482105,   "sink": -713.43158,   "target_pass": true,   "speedup_mean": 12.742405608907697 } 
+- Export width 256; package bytes: 3911843
+- No wider trial required: student within 3 percentage points of teacher.
+- Safety 50/98 (51.02%); control 59/98 (60.20%); delta -9.18 pp; FAIL.
+- Wins by map: around_unsw 7/14, australia 10/14, islands 11/14, maze 9/14, stripes 5/14, tower_defense 1/14, weakhold 7/14.
+- Whole-game australia CPU peak: 57.361M.
+- Whole-game around_unsw CPU peak: 57.616M.
+- student: queen deaths 91/98 (92.86%); units@100 mean 25.643, median 21.000 (coverage 98/98).
+- parent: queen deaths 87/98 (88.78%); units@100 mean 25.296, median 22.000 (coverage 98/98).
+- Commands: C:/Users/sohan/AppData/Local/Programs/Python/Python310/python.exe -B ml/v6/train_mlp_student.py --out F:\BattleCode_data\ladder\scout_v6\train_out\mlp_student_fix2 --epochs 8 --width 256 --batch 512
+- Commands: C:/Users/sohan/AppData/Local/Programs/Python/Python310/python.exe -B ml/v6/parity_mlp_student.py --out F:\BattleCode_data\ladder\scout_v6\train_out\mlp_student_fix2
+- Commands: uv run --python 3.11 --with unswbc python -B ml/v6/bench_mlp_student.py --out F:\BattleCode_data\ladder\scout_v6\train_out\mlp_student_fix2
+- Commands: uv run --python 3.11 --with unswbc python tools/panel_zig.py viper_y96qm baselines/Y9_6 out/mlp_safety --maps around_unsw,australia,islands,maze,stripes,tower_defense,weakhold --seeds 3,4,5,6,7,8,9 -j 2
+- Commands: uv run --python 3.11 --with unswbc python tools/panel_queen.py out/mlp_safety out/p2_viper_y96qg
+- Commands: uv run --python 3.11 --with unswbc python tools/opening_census.py --dir out/mlp_safety
+- Historical control census (original bot/engine provenance unavailable); command: uv run --python 3.11 --with unswbc python tools/opening_census.py --dir out/p2_viper_y96qg
+- Unverified: universal per-call worst case, fresh-seed and ladder performance; no submission.
+- Fix round 1: supervisor retired (exit 2 for all modes); no cache reuse, report regeneration, training, panels, or search.
+- Handoff updated: NEXT_STEPS.md records completed FAIL; retained candidate is an unpromoted artifact.
+- Cached control keys/census checked; immutable execution-time control bot/engine provenance remains unavailable.
+- Verification completed with a failed acceptance threshold; drop candidate, do not promote.
+- Fix round 2: benchmark exits nonzero for over-budget or nonfinite/nonpositive costs; parity harness checks arguments and all file I/O.
+- Reverified repaired scripts with exact parity/benchmark commands above: 1600/1600 argmax, error 0.000671387; CPU 1.659M mean / 2.482M sampled max.
+- Failure checks PASS: valid, >3M, zero, negative, NaN, infinity; native missing arguments/input and output-open errors return 2/3/7.
+- Safety remains FAIL; candidate dropped/unpromoted. Supervisor remains retired; future comparisons require fresh sealed paired control, never reconstructed cached provenance.

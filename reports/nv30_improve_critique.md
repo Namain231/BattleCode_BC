@@ -1,0 +1,27 @@
+﻿Nv30 improvement critique — 2026-10-07
+Required fixes (highest priority first):
+1. viper_nv31b/main.cpp:1017 commits trapHash/trapLast BEFORE a successful rebuild. trapBudget (997) clears protection on timeout, but the same terrain hash then skips every later rebuild indefinitely. Commit validity only on success; retry aborted work and test timeout -> unchanged-terrain recovery.
+2. out/nv31_work/run.py:58 reuses opening.json merely because it exists. A restarted/rebuilt panel can therefore combine new wins/CPU/replays with old units/eats. Bind opening and every derived metric to replay hashes, build provenance and analysis versions; regenerate on mismatch.
+3. out/nv31_work/run.py:44 trusts nv31_metrics after checking success identities and n, without checking replay contents or metric/decoder versions. postprocess.py:36 versions only indicator accounting. Bind ALL metrics and summary to the actual replay bytes and full producer versions.
+4. out/nv31_work/run.py:30 diagnosis cache keys only replay hash, omitting audit/census/engine versions. Store and verify those versions; reject reconstruction errors rather than merely recording validation at line 34.
+5. out/nv31_work/unit.cpp:13 / unit.exe: the supplied executable fails trapDepth[10]==0 in the unresolved-portal fixture (reproduced twice). Binary timestamp 19:05 precedes current bot 19:18; rebuild and run the current source, and bind fixture/source/compiler/executable hashes before claiming PASS. This does not establish that the current source fails.
+6. out/nv31_work/run.py:94-100 / out/nv30_improve_report.md:2: required b/c screens, trap-target comparison and confirmation are unfinished; neither DONE nor POST_DONE exists. Complete those runs and report target outcomes before any recommendation or acceptance.
+7. viper_nv31b/main.cpp:1306 unconditionally demotes any positive static risk, even when the alternative is dynamically unsafe. Add decision fixtures for a threatened/unsafe alternative and for all moves trapped; verify that the chosen move is actually the least bad as required by the addendum.
+8. viper_nv31b/main.cpp:1033-1040 stores minimum articulation-side area per cell, rather than direction-specific entry components. Add fixtures crossing a cut vertex in both directions and leaving a pocket; establish that exit moves are not incorrectly vetoed.
+Verification and scope:
+- Read AGENTS, NEXT_STEPS, brief/report; inspected candidate main.cpp diffs, runner, fixtures, diagnosis JSON, supporting postprocessor/meter/report/target scripts and tracked panel/build diffs. No baseline or bot edits performed.
+- All three candidates' other files byte-match Nv30; frozen_inputs hashes currently match. Existing unrelated dirty files (including secrets.env) cannot be attributed to this executor from git status alone; no secret contents were printed.
+- Re-ran report command via offline uv: python -B tools/panel_queen.py out/kz_ctl out/nv31a. Control 42/98, queen deaths 90, median r199; a 48/98, deaths 90, median r222.5: reproduced.
+- Head-on queen deaths 69 -> 59; wall 15 -> 20, self 6 -> 10, body 0 -> 1. Queen survival count did not improve.
+- Recomputed stored summary/opening aggregates: control CPU 65.250514M, units100 24.132653, eats/r 0.916633; a CPU 65.268975M, units100 24.520408, eats/r 0.918980. Matches report; CPU is retained judge evidence, not a new live measurement.
+- Census in-memory self-check PASS; freshly decoded around_unsw seed3, sides A/B for both builds: units100/eats match saved rows (four replays). Full census command writes opening.json, so used read-only computations under the edit restriction.
+- Both panels cover exactly 7 maps x 7 seeds x 2 sides, with successful sidecars. Opponent/map/engine/judge/seed/side identities pair correctly; candidate build hashes differ as expected.
+- Current C++ fixture passes g++ -O1 -std=c++17 -fsyntax-only. Did not overwrite unit.exe or run the write-producing meter/resume commands; sampled 0.821M trap rebuild claim remains independently unverified.
+- No full panels started. Reviewer checks were serial apart from lightweight decoders (maximum three); C: about 7.4 GiB free, F: about 105.7 GiB; out/ladder junctions resolve to F:. Existing runner uses -j2, shared reservation and resource guards.
+- Panel code raises on failed judge/results rather than counting them as losses. Runner contains no LLM invocation or submission/activation call; no secret persistence found in the inspected new sources.
+What I would not trust:
+- A complete deliverable or ladder recommendation while b/c/target/confirmation results remain absent. +6/98 is a provisional screen gain against Y9_6, not direct wins against Nv30 or a confirmed ladder improvement.
+- Native unit PASS until rebuilt; worst-case CPU/RAM safety from a few fixtures; static protection after an aborted rebuild; cached economy/diagnosis/metrics after tool or replay changes.
+- Historical Nv30/L10 opening differences as causal: map/side matching is explicitly seed/time/opponent confounded. Corpse bonus marks vacated occupied cells, not verified deaths, and needs target-metric evidence.
+- Farm ±1-point precision and league fidelity are not deliverables of this brief; neither has been established here. No promotion happened, and user approval remains required for ladder A/B.
+VERDICT: FAIL: incomplete required screens, aborted trap rebuild cached as valid, and insufficient derived-metric resume binding

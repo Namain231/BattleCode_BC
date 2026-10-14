@@ -1,0 +1,164 @@
+55a56
+>     bool qSearch = true; // QS
+813a815,966
+> // Queen-only branch state; never modifies live simulator or sonar globals.
+> struct QSDragon { int id, face; vector<int> b; bool alive=true; };
+> struct QSWorld { vector<QSDragon> ds; vector<int> occ; vector<unsigned char> pearl; };
+> struct QSClock {
+>     double start; bool aborted=false;
+>     bool stop() { if(elapsedMs()-start>4 || elapsedMs()>58)aborted=true; return aborted; }
+> };
+> #ifdef DEBUG_QS
+> static int qsCalls=0; static double qsTotal=0,qsMax=0;
+> #endif
+> static bool qsEdge(int c,int d,int& n,QSClock& t) {
+>     if(t.stop())return false;
+>     int k=effK(c,d);n=nbr[c*4+d];
+>     if(!k || (k==3 && n<0)){t.aborted=true;return false;}return true;
+> }
+> static void qsKill(QSWorld& w,int i) {
+>     auto& a=w.ds[i];if(!a.alive)return;
+>     for(size_t j=0;j<a.b.size();j++){if(!(j&1))w.pearl[a.b[j]]=1;w.occ[a.b[j]]=0;}
+>     a.alive=false;
+> }
+> // Exact single-turn primitive: self including tail first, both heads die at
+> // every length, pearl growth, fixed ceil(startLength/4) free allowance.
+> static bool qsMove(QSWorld& w,int i,const vector<int>& path,QSClock& t) {
+>     auto& a=w.ds[i];if(!a.alive)return true;
+>     int freeSteps=(int(a.b.size())+3)/4;
+>     for(int j=0;j<int(path.size());j++){
+>         if(t.stop())return false;
+>         if(j>=freeSteps && a.b.size()<3){qsKill(w,i);return true;}
+>         int n;if(!qsEdge(a.b[0],path[j],n,t))return false;a.face=path[j];
+>         if(n<0){qsKill(w,i);return true;}
+>         if(viewIndex[n]<0){t.aborted=true;return false;}
+>         int hit=w.occ[n]-1;
+>         if(hit>=0){if(hit!=i && w.ds[hit].b[0]==n)qsKill(w,hit);qsKill(w,i);return true;}
+>         a.b.insert(a.b.begin(),n);w.occ[n]=i+1;
+>         if(w.pearl[n])w.pearl[n]=0;
+>         else {w.occ[a.b.back()]=0;a.b.pop_back();}
+>         if(j>=freeSteps){w.occ[a.b.back()]=0;a.b.pop_back();}
+>     }return true;
+> }
+> static bool qsBuild(QSWorld& w,vector<int>& enemies,QSClock& t) {
+>     if(body.empty() || int(body.size())!=MY_LEN)return false;
+>     for(int c:body)if(c<0)return false;
+>     // A round-boundary spawn can alter tail advancement: do not forecast
+>     // through an imminent pearl tick in this local movement-only prototype.
+>     for(int j=0;j<49;j++)if(V.ptime[j]>=0 && V.ptime[j]<=1)return false;
+>     w.occ.assign(N,0);w.pearl.assign(N,0);w.ds.push_back({MY_ID,MY_DIR,body,true});
+>     for(const auto& dr:others){
+>         if(t.stop() || dr.headCell<0)return false;
+>         QSDragon a;a.id=dr.id;a.face=dr.headFace;int c=dr.headCell;
+>         for(int j=0;j<dr.visCount;j++){
+>             if(find(a.b.begin(),a.b.end(),c)!=a.b.end())return false;
+>             a.b.push_back(c);if(j+1==dr.visCount)break;int next=-1;
+>             for(const auto& p:V.parts)if(p.id==dr.id && !p.head && find(a.b.begin(),a.b.end(),p.cell)==a.b.end()){
+>                 int n;if(!qsEdge(p.cell,p.face,n,t))return false;
+>                 if(n==c){if(next>=0)return false;next=p.cell;}
+>             }
+>             if(next<0)return false;c=next;
+>         }
+>         // Build straight-behind estLen estimate, then reject unknown geometry.
+>         // Estimates cannot establish survival: unseen enemy body => fallback.
+>         if(!dr.tailKnown || int(a.b.size())!=dr.estLen){
+>             while(int(a.b.size())<dr.estLen){
+>                 int n;if(!qsEdge(a.b.back(),opp(a.face),n,t) || n<0)return false;
+>                 a.b.push_back(n);
+>             }return false;
+>         }
+>         int index=int(w.ds.size());w.ds.push_back(a);
+>         if(dr.team!=MY_TEAM)enemies.push_back(index);
+>     }
+>     for(int i=0;i<int(w.ds.size());i++)for(int c:w.ds[i].b){if(w.occ[c])return false;w.occ[c]=i+1;}
+>     for(int c=0;c<N;c++)if(viewIndex[c]>=0)w.pearl[c]=pearlNow(c);
+>     stable_sort(enemies.begin(),enemies.end(),[&](int a,int b){return torusDist(body[0],w.ds[a].b[0])<torusDist(body[0],w.ds[b].b[0]);});
+>     if(enemies.size()>2)enemies.resize(2);
+>     sort(enemies.begin(),enemies.end(),[&](int a,int b){return (w.ds[a].id<MY_ID)!=(w.ds[b].id<MY_ID) ? w.ds[a].id>=MY_ID : w.ds[a].id<w.ds[b].id;});
+>     return !enemies.empty();
+> }
+> struct QSValue { int life=0,space=0,open=0; };
+> static bool qsBetter(const QSValue& a,const QSValue& b){
+>     if(a.life!=b.life)return a.life>b.life;
+>     if(a.space!=b.space)return a.space>b.space;return a.open>b.open;
+> }
+> // Branch version of the existing staticSpace survival flood-fill principle;
+> // frozen occupied cells, at most 48 observed cells, no expensive evaluate().
+> static QSValue qsLeaf(const QSWorld& w,QSClock& t){
+>     QSValue v;if(!w.ds[0].alive)return v;v.life=1;int head=w.ds[0].b[0];
+>     for(int d=0;d<4;d++){int n;if(!qsEdge(head,d,n,t))return {};
+>         if(n>=0 && viewIndex[n]>=0 && !w.occ[n])v.open++;}
+>     vector<int> q{head};vector<unsigned char> seen(N,0);seen[head]=1;
+>     for(size_t j=0;j<q.size() && q.size()<48;j++)for(int d=0;d<4;d++){
+>         int n;if(!qsEdge(q[j],d,n,t))return {};
+>         if(n>=0 && viewIndex[n]>=0 && !w.occ[n] && !seen[n]){
+>             seen[n]=1;q.push_back(n);if(q.size()==48)break;}
+>     }v.space=int(q.size());return v;
+> }
+> static QSValue qsContinue(const QSWorld& w,QSClock& t){
+>     QSValue best;if(!w.ds[0].alive)return best;
+>     for(int d=0;d<4;d++)if(d!=opp(w.ds[0].face)){
+>         QSWorld leaf=w;if(!qsMove(leaf,0,{d},t))return {};
+>         QSValue v=qsLeaf(leaf,t);if(qsBetter(v,best))best=v;
+>     }return best;
+> }
+> // All non-reversing free sprint paths ending on queen head/body. Exhaustion
+> // discards the entire result instead of silently pruning dangerous replies.
+> static void qsRams(const QSWorld& w,int ei,int left,vector<int>& path,
+>                    vector<vector<int>>& replies,QSClock& t){
+>     if(!left || t.stop() || !w.ds[ei].alive)return;
+>     for(int d=0;d<4;d++)if(d!=opp(w.ds[ei].face)){
+>         int n;if(!qsEdge(w.ds[ei].b[0],d,n,t))return;if(n<0)continue;
+>         if(viewIndex[n]<0){t.aborted=true;return;}
+>         path.push_back(d);
+>         if(w.occ[n]==1){if(path.size()>1)replies.push_back(path);}
+>         else {QSWorld next=w;if(!qsMove(next,ei,{d},t)){path.pop_back();return;}
+>             qsRams(next,ei,left-1,path,replies,t);}
+>         path.pop_back();if(t.stop())return;
+>     }
+> }
+> static QSValue qsReplies(const QSWorld& w,const vector<int>& enemies,int pos,QSClock& t){
+>     if(t.stop() || !w.ds[0].alive)return {};
+>     if(pos==int(enemies.size()))return qsContinue(w,t);
+>     int ei=enemies[pos];if(!w.ds[ei].alive)return qsReplies(w,enemies,pos+1,t);
+>     vector<vector<int>> replies;for(int d=0;d<4;d++)if(d!=opp(w.ds[ei].face))replies.push_back({d});
+>     vector<int> path;qsRams(w,ei,(int(w.ds[ei].b.size())+3)/4,path,replies,t);
+>     QSValue worst{1,MAXN,4};
+>     for(const auto& reply:replies){QSWorld next=w;if(!qsMove(next,ei,reply,t))return {};
+>         QSValue v=qsReplies(next,enemies,pos+1,t);if(qsBetter(worst,v))worst=v;if(t.stop())return {};}
+>     return worst;
+> }
+> template<class Options> static bool queenSearch(Options& opts){
+>     if(!isTrueQueen() || opts.size()<2 || body.empty() || elapsedMs()>50)return false;
+>     bool trigger=opts[0].ev.pDeath>=0.05 || enemyPingNow || qThreat;
+>     for(const auto& dr:others)if(dr.team!=MY_TEAM && dr.headCell>=0){
+>         int dx=abs(body[0]%W-dr.headCell%W),dy=abs(body[0]/W-dr.headCell/W);
+>         if(max(min(dx,W-dx),min(dy,H-dy))<=5)trigger=true;}
+>     if(!trigger)return false;
+>     QSClock t{elapsedMs()};vector<int> roots{0},eligible;
+>     for(int i=1;i<int(opts.size());i++)if(opts[i].ev.pDeath<=opts[0].ev.pDeath+0.15)eligible.push_back(i);
+>     stable_sort(eligible.begin(),eligible.end(),[&](int a,int b){return opts[a].ev.score>opts[b].ev.score;});
+>     for(int i:eligible){roots.push_back(i);if(roots.size()==3)break;}
+>     QSWorld start;vector<int> enemies;int chosen=0;QSValue winner,best;
+>     bool complete=qsBuild(start,enemies,t);
+>     if(complete)for(int i:roots){
+>         QSWorld branch=start;if(!qsMove(branch,0,opts[i].dirs,t)){complete=false;break;}
+>         QSValue v=qsReplies(branch,enemies,0,t);if(t.stop()){complete=false;break;}
+>         if(i==0){winner=best=v;}
+>         else if(v.life>best.life || (v.life==best.life && (v.space>best.space || (v.space==best.space && opts[i].ev.score>opts[chosen].ev.score)))){best=v;chosen=i;}
+>     }
+> #ifdef DEBUG_QS
+>     double used=elapsedMs()-t.start;qsCalls++;qsTotal+=used;qsMax=max(qsMax,used);
+> #endif
+>     if(!complete || t.stop() || chosen==0 || best.life-winner.life<1)return false;
+>     swap(opts[0],opts[chosen]);return true;
+> }
+2237a2391
+>         bool qsChanged = false;
+2264a2419
+>         if (P.qSearch) qsChanged = queenSearch(opts);
+2288a2444,2447
+>         if (qsChanged) indicator += " QS";
+> #ifdef DEBUG_QS
+>         if (P.qSearch && isTrueQueen() && qsCalls) { char qb[96]; snprintf(qb,sizeof qb," QSDBG n%d mean%.3f max%.3f",qsCalls,qsTotal/qsCalls,qsMax); indicator+=qb; }
+> #endif

@@ -1,0 +1,8 @@
+# Kamikaze correctness critique
+Read only. Review viper_y96nk/main.cpp against baselines/Nv30/main.cpp and tools/kamikaze_measure.py, tools/kamikaze_unit.py, tools/kamikaze_run.py, tools/kamikaze_report.py.
+Task: nonqueen immediate legal ram of visible enemy queen head, respecting queen-life/longest guards, cheap-sacrifice policy, own-body collision, paid free-step budgets, no ally targets; chase OFF. No submissions/baseline edits.
+Input lacks exact global ally-queen life / longest census; candidate intentionally requires visible living allied queen, or complete visible ally census proving her absent plus enemy visible length greater than all allies. Attack override precedes feeding; legacy queen attacks excluded while flag ON.
+Attack priority and any extra semantic regressions matter. Challenge the measurement's turn-state reconstruction, portals, paid costs, own-body timing, replay ID filtering, reverse attacker accounting, and node/time caps. Identify real defects; return <=10 lines, required fixes, file:line, VERDICT PASS/FAIL. Edit nothing.
+Exact deterministic verify command: uv run --python 3.11 python -B tools/kamikaze_unit.py.
+Full verification command (director-owned, do NOT start another panel): uv run --python 3.11 --with unswbc python -B tools/kamikaze_run.py. Runs current-source maze smoke, then candidate and Nv30 control vs Y9_6 on seven unseen maps seeds 3-9, 98 games each, sequential -j2 (reduced from requested -j4 for machine RAM); RAM/disk/judge guards; outputs out/kz_smoke_current, out/kz_panel, out/kz_ctl.
+Critique pending panel results as unverified. Do not change a promotion decision or imply a pass based on tests not yet finished.

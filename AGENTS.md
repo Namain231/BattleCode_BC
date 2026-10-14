@@ -284,3 +284,24 @@ restore THAT id, not an older one). Local gates and yardsticks use `baselines/Y9
 
 ### Lane routing (user instruction, 2026-10-04: Claude tokens nearly exhausted; master plan in NEXT_STEPS.md)
 Thinking tasks (code, critique, analysis) are balanced between Codex CLI (headless: `codex exec --approve-for-me "$(cat tools/tasks/X.md)"`) and the Antigravity IDE agent (GUI only, no headless CLI: the user tells it "Follow tools/tasks/ag_queue/NEXT.md"). Whichever lane wrote code, the OTHER lane critiques it. Menial work (git push/pull, downloads, file moves, log summaries) goes to OpenRouter models via `opencode run --model openrouter/meituan/longcat-2.0` (or the `or` / `cf` back-ends in tools/delegate.sh). Never use the menial lane for code that changes bots.
+
+### League validation (2026-10-05)
+The eight experimental league/team_<id> proxies failed opening-economy fidelity; none is an accepted
+ladder-faithful opponent. See out/league_build_report.md and league/index.json for measured decisions.
+Their local CUDA/WSL workflow is tools/league_build.py (documentation: tools/README_LEAGUE.md);
+all data/checkpoints/evaluations stay on F:, remote lanes remain OFF. This does not change the champion.
+
+## Paired opening farm (2026-10-05)
+`bash tools/farm_run.sh CANDIDATE_DIR --games 2000` runs the local WSL lane, paired with `out/sv53_pkg` on identical seeds/sides/opponents. Stages on F:, defaults to six workers with memory/disk guards, checkpoints every evaluation. See `farm/README_SCALE.md`. Primary metrics are census opening metrics; league wins are secondary safety evidence. Remote lanes remain OFF; no workflow installed or publishing performed. Full-scale candidate run still needs a candidate directory selection.
+## Opening parameter search (2026-10-05)
+Resume with `uv run --python 3.11 --with unswbc --with scipy python -B tools/param_search.py --run`. Generated 12-parameter bots and atomic search state: `out/param_search/`; evaluation history: `out/param_search.tsv`; concise status: `out/param_search_report.md`. Uses local guarded farm only, four workers, balanced map-cycle statistical stopping and fresh final validation seeds. Tooling critique PASS does not approve a candidate. No submissions or remote publishing.
+
+## MLP student experiment (2026-10-06)
+- `viper_y96qm` is an unpromoted MLP swap of `viper_y96qg`, with `Params::nnKind` selecting MLP/conv; all other parent files and bot logic are preserved.
+- Eight streaming epochs, best epoch 7: holdout top-1 68.628% vs conv 68.579%; sparse 256/128 net costs 1.659M mean / 2.482M sampled max points (conv 21.137M), native parity 1600/1600 argmax matches.
+- Requested same-seed safety FAIL: 50/98 vs Sv5.3 59/98 (-9.18 pp); first epoch trial also failed 47/98. Do not promote. Report: `out/mlp_student_report.md`; no submission or champion change.
+
+- MLP student fix round 2 (2026-10-06): hardened CPU threshold/finite checks and native parity I/O; reruns pass (1600/1600, 2.482M sampled max). Historical safety remains FAIL; candidate unpromoted, supervisor retired, fresh sealed control required for future comparisons.
+
+## Kamikaze verification (2026-10-07, still running)
+- Unpromoted viper_y96nk copies baselines/Nv30; fresh audit and deterministic C++/engine_sim PASS; fresh smoke peak63.741005M, no rams. Paired 98-game candidate/control verification pending; no submission. Report: out/kamikaze_report.md. Panel resumes now bind both builds/map/engine/judge/seed/side; audits bind replay/version; cooperating Windows/WSL panels share a worker reservation.

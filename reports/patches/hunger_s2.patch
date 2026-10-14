@@ -1,0 +1,277 @@
+--- viper_nv30k/main.cpp	2026-10-07 22:15:38.425700600 +0530
++++ viper_nv30h_s2/main.cpp	2026-10-08 03:16:08.438384300 +0530
+@@ -34,6 +34,12 @@
+ // ---------------------------------------------------------------- tunables --
+ 
+ struct Params {
++    // HUNGER: score-only exploration; grace/ramp in rounds, revisit window in rounds.
++    bool hunger = true;
++    int hungerGraceN = 4, hungerRampN = 15, hungerGraceQ = 15, hungerRampQ = 60;
++    int hungerWindow = 30, hungerMaxLenN = 6;
++    double hungerExplN = 6.0, hungerExplQ = 0.3;
++    double hungerRevisitN = 2.5, hungerRevisitQ = 0.15, hungerFrontierN = 3.0;
+     // pearl field
+     double gamma = 0.86;         // per-step discount of pearl value
+     double wField = 0.22;        // weight of the discounted pearl sum
+@@ -281,6 +287,13 @@
+ 
+ // pearl memory
+ static int seenR[MAXN];
++// HUNGER: process-local head visits, independent of vision memory.
++static int visitR[MAXN], hungerDist[MAXN], hungerLastEat = 0, hungerPrevLen = -1;
++static int hungerTarget = -1, hungerTargetRound = -100, hungerBfsRound = -100;
++static int hungerBan = -1, hungerBanUntil = -1;
++static double hungerLevel = 0;
++static bool hungerSafe[MAXN];
++static bool hungerQueenOption = false;
+ static bool pearlSeen[MAXN];
+ static int spawnAt[MAXN];      // absolute round of next spawn attempt; -1 never; -2 unknown
+ static int mirSpawn[MAXN];     // spawn round learnt from the mirror tile; -2 unknown
+@@ -472,7 +485,7 @@
+ }
+ 
+ // probability that a pearl sits on c when we arrive at round T
+-static double pearlProb(int c, int T) {
++static double pearlProbBase(int c, int T) {
+     int now = ROUND;
+     if (seenR[c] == now) {
+         if (pearlSeen[c]) return 1.0;
+@@ -511,6 +524,21 @@
+     return min(0.22, 0.04 + T / 1500.0);
+ }
+ 
++static double pearlProb(int c, int T) {
++    double p = pearlProbBase(c, T);
++    if (!P.hunger || hungerLevel <= 0 || (isTrueQueen() && (!hungerQueenOption || !hungerSafe[c]))) return p;
++    // HUNGER (EXPL31 idea only): preserve visible pearls and known spawn countdowns.
++    if (seenR[c] != ROUND && (seenR[c] < 0 || ROUND - seenR[c] >= P.hungerWindow))
++        p *= min(4.0, 1.0 + (isTrueQueen() ? P.hungerExplQ : P.hungerExplN) * hungerLevel);
++    // Vision is not a visit. Even seen empty cells attract exploration once unwalked,
++    // but a known non-producing bed remains worthless.
++    if (gmax[c] != 0 && spawnAt[c] != -1 &&
++        (visitR[c] < 0 || ROUND - visitR[c] >= P.hungerWindow) &&
++        !(seenR[c] == ROUND && pearlSeen[c]))
++        p += 0.04 * (isTrueQueen() ? P.hungerExplQ : P.hungerExplN) * hungerLevel;
++    return min(1.0, p);
++}
++
+ // tiles that respawn quickly keep paying while we circle them
+ static inline double farmBonus(int c) {
+     if (gmax[c] <= 0) return 1.0;
+@@ -988,7 +1016,122 @@
+ }
+ 
+ static int pxTarget = -1; static bool pxHungry = false;  // PEXPLORE: nearest seen cell with an unexplored portal edge (hungry drones head there)
++static bool protectedQueen();
++// HUNGER: ordinary known open edges only; portals retain all existing PEXPLORE rules.
++static bool hungerEdge(int c, int d) {
++    int n = nbr[c * 4 + d];
++    return n >= 0 && effK(c, d) == 1 && n == stepRaw(c, d);
++}
++static bool hungerFrontier(int c) {
++    if (seenR[c] < 0 || c == body[0] || (visitR[c] >= 0 && ROUND - visitR[c] < P.hungerWindow)) return false;
++    for (int d = 0; d < 4; d++) if (hungerEdge(c, d)) {
++        int n = nbr[c * 4 + d];
++        if (seenR[n] < 0 || visitR[n] < 0) return true;
++    }
++    return false;
++}
++static void updateHunger() {
++    hungerLevel = 0;
++    if (!P.hunger || body.empty() || body[0] < 0) { hungerTarget = -1; return; }
++    if (hungerPrevLen < 0) fill(visitR, visitR + N, -100000);
++    // Same growth detector as pxLastGrow2; split emitters reset explicitly.
++    // Sprint shrink alone must never make a starving dragon appear fed.
++    if (hungerPrevLen < 0 || MY_LEN > hungerPrevLen) hungerLastEat = ROUND;
++    hungerPrevLen = MY_LEN;
++    visitR[body[0]] = ROUND;
++    bool q = isTrueQueen();
++    bool nearEnemy = enemyDist[body[0]] <= 8;
++    for (const auto& dr : others) if (dr.team != MY_TEAM && dr.headCell >= 0 &&
++        torusDist(body[0], dr.headCell) <= 8) nearEnemy = true;
++    // Base has no phases: before r150 is its explicitly permitted queen window.
++    // QSAFE protection from r100 and the protectedQueen condition also disable hunger.
++    if (q && (ROUND >= 100 || protectedQueen() || nearEnemy)) {
++        hungerTarget = -1; return;
++    }
++    hungerLevel = max(0.0, min(q ? 0.6 : 1.0,
++        double(ROUND - hungerLastEat - (q ? P.hungerGraceQ : P.hungerGraceN)) /
++        max(1, q ? P.hungerRampQ : P.hungerRampN)));
++    // One O(cells) safe-region pass: fully observed, roomy cells outside head reach,
++    // excluding portals and corridors. The existing survival/corridor scores remain.
++    for (int c = 0; c < N; c++) {
++        int open = 0; bool portal = false;
++        for (int d = 0; d < 4; d++) {
++            portal |= effK(c, d) == 3;
++            if (hungerEdge(c, d) && seenR[nbr[c * 4 + d]] >= 0) open++;
++        }
++        hungerSafe[c] = seenR[c] >= 0 && !portal && open >= 3 &&
++            enemyDist[c] > 8 && otherBT[c] == 0 && radarExpire[c] <= ROUND;
++    }
++    if (q || MY_LEN > P.hungerMaxLenN || hungerLevel <= 0) { hungerTarget = -1; return; }
++    if (hungerTarget >= 0 && (hungerTarget == body[0] || !hungerFrontier(hungerTarget) ||
++        ROUND - hungerTargetRound >= 8)) {
++        // HUNGER (STUCK36 idea only): temporary ban of an unreached sticky target.
++        if (hungerTarget != body[0] && ROUND - hungerTargetRound >= 8)
++            hungerBan = hungerTarget, hungerBanUntil = ROUND + 15;
++        hungerTarget = -1;
++    }
++    if (ROUND - hungerBfsRound < 4) return;
++    hungerBfsRound = ROUND;
++    static int hd[MAXN], queue[MAXN];
++    fill(hd, hd + N, -1);
++    int lo = 0, hi = 0; hd[body[0]] = 0; queue[hi++] = body[0];
++    int best = -1, bestD = N + 1; uint32_t bestHash = UINT32_MAX;
++    while (lo < hi) {
++        int c = queue[lo++];
++        uint32_t hash = uint32_t(c + 1) * 2654435761u ^ uint32_t(MY_ID + 1) * 2246822519u;
++        if (hungerFrontier(c) && !(c == hungerBan && ROUND < hungerBanUntil) &&
++            (hd[c] < bestD || (hd[c] == bestD && hash < bestHash)))
++            best = c, bestD = hd[c], bestHash = hash;
++        for (int d = 0; d < 4; d++) if (hungerEdge(c, d)) {
++            int n = nbr[c * 4 + d];
++            if (hd[n] >= 0 || seenR[n] < 0 || (otherBT[n] > 0 && n != body[0])) continue;
++            hd[n] = hd[c] + 1; queue[hi++] = n;
++        }
++    }
++    if (hungerTarget >= 0 && hd[hungerTarget] < 0) hungerTarget = -1;
++    if (hungerTarget < 0 && best >= 0) hungerTarget = best, hungerTargetRound = ROUND;
++    fill(hungerDist, hungerDist + N, -1);
++    if (hungerTarget < 0) return;
++    lo = hi = 0; queue[hi++] = hungerTarget; hungerDist[hungerTarget] = 0;
++    while (lo < hi) {
++        int c = queue[lo++];
++        for (int d = 0; d < 4; d++) if (hungerEdge(c, d)) {
++            int n = nbr[c * 4 + d];
++            if (hungerDist[n] >= 0 || seenR[n] < 0) continue;
++            hungerDist[n] = hungerDist[c] + 1; queue[hi++] = n;
++        }
++    }
++}
++static double hungerMoveScore(const SimResult& s) {
++    if (!P.hunger || hungerLevel <= 0 || s.cells.empty()) return 0;
++    double score = 0, revisit = 0; int prev = body[0]; bool ordinary = true;
++    for (int c : s.cells) {
++        bool edge = false;
++        for (int d = 0; d < 4; d++) if (hungerEdge(prev, d) && nbr[prev * 4 + d] == c) edge = true;
++        ordinary &= edge;
++        if (visitR[c] >= 0 && ROUND - visitR[c] < P.hungerWindow)
++            revisit += 1.0 - double(ROUND - visitR[c]) / max(1, P.hungerWindow);
++        prev = c;
++    }
++    if (!isTrueQueen() || hungerQueenOption)
++        score -= hungerLevel * (isTrueQueen() ? P.hungerRevisitQ : P.hungerRevisitN) * revisit;
++    if (!isTrueQueen() && ordinary && hungerTarget >= 0 &&
++        hungerDist[body[0]] >= 0 && hungerDist[s.cells.back()] >= 0)
++        score += P.hungerFrontierN * hungerLevel *
++            (hungerDist[body[0]] - hungerDist[s.cells.back()]);
++    return score;
++}
+ static Eval evaluate(const SimResult& s, bool deepAllowed) {
++    hungerQueenOption = false;
++    if (P.hunger && hungerLevel > 0 && isTrueQueen() && !s.cells.empty()) {
++        int prev = body[0]; bool safe = hungerSafe[prev];
++        for (int c : s.cells) {
++            bool edge = false;
++            for (int d = 0; d < 4; d++) if (hungerEdge(prev, d) && nbr[prev * 4 + d] == c) edge = true;
++            safe &= edge && hungerSafe[c]; prev = c;
++        }
++        hungerQueenOption = safe && corridorRisk(s.body) == 0;
++    }
+     if (elapsedMs() >= 48) deepAllowed = false; // CPU1
+     Eval e;
+     const vector<int>& B = s.body;
+@@ -1155,7 +1298,8 @@
+     // enemy heads (dg 14-42) and died. Her length only matters vs a living enemy queen: after r100 she barely forages.
+     if (isTrueQueen() && ROUND >= 100 && ROUND < P.qfeedFrom) greed *= 0.2;  // QFEED: she eats the feed late
+     if (L > capLen && !endgame()) { greed *= 0.3; if (growth > 0) growth *= -0.3; }
+-    double score = 0;
++    // HUNGER: score terms only; safeClass, doomed logic and survival veto untouched.
++    double score = hungerMoveScore(s);
+     if (pxTarget >= 0 && !s.cells.empty() && body[0] >= 0) score += 2.0 * (torusDist(body[0], pxTarget) - torusDist(s.cells.back(), pxTarget));  // PEXPLORE
+     score += growth * (endgame() ? 1.5 : 1.0);
+     score += greed * (P.wField * fsum + P.wTarget * fmax);
+@@ -1314,6 +1458,12 @@
+ static vector<int> chosenCells;
+ 
+ static void emitMove(const vector<int>& dirs, const vector<int>& cells) {
++    // Successful chosen path is confirmed by our surviving process next turn.
++    // Remember sprint crossings too; observed pearls reset hunger even if paid steps offset growth.
++    if (P.hunger) for (int c : cells) if (c >= 0) {
++        visitR[c] = ROUND;
++        if (seenR[c] == ROUND && pearlSeen[c]) hungerLastEat = ROUND;
++    }
+     string m = "MOVE ";
+     for (int d : dirs) m += DCH[d];
+     printf("%s\n", m.c_str());
+@@ -1423,12 +1573,14 @@
+         // QBOX (from Y.9.6): no move at all and no coil exit (e.g. an L4 queen in a closed 2x2 box, live Schooltime): shed the
+         // rear 2. The boxed child dies and frees the cells; a dead child is better than a dead queen.
+         if (curPd >= 0.99 && L >= 4) {
++            if (P.hunger) hungerLastEat = ROUND + 1;
+             printf("SPLIT 2%c", 10);
+             indicator = "QBOX-SHED 2";
+             return true;
+         }
+         return false;
+     }
++    if (P.hunger) hungerLastEat = ROUND + 1;
+     printf("SPLIT %d%c", bestS, 10);
+     indicator = "AMPUTATE " + to_string(bestS) + " pd" + to_string((int)(100 * bestPd));
+     return true;
+@@ -1475,6 +1627,7 @@
+                 if (!mine) open = true;
+             }
+             if (open) {
++                if (P.hunger) hungerLastEat = ROUND + 1;
+                 printf("SPLIT %d\n", c);
+                 indicator = "SHED " + to_string(c);
+                 return true;
+@@ -1484,6 +1637,7 @@
+         // (moving into the own tail kills). STAR split 2 at r0: the boxed child dies, and the L2 queen circles in the box.
+         // A dead child is better than a dead queen: shed the rear 2 when nothing else works.
+         if (isTrueQueen() && MY_LEN >= 4) {
++            if (P.hunger) hungerLastEat = ROUND + 1;
+             printf("SPLIT 2\n");
+             indicator = "QBOX-SHED 2";
+             return true;
+@@ -1491,6 +1645,7 @@
+         dsWhy = "val " + to_string(bestVal);
+         return false;
+     }
++    if (P.hunger) hungerLastEat = ROUND + 1;
+     printf("SPLIT %d\n", bestC);
+     indicator = "ESCAPE-SPLIT " + to_string(bestC);
+     return true;
+@@ -1511,6 +1666,7 @@
+     for (int d = 0; d < 4; d++) {
+         int n = nbr[tail * 4 + d];
+         if (n >= 0 && !occId[n] && n != body[MY_LEN - 2]) {
++            if (P.hunger) hungerLastEat = ROUND + 1;
+             printf("SPLIT 2\n");
+             indicator = "BUD";
+             return true;
+@@ -1559,6 +1715,7 @@
+     if (elapsedMs() >= 48) return false; // CPU1: recheck after the parent evaluation.
+     Eval ce = evaluate(child, false);
+     if (ce.space < (overlong ? 4 : 12)) return false;
++    if (P.hunger) hungerLastEat = ROUND + 1;
+     printf("SPLIT %d\n", c);
+     indicator = "SPLIT";
+     return true;
+@@ -1889,6 +2046,7 @@
+     authenticateMessages(); // SECURE
+     updateQueen();
+     updateTrueQueenPos();  // QPOS + SECURE
++    updateHunger(); // HUNGER: once per turn, before scoring moves.
+     // QFEED: ladder Trauma vs No Idea: both queens alive, they fed THEIR queen 2 -> 16 from r350 and won 'by queen' (ours 3).
+     // From qfeedFrom on, our true queen is the feeding/homing sink whenever her position is fresh.
+     if (ROUND >= P.qfeedFrom && trueQueenCell >= 0 && ROUND - trueQueenRound <= 6) {
+@@ -2145,6 +2303,7 @@
+         snprintf(tmp, sizeof tmp, "L%d s%.1f sp%d rm%d f%.2f t%.2f dg%.2f pd%.2f%s", MY_LEN, o.ev.score, o.ev.space, o.ev.room,
+                  o.ev.field, o.ev.target, o.ev.danger, o.ev.pDeath, KM ? " K" : "");
+         indicator = tmp;
++        if (P.hunger && hungerTarget >= 0) indicator += " H";
+         if (o.ev.targetCell >= 0) indicator += " T" + to_string(o.ev.targetCell % W) + "," + to_string(o.ev.targetCell / W);
+         if (compassActive) indicator += " C" + to_string(compassTarget % W) + "," + to_string(compassTarget / W);  // COMPASS
+         if (searchChanged) { char db[48]; snprintf(db, sizeof db, " S1[%d:%.2f]", s1DbgN, s1DbgPd); indicator += db; }  // SEARCH1

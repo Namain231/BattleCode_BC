@@ -121,3 +121,59 @@ Summarized from the archived file, in case useful as a sanity check once new-rul
   partial screen before the session ended, all were within noise of gP (47-61% depending on map set) — nothing
   from rule-mining cycle 1 had cleanly beaten gP yet. 15 more learned models (5 queen-move teams never screened,
   all leaderboard-ranks-21-40 teams never even reached learning) are sitting in `rulemine_data/` unscreened.
+
+## 2026-10-04 nn_refresh (in progress)
+The 1513-game full-terrain net ends at game 933320 / 2026-10-03T04:45:14.561Z.
+The scout's manifest already had additional untrained rows, so new-game selection excludes the
+actual shard manifest's game IDs. Recent winning ranked games are being scouted at Elo >=2110
+(the leaderboard's twelfth team was 2111). The first 225 new games cover all 17 live maps.
+GET /battles/:id returns the series' other game IDs; marking those as covered avoids repeated
+series requests. The refresh uses a frozen chronological newest-game holdout, old+new shards,
+and two visits to new training shards; old-net drift is evaluated before either new training run.
+No refreshed accuracy or playing-strength result exists yet. The memory guard delayed the
+runtime split test, whose first attempt exposed an F: junction import-root bug; fixed to repo cwd.
+
+### nn_refresh resource abort
+The scout preserved 358 new winning ranked games from 11 teams, 382051345 bytes, covering all 17 maps,
+2026-10-04T10:41:57.010Z through 2026-10-04T12:36:56.340Z. C fell to 2.70 GiB, so the disk guard
+stopped before BUILD; RAM remained below the required 3000 MiB. No shards, new net or candidate were
+produced. All refresh processes were stopped. The corrected workflow passed static critic review;
+runtime split test, drift, Kaggle runs, parity and CPU remain unverified. See the saved report.
+
+### 2026-10-05: league_build movement proxies rejected
+Eight per-team small v6 nets were trained locally on winning post-rule replays and copied into
+league/team_<id> from viper_y96qf with shared wNN=20 and rules fallback. The roster includes
+tungtung67, avid coders, Just Keep Swimming, code matters, Jingling Munmin, hm, SSS and forgot to mention.
+All eight failed the units@r100 fidelity gate (local/real equal-map medians 0.088-0.566).
+Sv5.3 won 15-17/20 against each proxy; these results do not reproduce its real ladder difficulty.
+Movement-only imitation leaves splits/feeding/actions to our rules; runtime feature parity is unverified.
+Do not use rejected proxies as ladder-faithful gate opponents. Full numbers and limitations:
+out/league_build_report.md; raw data, atomic resume state and CPU sidecars on F:/BattleCode_data/league_build.
+
+## 2026-10-05: paired opening farm tooling
+Local farm entry: `bash tools/farm_run.sh CANDIDATE_DIR --games 2000`; documentation `farm/README_SCALE.md`. The default plan is 2000 candidate + 2000 Sv5.3 evaluations against Y9_6 and eight rejected league proxies, 17 live + 20 dev maps, both sides, >=27 distinct seeds per map, 40 shards. Primary opening metrics reuse the census analyzer; wins are secondary. Queens are fixed starting IDs 0/1, resolved by map team order. Atomic per-evaluation JSON, F: staging and disk/memory guards support resume; remote lanes OFF. Plan/fixtures passed; this is tooling verification, not candidate performance evidence.
+## Farm integrity fix (2026-10-05)
+- Python supervisor locks do not pass automatically to WSL children. A judge-side Linux flock plus unique attempt directories prevents shared replay writers; a killed Windows supervisor fixture confirmed the surviving WSL lease blocked resume.
+- 2,000 games per arm is nominal +/-2.2 pp pooled and about +/-6.6 pp per nine-way opponent group, not +/-1 pp. Use explicit sample budgets and report achieved clustered intervals.
+
+## Farm scale fix round 2 (2026-10-05)
+WSL shell paths quoted; checkpoint manifest parses once per scan. Normal shard summaries reuse validated rows; restart/import/failure/final coverage validate disk state. Path/parse-count/opening/integrity/supervisor-kill fixtures pass. Corrected bundle packed and collected with zero games; throughput and achieved precision unmeasured. Correction to earlier farm entry: default has 3-4 independent seed clusters per map, not >=27. See out/farm_scale_report.md.
+
+## Parameter search tooling (2026-10-05)
+`tools/param_search.py` exposes 12 opening parameters from viper_y96qf via generated headers. Successive halving uses the paired farm against Sv5.3; league wins are only safety evidence. Early stops inspect balanced map cycles of independent map-seed clusters, not prefixes; final validation uses fresh seed offset 100000. Interrupted evaluations are authoritative in farm JSON and repair TSV on resume. No candidate is promoted without four closed-start halfway targets, >=1500 paired final games, CPU <=66M, measured safety and separate other-lane critique. See out/param_search_report.md for measured status.
+
+## 2026-10-06 opening_recipe (unpromoted)
+Three measured revisions: viper_y96qo improves Stripes units@100 6.5->11.5,split42->11,but meets only1/4 halfway targets. Closed26/64 vs39/64;paired safety50/98 vs59/98(-9.18pp);population drops Around UNSW,Australia,Maze,Tower Defense. CPU64.648M passes;no submission. Details:out/opening_recipe_report.md. Static correctness did not establish performance;no universal box exit verified.
+
+## 2026-10-06: cheap MLP student passes inference checks, fails gameplay
+`viper_y96qm` changes only the net call in `viper_y96qg`, retaining nnInput6/wNN and a conv fallback. A 256/128 MLP trained for eight streaming epochs with CE + temperature-2 KL; newest 60 games (582,515 states) held out globally. Best epoch 7 top-1 is 68.628% vs teacher 68.579%, but backward-move recall is 8.77% vs 43.97%.
+Sparse first layer drops only reserved zero planes 8/18. Exported int32 coefficients +/-16,777,215 with double accumulation give max logit error 0.000671 and 1600/1600 matching argmaxes. Sampled wasm cost is 1.659M mean / 2.482M maximum vs conv 21.137M: 12.74x cheaper on average; this is not a universal per-call bound.
+Safety on the requested seven maps, seeds 3-9, both sides versus Y9_6: 50/98 vs cached parent 59/98 (-9.18 pp), FAIL. Prior epoch-1 trial was 47/98; follow-up reused those same safety seeds, with checkpoint chosen by held-out accuracy only. Peaks: australia 57.361M, around_unsw 57.616M. Overall imitation accuracy close to the teacher does not establish gameplay non-inferiority. Candidate remains unpromoted, with no submission; full numbers/commands in `out/mlp_student_report.md`.
+
+- 2026-10-06 mlp_student fix round 1: candidate dropped after 50/98 vs 59/98 safety FAIL (-9.18 pp). Resume supervisor retired rather than reuse unbound historical caches; original control bot/engine provenance unavailable. No additional experiment or submission.
+
+- MLP student fix round 2 (2026-10-06): hardened CPU threshold/finite checks and native parity I/O; reruns pass (1600/1600, 2.482M sampled max). Historical safety remains FAIL; candidate unpromoted, supervisor retired, fresh sealed control required for future comparisons.
+
+## Kamikaze audit, 2026-10-07 (verification still running)
+
+Fresh replay/version-bound audit: 389/976 games offer a legal non-queen route to the current enemy queen head (379 with a fully visible route); our queen later dies in 171 opportunity games. Enemy length<=4 dragons initiate queen rams in 414 games. Existing tagged attacks already kill the enemy queen head-on in 367 games, so opportunity incidence is not incremental benefit. Reconstruction errors: none. Candidate viper_y96nk is Nv30 with conservative visible queen-life/remaining-longest guards; chase OFF. Fresh smoke passes CPU 63.741005M, 1/2 wins, no rams. Paired 98-game arms pending; no promotion/submission. Build-proven sidecars and replay/analysis identity are required to trust resumed panels. Final evidence: out/kamikaze_report.md.

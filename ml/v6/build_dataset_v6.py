@@ -382,6 +382,9 @@ def capped_counts(counts, cap=0.3):
 
 def export(a, manifest, out, stage):
     """Rebuild selection from staging when new games arrive; decoding is incremental."""
+    from shard_manifest import sha256
+    import subprocess
+    subprocess.run(['C:/Program Files/Git/bin/bash.exe', 'tools/mem_guard.sh', '2500'], check=True, timeout=1800)
     dbpath = out / "dedupe_work.sqlite"
     if dbpath.exists():
         dbpath.unlink()  # only this builder's disposable index
@@ -418,7 +421,7 @@ def export(a, manifest, out, stage):
         file = f"shard_g{generation:04d}_{len(shards):04d}.npz"
         np.savez_compressed(out / file, **data)
         size = (out / file).stat().st_size
-        shards.append(dict(file=file, samples=buffered, bytes=size,
+        shards.append(dict(file=file, samples=buffered, bytes=size, sha256=sha256(out / file),
                            teams=dict(Counter(map(str, data["meta"][:, 1]))),
                            maps=dict(Counter(map(str, data["meta"][:, 2]))),
                            sides=dict(Counter(map(str, data["meta"][:, 11])))))
@@ -452,7 +455,7 @@ def export(a, manifest, out, stage):
     flush()
     assert max(counts.values()) / total <= 0.3
     old = manifest.get("shards", [])
-    manifest.update(generation=generation, shards=shards, total_samples=total,
+    manifest.update(exported_game_ids=sorted(g["game"] for g in manifest["games"]), generation=generation, shards=shards, total_samples=total,
                     counts_per_team=dict(counts), counts_per_map=dict(maps), counts_per_side=dict(sides),
                     labels=classes.tolist(), queen_samples=queen, continuation_samples=continuation,
                     duplicate_dropped=dropped, cap_dropped=sum(unique_counts.values())-total,
@@ -499,10 +502,13 @@ def main():
             manifest["games"].append(info); done.add(info["game"]); changed = True
             atomic_json(path, manifest)
             print(json.dumps(info), flush=True)
+            if len(done)%25 == 0:
+                import subprocess
+                subprocess.run(["C:/Program Files/Git/bin/bash.exe", "-c", 'printf "%s\\n" "$1" >> AGENT_LOG.md', "_", f"- [2026-10-04] [executor] [nn_refresh] BUILD progress {len(done)} cached games; ETA depends on union size"], check=True)
     finally:
         if pool:
             pool.close(); pool.join()
-    if changed or not manifest.get("total_samples"):
+    if changed or not manifest.get("total_samples") or manifest.get("exported_game_ids") != sorted(done):
         export(a, manifest, out, stage)
     else:
         print(f"resume: {len(done)} games already processed; {manifest['total_samples']} samples unchanged")

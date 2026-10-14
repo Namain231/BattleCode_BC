@@ -1,0 +1,9 @@
+out/nv30k: games 98 win 52 (53.1%) | our queen died 88/98 median r 179.5 causes {'headon': 67, 'self': 7, 'wall': 14} | enemy queen died 93/98
+   around_unsw: W 8/14  queen died 14/14 median r 220
+   australia: W 7/14  queen died 14/14 median r 210
+   islands: W 8/14  queen died 14/14 median r 177
+   maze: W 7/14  queen died 13/14 median r 217
+   stripes: W 9/14  queen died 9/14 median r 126
+   tower_defense: W 2/14  queen died 12/14 median r 158
+   weakhold: W 11/14  queen died 12/14 median r 111
+baselines/Nv30/out/kz_ctl: games 0 win 0 (0.0%) | our queen died 0/0 median r - causes {} | enemy queen died 0/0

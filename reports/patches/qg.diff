@@ -1,0 +1,243 @@
+36a37,41
+>     int qposFrom = 12; // 0 disables QPOS
+>     bool encryptPayload = true, statusRay = true, guardZone = true;
+>     bool guardIntercept = true, laneEcho = true, enemyPing = true, qFreeze = false;
+>     int laneRays = 4; // 3 keeps the back broadcast as a nuisance observation
+> 
+99a105,113
+> static int qHeading=0, qMode=0;
+> static bool enemyPingNow=false, qThreat=false;
+> struct GuardStatus { int cell, round, id, heading, len, threat, td, hops, enemyLen; };
+> static vector<GuardStatus> guardFriends;
+> static uint64_t guardRelay=0; static int guardRelayKind=0;
+> static int relaySeen[4096]={};
+> struct EchoLane { vector<int> cells; int resolved=-1; bool kelp=true, unknown=false; int dir=0; };
+> static vector<EchoLane> echoLanes;
+> static double laneRisk[MAXN];
+601c615
+<     if (ECHO[3] + ECHO[4] > 0 && !lastRay.empty() && ROUND <= P.gossipFrom) {
+---
+>     if (!isTrueQueen() && ECHO[3] + ECHO[4] > 0 && !lastRay.empty() && ROUND <= P.gossipFrom) {
+1145c1159
+<     score -= isTrueQueen() ? 3.0 * danger : danger;  // QSAFE
+---
+>     score -= isTrueQueen() ? 3.0 * (enemyPingNow ? 1.3 : 1.0) * danger : danger;  // QSAFE
+1541c1555
+< enum SecureKind { SEC_QUEEN = 1, SEC_QPOS = 2, SEC_PPROBE = 3 };
+---
+> enum SecureKind { SEC_QUEEN = 1, SEC_QPOS = 2, SEC_PPROBE = 3, SEC_STATUS = 4 };
+1566a1581,1585
+>     // XOR the 48-bit body with a domain-separated SipHash keystream keyed by
+>     // the existing team secret, source transmit round and kind. MAC authenticates
+>     // ciphertext exactly as before. Equal-round words reuse a mask (obfuscation,
+>     // not semantic security); relays preserve the original source-round field.
+>     if (P.encryptPayload) payload ^= siphashPacket(0x51474B4559ULL, kind+128, txRound) & SECURE_PAYLOAD_MASK;
+1574c1593
+<         if ((uint16_t)(siphashPacket(payload, kind, r) >> 48) == tag) { txRound = r; return true; }
+---
+>         if ((uint16_t)(siphashPacket(payload, kind, r) >> 48) == tag) { txRound = r; if(P.encryptPayload) payload ^= siphashPacket(0x51474B4559ULL, kind+128, r) & SECURE_PAYLOAD_MASK; return true; }
+1592c1611
+<         return (p >> 33) == 0 && sourceRound <= ROUND && sourceRound <= txRound && id <= 1 && id <= maxKnownId;
+---
+>         return (p >> 41) == 0 && sourceRound <= ROUND && sourceRound <= txRound && id <= 1 && id <= maxKnownId;
+1593a1613
+>     if (kind == SEC_STATUS) return (p >> 48)==0 && ((p>>12)&511)<=txRound && ((p>>21)&4095)<=maxKnownId;
+1597c1617
+<     secureMessages.clear();
+---
+>     secureMessages.clear(); enemyPingNow=false; guardRelayKind=0;
+1599c1619
+<         if (v == 0) continue;
+---
+> 
+1602c1622
+<         for (int kind = SEC_QUEEN; kind <= SEC_PPROBE; kind++) {
+---
+>         for (int kind = SEC_QUEEN; kind <= SEC_STATUS; kind++) {
+1604a1625
+>                 if(!securePayloadPlausible(kind,candidatePayload,candidateRound) && securePayloadPlausible(kind,v&SECURE_PAYLOAD_MASK,candidateRound)) candidatePayload=v&SECURE_PAYLOAD_MASK; // legacy unmasked body
+1608a1630
+>         if (matches==0 && P.enemyPing) enemyPingNow=true;
+1628c1650
+<     uint64_t payload = (uint64_t)cell | ((uint64_t)(round & 511) << 12) | ((uint64_t)id << 21);
+---
+>     uint64_t payload = (uint64_t)cell | ((uint64_t)(round & 511) << 12) | ((uint64_t)id << 21) | ((uint64_t)qHeading<<33) | ((uint64_t)qMode<<35) | ((uint64_t)qThreat<<37) | (1ULL<<40);
+1643a1666,1667
+>             if(m.payload & (1ULL<<40)) { qHeading=(m.payload>>33)&3; qMode=(m.payload>>35)&3; qThreat=(m.payload>>37)&1; }
+> 
+1645a1670,1674
+>     // Own view is authoritative; messages reach only 45.855% of queen turns,
+>     // 24.9% before head-on deaths. Never require a message for nearby protection.
+>     for(const auto& dr:others) if(dr.team==MY_TEAM && isQueenId(dr.id) && dr.headCell>=0) {
+>         trueQueenCell=dr.headCell; trueQueenRound=ROUND; trueQueenId=dr.id; qHeading=dr.headFace; qMode=0;
+>     }
+1843a1873,1909
+> 
+> static void guardUpdate() {
+>     guardFriends.erase(remove_if(guardFriends.begin(),guardFriends.end(),[](const GuardStatus& f){return ROUND-f.round>6;}),guardFriends.end());
+>     for(const auto& m:secureMessages) {
+>         int id=(m.payload>>21)&4095, r=(m.payload>>12)&511;
+>         if(m.kind==SEC_STATUS) {
+>             GuardStatus f{int(m.payload&4095),r,id,int((m.payload>>33)&3),max(1,int(((m.payload>>35)&7)*4)),int((m.payload>>38)&1),int((m.payload>>39)&3),int((m.payload>>41)&3),int(((m.payload>>43)&31)*4)};
+>             bool found=false; for(auto& old:guardFriends) if(old.id==id) {if(f.round>=old.round)old=f;found=true;break;} if(!found)guardFriends.push_back(f);
+>         }
+>         if((m.kind==SEC_STATUS || m.kind==SEC_QPOS) && r>relaySeen[id] && ROUND-r<=3) {
+>             int shift=m.kind==SEC_STATUS?41:38, hops=(m.payload>>shift)&3;
+>             if(hops<3 && id!=MY_ID) {guardRelay=(m.payload&~(3ULL<<shift))|((uint64_t)(hops+1)<<shift);guardRelayKind=m.kind;relaySeen[id]=r;}
+>         }
+>     }
+>     memset(laneRisk,0,sizeof laneRisk);
+>     if(!P.laneEcho || !isTrueQueen() || echoLanes.empty())return;
+>     int counts[6]={ECHO[0],ECHO[1],ECHO[2],ECHO[3],ECHO[4],0};
+>     int sum=0;for(int i=0;i<5;i++)sum+=counts[i]; counts[5]=int(echoLanes.size())-sum;
+>     vector<int> unresolved;
+>     for(int i=0;i<(int)echoLanes.size();i++)if(echoLanes[i].resolved>=0)counts[echoLanes[i].resolved]--;else unresolved.push_back(i);
+>     for(int c:counts)if(c<0)return;
+>     double total=0, enemy[4]={}; int assign[4]={};
+>     auto enumerate=[&](auto&& self,int at,double weight)->void {
+>         if(at==(int)unresolved.size()) {for(int c:counts)if(c)return;total+=weight;for(int j=0;j<at;j++)if(assign[j]==3||assign[j]==4)enemy[unresolved[j]]+=weight;return;}
+>         int i=unresolved[at];
+>         // Terrain-only priors averaged over the two held-out folds; unknown
+>         // terrain permits both kelp and no-hit outcomes. Never use occupancy
+>         // to decide whether a kelp outcome is eligible.
+>         const double kp[6]={.7305,.111,.0877,.041,.0299,.0001};
+>         const double op[6]={0,.254,.3235,.2235,.1982,.0008};
+>         for(int k=0;k<6;k++)if(counts[k] && (k!=0 || echoLanes[i].kelp) && (k!=5 || !echoLanes[i].kelp || echoLanes[i].unknown)) {counts[k]--;assign[at]=k;self(self,at+1,weight*(echoLanes[i].unknown?.5*(kp[k]+op[k]):echoLanes[i].kelp?kp[k]:op[k]));counts[k]++;}
+>     };
+>     enumerate(enumerate,0,1.0);
+>     if(total>0)for(int i:unresolved)if(echoLanes[i].dir!=opp(qHeading) && enemy[i]/total>.5)for(int c:echoLanes[i].cells)laneRisk[c]=max(laneRisk[c],enemy[i]/total);
+> }
+> 
+> 
+1861c1927
+<     authenticateMessages(); // SECURE
+---
+>     qThreat=false; authenticateMessages(); // SECURE
+1863a1930
+>     guardUpdate(); if(isTrueQueen()) {qMode=0;qThreat=enemyPingNow; if(enemyPingNow)qMode=2;}
+1989a2057,2091
+>     // QG: soft protection, including own-vision threats and aging reports.
+>     for(auto& o:opts) if(!o.sim.cells.empty()) {
+>         int dest=o.sim.cells.back(), age=ROUND-trueQueenRound;
+>         if(isTrueQueen()) {
+>             double risk=0;for(int c:o.sim.cells)risk=max(risk,laneRisk[c]);
+>             int reach=(MY_LEN+3)/4+1; // echo carries no enemy length; conservative own-length proxy
+>             for(int d=0;d<4;d++) {int c=dest;for(int k=0;k<min(reach,12);k++){c=stepRaw(c,d);risk=max(risk,laneRisk[c]*.7);}}
+>             o.ev.score-=12*risk; if(risk>0 && o.dirs[0]==MY_DIR)qMode=2;
+>             if(enemyPingNow)o.ev.score+=2.0*min(1.0,o.ev.space/double(2*MY_LEN+20));
+>             for(const auto& f:guardFriends) {if(torusDist(dest,f.cell)<=2)o.ev.score-=3.0/(1+ROUND-f.round); if(f.threat) {int tc=stepRaw(f.cell,f.td);int dd=torusDist(dest,tc);if(dd<=3)o.ev.score-=8.0*(4-dd)/(1+ROUND-f.round);}}
+>         } else if(trueQueenCell>=0 && age<=6) {
+>             double decay=1.0/(1+age);
+>             if(P.guardZone && qMode!=3 && !feeding) {
+>                 double penalty=0;for(int c:o.sim.body)if(torusDist(c,trueQueenCell)<=3+age)penalty=max(penalty,15.0*decay);
+>                 int c=trueQueenCell;for(int k=1;k<=6;k++){c=stepRaw(c,qHeading);for(int bc:o.sim.body)if(torusDist(c,bc)<=age)penalty=max(penalty,24.0*decay);}
+>                 o.ev.score-=penalty;
+>             }
+>             if(P.qFreeze && qMode==3 && torusDist(body[0],trueQueenCell)<=4) {o.ev.score-=o.dirs.size()>1?25:0; if(torusDist(dest,trueQueenCell)<=3)o.ev.score-=30; o.ev.score+=2*o.ev.space/(double)(2*MY_LEN+20);}
+>             if(P.guardIntercept && UNITS>=6 && !feeding) {
+>                 auto intercept=[&](int tc,int len,int tid) {
+>                     if(torusDist(tc,trueQueenCell)>6 || MY_LEN<len)return;
+>                     int dd=torusDist(body[0],tc), rank=0;
+>                     for(const auto& f:guardFriends)if(f.id!=MY_ID && f.len>=len && (torusDist(f.cell,tc)<dd || (torusDist(f.cell,tc)==dd && f.id<MY_ID)))rank++;
+>                     for(const auto& dr:others)if(dr.team==MY_TEAM && dr.id!=MY_ID && !isQueenId(dr.id) && dr.headCell>=0 && dr.estLen>=len) {bool known=false;for(const auto& f:guardFriends)if(f.id==dr.id)known=true;if(!known && (torusDist(dr.headCell,tc)<dd || (torusDist(dr.headCell,tc)==dd && dr.id<MY_ID)))rank++;}
+>                     if(rank<2)o.ev.score+=8.0*decay*(dd-torusDist(dest,tc));
+>                 };
+>                 for(const auto& dr:others)if(dr.team!=MY_TEAM && dr.headCell>=0)intercept(stepRaw(dr.headCell,dr.headFace),dr.estLen,dr.id);
+>                 for(const auto& f:guardFriends)if(f.threat && f.enemyLen>0 && ROUND-f.round<=3)intercept(stepRaw(f.cell,f.td),f.enemyLen,f.id);
+>                 // MAC-failed alignment pings lack an enemy length; they raise
+>                 // caution but cannot alone authorise a head-on trade.
+>             }
+>         }
+>     }
+>     double guardMinDeath=1;for(const auto& o:opts)guardMinDeath=min(guardMinDeath,o.ev.pDeath); if(guardMinDeath>=.6)qThreat=true;
+>     if(isTrueQueen() && P.qFreeze) {bool safe=false;for(const auto& o:opts)if(o.ev.pDeath<.6)safe=true;if(!safe)qMode=3;}
+2148,2155c2250,2282
+<     lastRay.clear();
+<     int head = -1, dir = MY_DIR;
+<     if (!body.empty() && body[0] >= 0) {
+<         head = body[0];
+<         if (!chosenCells.empty()) {
+<             head = chosenCells.back();
+<             int prev = chosenCells.size() >= 2 ? chosenCells[chosenCells.size() - 2] : body[0];
+<             for (int d = 0; d < 4; d++) if (nbr[prev * 4 + d] == head) dir = d;
+---
+>     lastRay.clear(); echoLanes.clear(); if(body.empty() || body[0]<0 || elapsedMs()>=55)return;
+>     int head=chosenCells.empty()?body[0]:chosenCells.back(), dir=MY_DIR;
+>     if(!chosenCells.empty()) {int prev=chosenCells.size()>1?chosenCells[chosenCells.size()-2]:body[0];for(int d=0;d<4;d++)if(nbr[prev*4+d]==head)dir=d;}
+>     if(isTrueQueen() && P.qposFrom>0 && ROUND>=P.qposFrom) {
+>         qHeading=dir;
+>         if(qMode==0)for(const auto& dr:others)if(dr.team==MY_TEAM && dr.headCell>=0 && torusDist(head,dr.headCell)<=3)qMode=1;
+>         uint64_t word=packTrueQueenPos(head,ROUND,MY_ID);
+>         vector<int> predicted=body;
+>         if(!chosenCells.empty()) {vector<int> dirs;int prev=body[0];for(int c:chosenCells){for(int d=0;d<4;d++)if(nbr[prev*4+d]==c){dirs.push_back(d);break;}prev=c;}if(dirs.size()==chosenCells.size()){auto sim=simulate(dirs);if(!sim.dead)predicted=sim.body;}}
+>         int sent=0;
+>         for(int j=0;j<4;j++) {int d=(dir+(P.laneRays==3 ? (j==1?3:j==3?1:j) : j))%4;if(elapsedMs()>=60 || (sent>=2 && elapsedMs()>55))break;
+>             printf("SONAR %c %llu\n",DCH[d],(unsigned long long)word);sent++;
+>             EchoLane lane;lane.dir=d;lane.kelp=false;
+>             // Refracted back rays are included in count subtraction/marginalisation,
+>             // but never produce a head-area danger lane, for both schedules.
+>             int c=head, rayDir=d;
+>             if(predicted.size()>1 && (d==opp(dir) || find(predicted.begin()+1,predicted.end(),nbr[head*4+d])!=predicted.end())) {
+>                 c=predicted.back();int before=predicted[predicted.size()-2];
+>                 for(int td=0;td<4;td++)if(nbr[c*4+td]==before){rayDir=opp(td);break;}
+>             }
+>             for(int k=1;k<=W+H;k++) {
+>                 int terrain=effK(c,rayDir); if(!terrain){lane.kelp=true;lane.unknown=true;}
+>                 if(terrain==2){lane.kelp=true;lane.resolved=0;break;}
+>                 int next=nbr[c*4+rayDir];if(next<0){lane.kelp=true;lane.unknown=true;break;}c=next;
+>                 if(k<=12 && viewIndex[c]<0)lane.cells.push_back(c);
+>                 if(find(predicted.begin(),predicted.end(),c)!=predicted.end()){lane.resolved=c==head?2:1;break;}
+>                 if(viewIndex[c]>=0 && occId[c] && occId[c]!=MY_ID+1) {bool ally=false;for(const auto& dr:others)if(dr.id==occId[c]-1)ally=dr.team==MY_TEAM;lane.resolved=ally?(occHead[c]?2:1):(occHead[c]?4:3);break;}
+>                 if(viewIndex[c]<0) { // unseen bodies may precede known distant kelp
+>                     lane.resolved=-1;
+>                     for(int n=k;n<W+H;n++){int t=effK(c,rayDir);if(t==0){lane.kelp=true;lane.unknown=true;}if(t==2){lane.kelp=true;break;}int nc=nbr[c*4+rayDir];if(nc<0){lane.kelp=true;lane.unknown=true;break;}c=nc;if(n<12)lane.cells.push_back(c);}break;
+>                 }
+>             }
+>             echoLanes.push_back(lane);
+2157,2171d2283
+<     }
+<     // QPOS: true queen uses all four rays after r200; other dragons keep sink gossip flowing.
+<     if (isTrueQueen() && ROUND >= 200 && head >= 0) {
+<         uint64_t v = packTrueQueenPos(head, ROUND, MY_ID);
+<         trueQueenCell = head; trueQueenRound = ROUND; trueQueenId = MY_ID;
+<         for (int d = 0; d < 4; d++) printf("SONAR %c %llu\n", DCH[d], (unsigned long long)v);
+<         return;
+<     }
+<     if (ROUND >= P.gossipFrom) {
+<         uint64_t v = packQueen(queen);
+<         bool relay = !isTrueQueen() && trueQueenCell >= 0 && ROUND - trueQueenRound <= 6;
+<         int relayDir = (MY_ID + ROUND) & 3;
+<         for (int d = 0; d < 4; d++)
+<             printf("SONAR %c %llu\n", DCH[d], (unsigned long long)(relay && d == relayDir ?
+<                    packTrueQueenPos(trueQueenCell, trueQueenRound, trueQueenId) : v));
+2174,2187c2286,2300
+<     if (head < 0) return;
+<     // PPROBE: a head next to a portal edge sends its ray through that portal (the radar still reads enemy echoes)
+<     probeDir = -1;
+<     for (int d = 0; d < 4; d++) if (effK(head, d) == 3 && d != opp(dir)) { probeDir = d; if (d == dir) break; }
+<     if (probeDir >= 0) { dir = probeDir; probeCell = head; probeRound = ROUND; }
+<     int c = head;
+<     for (int k = 0; k < W + H; k++) {
+<         c = nbr[c * 4 + dir];
+<         if (c < 0) break;
+<         lastRay.push_back(c);
+<     }
+<     if (probeDir >= 0)  // PPROBE warn: tell a friend on the far side where our head is
+<         printf("SONAR %c %llu\n", DCH[dir], (unsigned long long)packPortalProbe(head));
+<     else printf("SONAR %c 0\n", DCH[dir]);
+---
+>     qThreat=qThreat||enemyPingNow;
+>     int sd=-1;
+>     if(!isTrueQueen() && P.statusRay && ROUND>=12) {
+>         int best=1<<30;
+>         for(int j=0;j<4;j++){int d=(j+(MY_ID&1)*2)%4;int dd=trueQueenCell>=0?torusDist(stepRaw(head,d),trueQueenCell):j;if(dd<best){best=dd;sd=d;}}
+>         bool threat=enemyPingNow||qThreat||(ECHO[3]+ECHO[4]>0);int td=dir, enemyLen=0;
+>         for(const auto& dr:others)if(dr.team!=MY_TEAM && dr.headCell>=0){threat=true;enemyLen=min(31,(dr.estLen+3)/4);int bestd=1<<30;for(int d=0;d<4;d++){int dd=torusDist(stepRaw(head,d),dr.headCell);if(dd<bestd){bestd=dd;td=d;}}break;}
+>         uint64_t payload=(uint64_t)head|((uint64_t)ROUND<<12)|((uint64_t)MY_ID<<21)|((uint64_t)dir<<33)|((uint64_t)min(7,MY_LEN/4)<<35)|((uint64_t)threat<<38)|((uint64_t)td<<39)|((uint64_t)enemyLen<<43);
+>         uint64_t word=guardRelayKind?packSecure(guardRelay,guardRelayKind,ROUND):packSecure(payload,SEC_STATUS,ROUND);
+>         printf("SONAR %c %llu\n",DCH[sd],(unsigned long long)word);
+>     }
+>     if(elapsedMs()>=55)return;
+>     if(dir==sd)dir=(dir+1)%4;
+>     int c=head;for(int k=0;k<W+H;k++){c=nbr[c*4+dir];if(c<0)break;lastRay.push_back(c);}
+>     printf("SONAR %c %llu\n",DCH[dir],(unsigned long long)(ROUND>=P.gossipFrom?packQueen(queen):packPortalProbe(head)));

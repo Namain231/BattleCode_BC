@@ -1,0 +1,8 @@
+out/p2_viper_y96qg: games 98 win 59 (60.2%) | our queen died 87/98 median r 171 causes {'headon': 60, 'wall': 20, 'self': 7} | enemy queen died 90/98
+   around_unsw: W 10/14  queen died 12/14 median r 259
+   australia: W 5/14  queen died 14/14 median r 260
+   islands: W 9/14  queen died 14/14 median r 135
+   maze: W 8/14  queen died 14/14 median r 255
+   stripes: W 12/14  queen died 10/14 median r 134
+   tower_defense: W 6/14  queen died 11/14 median r 171
+   weakhold: W 9/14  queen died 12/14 median r 121

@@ -7,6 +7,7 @@ can check its own forward pass inside the judge's sandbox (NN_SELFTEST).
 """
 import argparse
 import glob
+import json
 import os
 import sys
 
@@ -36,7 +37,18 @@ def main():
     npl = ck.get("planes", 16)
     m = Policy(planes=npl, scalars=nsc, ch=ch, hidden=hid, classes=nout); m.load_state_dict(ck["state_dict"]); m.eval()
     sd = m.state_dict()
-    d = np.load(sorted(glob.glob(os.path.join(a.data, "shard_*.npz")))[0])
+    manifest_path = os.path.join(a.data, 'manifest.json')
+    manifest = {}
+    if os.path.exists(manifest_path):
+        with open(manifest_path, encoding='utf-8') as stream:
+            manifest = json.load(stream)
+    if isinstance(manifest, dict) and str(manifest.get('schema_version', '')).startswith('v6.'):
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'v6'))
+        from shard_manifest import owned_shards
+        first = owned_shards(a.data)[0]
+    else:
+        first = sorted(glob.glob(os.path.join(a.data, "shard_*.npz")))[0]
+    d = np.load(first)
     i = 123
     planes = torch.from_numpy(d["planes"][i:i + 1]).float() / 255
     sv = np.zeros((1, nsc), np.float32)   # test input: the sample's scalars, zero-padded (e.g. team one-hot)

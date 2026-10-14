@@ -1,0 +1,176 @@
+SUMMARY echo_eval_v2
+77/77 games decoded; 22087 unique queen records; failed games=0.
+Ray validation all fields: 4248800/4248800 (100.0000%); all4 head-on deaths warned=20/45; shuffled mean=6.51, lift=3.0721966205837177.
+Friend direct reach=45.855%; 2-hop=45.855%; 3-hop=45.855%.
+Echo warnings formed at record i are usable only at records >i; terminal death index is the first queen record at/after death round.
+Lane metrics: every unresolved non-back lane within FAR=12, including uncast misses. Truth-distance mask and known whole-map terrain are privileged upper bounds.
+VISION-ONLY scans square-view occupancy on non-back cardinal lanes (no sonar), same 5-record horizon; same strict delayed warning convention. Echo policies warn on unseen lanes only; three_nofwd_stale explicitly excludes view-resolved lanes (no stale carryover).
+Shuffle: 200 deterministic repetitions, positive offsets >=20 (modulo game length); brackets are empirical central 95% null counts and reciprocal lift intervals, not confidence intervals for causal benefit. Precision excludes surviving end censoring.
+
+RAY VALIDATION
+endpoint: 4248800/4248800 = 1.000000
+kind: 4248800/4248800 = 1.000000
+dragon: 4248800/4248800 = 1.000000
+all: 4248800/4248800 = 1.000000
+Mismatch classes (exclusive, portal then refraction then sprint then other): {'portal': 0, 'own-body refraction': 0, 'sprint-reconstruction': 0, 'other': 0}
+Movement fallback count: 0
+
+RECORD COUNTS: game | map | queen records | rounds | queen death
+985794 | Around UNSW | 423 | 500 | (422, 3)
+985795 | Australia | 448 | 500 | (447, 3)
+985796 | Autarky | 113 | 363 | (112, 3)
+985797 | Default | 378 | 500 | (378, 2)
+985798 | Devil | 140 | 140 | (139, 3)
+985799 | Islands | 335 | 500 | (334, 3)
+985800 | Maze | 294 | 500 | (294, 2)
+985801 | Portals | 462 | 500 | (462, 2)
+985802 | Prisoners Dilemma | 357 | 357 | None
+985803 | Queen Of Spades | 403 | 500 | (402, 3)
+985804 | Schooltime | 500 | 500 | None
+985805 | Slithery Fight | 479 | 500 | (478, 3)
+985806 | Stripes | 203 | 381 | (202, 3)
+985807 | Tower Defense | 122 | 233 | (121, 3)
+985808 | Trauma | 494 | 500 | (494, 2)
+985809 | Trophy | 81 | 152 | (80, 3)
+985810 | weakhold | 149 | 325 | (149, 0)
+985868 | Around UNSW | 500 | 500 | None
+985869 | Australia | 95 | 499 | (94, 3)
+985870 | Autarky | 500 | 500 | None
+985871 | Default | 157 | 230 | (156, 3)
+985872 | Devil | 500 | 500 | None
+985873 | Islands | 99 | 500 | (99, 0)
+985874 | Maze | 199 | 500 | (199, 1)
+985875 | Portals | 500 | 500 | None
+985876 | Prisoners Dilemma | 98 | 251 | (97, 3)
+985877 | Queen Of Spades | 229 | 229 | (228, 3)
+985878 | Schooltime | 500 | 500 | None
+985879 | Slithery Fight | 500 | 500 | None
+985880 | Stripes | 409 | 409 | (408, 3)
+985881 | Tower Defense | 204 | 500 | (203, 3)
+985882 | Trauma | 500 | 500 | None
+985883 | Trophy | 242 | 242 | None
+985884 | weakhold | 345 | 498 | (345, 0)
+985910 | Around UNSW | 184 | 500 | (183, 3)
+985911 | Australia | 423 | 493 | (422, 3)
+985912 | Default | 127 | 339 | (126, 3)
+985913 | Islands | 150 | 266 | (149, 3)
+985914 | Maze | 367 | 500 | (366, 3)
+985915 | Queen Of Spades | 48 | 500 | (47, 3)
+985916 | Stripes | 82 | 226 | (81, 3)
+985917 | Tower Defense | 352 | 352 | (351, 3)
+985918 | weakhold | 158 | 500 | (158, 0)
+985836 | Around UNSW | 292 | 500 | (291, 3)
+985837 | Australia | 155 | 500 | (154, 3)
+985838 | Autarky | 387 | 500 | (386, 3)
+985839 | Default | 32 | 500 | (31, 3)
+985840 | Devil | 236 | 282 | (235, 3)
+985841 | Islands | 173 | 500 | (172, 3)
+985842 | Maze | 210 | 500 | (210, 0)
+985843 | Portals | 195 | 500 | (195, 1)
+985844 | Prisoners Dilemma | 144 | 279 | (143, 3)
+985845 | Queen Of Spades | 85 | 105 | (84, 3)
+985846 | Schooltime | 500 | 500 | None
+985847 | Slithery Fight | 500 | 500 | None
+985848 | Stripes | 139 | 139 | (138, 3)
+985849 | Tower Defense | 142 | 500 | (141, 3)
+985850 | Trauma | 465 | 465 | None
+985851 | Trophy | 99 | 99 | None
+985852 | weakhold | 138 | 500 | (138, 0)
+985777 | Around UNSW | 500 | 500 | None
+985778 | Australia | 426 | 500 | (425, 3)
+985779 | Autarky | 170 | 327 | (169, 3)
+985780 | Default | 447 | 500 | (446, 3)
+985781 | Devil | 315 | 316 | (315, 0)
+985782 | Islands | 469 | 500 | (468, 3)
+985783 | Maze | 289 | 500 | (289, 1)
+985784 | Portals | 283 | 500 | (282, 3)
+985785 | Prisoners Dilemma | 84 | 299 | (83, 3)
+985786 | Queen Of Spades | 407 | 500 | (406, 3)
+985787 | Schooltime | 500 | 500 | None
+985788 | Slithery Fight | 494 | 500 | (493, 3)
+985789 | Stripes | 182 | 200 | (181, 3)
+985790 | Tower Defense | 196 | 321 | (196, 0)
+985791 | Trauma | 329 | 500 | (328, 3)
+985792 | Trophy | 162 | 220 | (161, 3)
+985793 | weakhold | 93 | 500 | (93, 0)
+
+HELD-OUT FOLD: train parity 1 (38 games), evaluate parity 0 (39 games)
+Training frequencies by terrain-only base: {'kelp': {'ally': 2801, 'kelp': 20544, 'ally_head': 2109, 'enemy_head': 1045, 'enemy': 1455}, 'none': {'enemy_head': 398, 'enemy': 455, 'ally_head': 471, 'ally': 378}}
+Smoothed training priors: {'kelp': {'kelp': 0.7348259952072678, 'ally': 0.10021817661575878, 'ally_head': 0.07546764905754855, 'enemy': 0.05207625451554061, 'enemy_head': 0.03741192460388426}, 'none': {'none': 0.0005858230814294083, 'ally': 0.22202694786174576, 'ally_head': 0.27650849443468073, 'enemy': 0.2671353251318102, 'enemy_head': 0.23374340949033393}}
+policy | rays/turn | lane coverage | Brier(all eligible lanes) | recall | precision | alarm rate | false/100 | deaths warned | shuffled mean [95%] | lift [95%] | P(death<=5|warn) / P(death<=5|no warn)
+all4 | 4.00 | 1.000 | 0.028 | 0.350 | 0.819 | 0.021 | 1.96 | 10/21 | 2.75 [0,6] | 3.63 [1.67,inf/NA] | 0.0900 / 0.0094 (n=(200, 9215))
+three | 3.00 | 1.000 | 0.018 | 0.579 | 0.927 | 0.034 | 3.19 | 11/21 | 4.12 [1,7] | 2.67 [1.57,11.00] | 0.0658 / 0.0092 (n=(319, 9096))
+fwd1 | 1.00 | 0.365 | 0.041 | 0.389 | 1.000 | 0.027 | 2.54 | 10/21 | 2.73 [0,5] | 3.66 [2.00,inf/NA] | 0.0632 / 0.0097 (n=(253, 9162))
+alt2 | 2.00 | 0.493 | 0.038 | 0.284 | 1.000 | 0.018 | 1.73 | 7/21 | 2.71 [0,5] | 2.58 [1.40,inf/NA] | 0.0578 / 0.0103 (n=(173, 9242))
+adapt2 | 2.00 | 0.725 | 0.022 | 0.521 | 0.997 | 0.033 | 3.05 | 12/21 | 3.67 [1,7] | 3.27 [1.71,12.00] | 0.0629 / 0.0094 (n=(302, 9113))
+fwd_rot | 2.00 | 0.680 | 0.028 | 0.471 | 0.994 | 0.031 | 2.94 | 9/21 | 3.50 [0,7] | 2.58 [1.29,inf/NA] | 0.0552 / 0.0098 (n=(290, 9125))
+fwd_left | 2.00 | 0.673 | 0.027 | 0.485 | 0.988 | 0.032 | 2.96 | 10/21 | 3.79 [1,7] | 2.64 [1.43,10.00] | 0.0676 / 0.0093 (n=(296, 9119))
+fwd_right | 2.00 | 0.691 | 0.029 | 0.457 | 0.997 | 0.030 | 2.80 | 12/21 | 3.59 [0,7] | 3.34 [1.71,inf/NA] | 0.0578 / 0.0097 (n=(277, 9138))
+three_nofwd_stale | 3.00 | 1.000 | 0.018 | 0.579 | 0.927 | 0.034 | 3.19 | 11/21 | 4.12 [1,7] | 2.67 [1.57,11.00] | 0.0658 / 0.0092 (n=(319, 9096))
+oracle | 4.00 | 1.000 | 0.000 | 1.000 | 1.000 | 0.063 | 5.90 | 15/21 | 6.14 [3,10] | 2.44 [1.50,5.00] | 0.0580 / 0.0080 (n=(586, 8829))
+vision_only | 0.00 | 0.000 | 0.066 | 0.000 | 0.000 | 0.100 | 9.60 | 14/21 | 5.46 [2,9] | 2.56 [1.56,7.00] | 0.0386 / 0.0081 (n=(933, 8482))
+
+HELD-OUT FOLD: train parity 0 (39 games), evaluate parity 1 (38 games)
+Training frequencies by terrain-only base: {'kelp': {'ally': 2466, 'kelp': 14712, 'ally_head': 2024, 'enemy': 603, 'enemy_head': 451}, 'none': {'ally': 282, 'ally_head': 366, 'enemy_head': 160, 'enemy': 177}}
+Smoothed training priors: {'kelp': {'kelp': 0.7261734366516954, 'ally': 0.12176101870588817, 'ally_head': 0.09994570850402251, 'enemy': 0.029810966882187453, 'enemy_head': 0.022308869256206506}, 'none': {'none': 0.00101010101010101, 'ally': 0.28585858585858587, 'ally_head': 0.3707070707070707, 'enemy': 0.1797979797979798, 'enemy_head': 0.16262626262626262}}
+policy | rays/turn | lane coverage | Brier(all eligible lanes) | recall | precision | alarm rate | false/100 | deaths warned | shuffled mean [95%] | lift [95%] | P(death<=5|warn) / P(death<=5|no warn)
+all4 | 4.00 | 1.000 | 0.048 | 0.424 | 0.819 | 0.047 | 4.53 | 10/24 | 3.90 [1,7] | 2.56 [1.43,10.00] | 0.0321 / 0.0084 (n=(591, 12001))
+three | 3.00 | 1.000 | 0.031 | 0.565 | 0.935 | 0.062 | 5.99 | 11/24 | 4.61 [1,8] | 2.39 [1.38,11.00] | 0.0284 / 0.0083 (n=(775, 11817))
+fwd1 | 1.00 | 0.368 | 0.078 | 0.348 | 1.000 | 0.046 | 4.47 | 9/24 | 4.03 [1,7] | 2.23 [1.29,9.00] | 0.0259 / 0.0087 (n=(579, 12013))
+alt2 | 2.00 | 0.480 | 0.072 | 0.284 | 0.992 | 0.035 | 3.42 | 9/24 | 3.15 [1,6] | 2.85 [1.50,9.00] | 0.0271 / 0.0089 (n=(442, 12150))
+adapt2 | 2.00 | 0.719 | 0.039 | 0.534 | 0.990 | 0.064 | 6.28 | 11/24 | 5.08 [2,9] | 2.17 [1.22,5.50] | 0.0259 / 0.0084 (n=(810, 11782))
+fwd_rot | 2.00 | 0.676 | 0.052 | 0.455 | 0.991 | 0.056 | 5.39 | 12/24 | 4.47 [1,8] | 2.68 [1.50,12.00] | 0.0314 / 0.0082 (n=(700, 11892))
+fwd_left | 2.00 | 0.683 | 0.051 | 0.458 | 0.988 | 0.057 | 5.52 | 10/24 | 4.74 [1,8] | 2.11 [1.25,10.00] | 0.0252 / 0.0086 (n=(714, 11878))
+fwd_right | 2.00 | 0.685 | 0.052 | 0.464 | 0.990 | 0.057 | 5.57 | 10/24 | 4.50 [1,8] | 2.22 [1.25,10.00] | 0.0292 / 0.0083 (n=(720, 11872))
+three_nofwd_stale | 3.00 | 1.000 | 0.031 | 0.565 | 0.935 | 0.062 | 5.99 | 11/24 | 4.61 [1,8] | 2.39 [1.38,11.00] | 0.0284 / 0.0083 (n=(775, 11817))
+oracle | 4.00 | 1.000 | 0.000 | 1.000 | 1.000 | 0.118 | 11.52 | 13/24 | 8.09 [4,12] | 1.61 [1.08,3.25] | 0.0209 / 0.0080 (n=(1481, 11111))
+vision_only | 0.00 | 0.000 | 0.120 | 0.000 | 0.000 | 0.136 | 13.23 | 18/24 | 6.96 [3,11] | 2.59 [1.64,6.00] | 0.0292 / 0.0064 (n=(1713, 10879))
+
+POOLED CROSS-FITTED RESULTS (each game evaluated with the opposite half's prior)
+policy | rays/turn | lane coverage | Brier(all eligible lanes) | recall | precision | alarm rate | false/100 | deaths warned | shuffled mean [95%] | lift [95%] | P(death<=5|warn) / P(death<=5|no warn)
+all4 | 4.00 | 1.000 | 0.040 | 0.403 | 0.819 | 0.036 | 3.43 | 20/45 | 6.51 [2,10] | 3.07 [2.00,10.00] | 0.0468 / 0.0089 (n=(791, 21216))
+three | 3.00 | 1.000 | 0.026 | 0.569 | 0.933 | 0.050 | 4.79 | 22/45 | 8.71 [5,14] | 2.53 [1.57,4.40] | 0.0393 / 0.0087 (n=(1094, 20913))
+fwd1 | 1.00 | 0.367 | 0.062 | 0.360 | 1.000 | 0.038 | 3.64 | 19/45 | 6.96 [3,11] | 2.73 [1.73,6.33] | 0.0373 / 0.0092 (n=(832, 21175))
+alt2 | 2.00 | 0.486 | 0.058 | 0.284 | 0.994 | 0.028 | 2.70 | 16/45 | 5.82 [2,11] | 2.75 [1.45,8.00] | 0.0358 / 0.0095 (n=(615, 21392))
+adapt2 | 2.00 | 0.722 | 0.032 | 0.531 | 0.992 | 0.051 | 4.90 | 23/45 | 8.72 [5,13] | 2.64 [1.77,4.60] | 0.0360 / 0.0089 (n=(1112, 20895))
+fwd_rot | 2.00 | 0.678 | 0.042 | 0.459 | 0.992 | 0.045 | 4.34 | 21/45 | 8.27 [4,13] | 2.54 [1.62,5.25] | 0.0384 / 0.0089 (n=(990, 21017))
+fwd_left | 2.00 | 0.679 | 0.041 | 0.466 | 0.988 | 0.046 | 4.42 | 20/45 | 8.71 [4,13] | 2.30 [1.54,5.00] | 0.0376 / 0.0089 (n=(1010, 20997))
+fwd_right | 2.00 | 0.688 | 0.043 | 0.462 | 0.992 | 0.046 | 4.38 | 22/45 | 8.08 [4,13] | 2.72 [1.69,5.50] | 0.0371 / 0.0089 (n=(997, 21010))
+three_nofwd_stale | 3.00 | 1.000 | 0.026 | 0.569 | 0.933 | 0.050 | 4.79 | 22/45 | 8.71 [5,14] | 2.53 [1.57,4.40] | 0.0393 / 0.0087 (n=(1094, 20913))
+oracle | 4.00 | 1.000 | 0.000 | 1.000 | 1.000 | 0.094 | 9.11 | 28/45 | 14.03 [8,20] | 2.00 [1.40,3.50] | 0.0314 / 0.0080 (n=(2067, 19940))
+vision_only | 0.00 | 0.000 | 0.097 | 0.000 | 0.000 | 0.121 | 11.67 | 32/45 | 13.10 [7,18] | 2.44 [1.78,4.57] | 0.0325 / 0.0072 (n=(2646, 19361))
+
+UNWEIGHTED TWO-FOLD MEAN: policy | Brier | recall | precision | alarm rate | death coverage
+all4 | 0.0380 | 0.3868 | 0.8189 | 0.0341 | 0.4464
+three | 0.0246 | 0.5721 | 0.9312 | 0.0479 | 0.4911
+fwd1 | 0.0593 | 0.3685 | 1.0000 | 0.0365 | 0.4256
+alt2 | 0.0552 | 0.2840 | 0.9958 | 0.0268 | 0.3542
+adapt2 | 0.0307 | 0.5279 | 0.9935 | 0.0485 | 0.5149
+fwd_rot | 0.0404 | 0.4629 | 0.9922 | 0.0434 | 0.4643
+fwd_left | 0.0390 | 0.4716 | 0.9880 | 0.0442 | 0.4464
+fwd_right | 0.0406 | 0.4609 | 0.9932 | 0.0435 | 0.4940
+three_nofwd_stale | 0.0246 | 0.5721 | 0.9312 | 0.0479 | 0.4911
+oracle | 0.0000 | 1.0000 | 1.0000 | 0.0901 | 0.6280
+vision_only | 0.0930 | 0.0000 | 0.0000 | 0.1180 | 0.7083
+
+REACHABILITY: all alive dragons cast four hypothetical rays, no FAR cutoff.
+group | records | direct fraction | mean hitting friends | 2 hops | 3 hops | mean alive friends | enemy direct | near8 records | near8 direct | near8 mean hitting friends | near8 2 hops | near8 3 hops
+overall | 22087 | 0.459 | 0.722 | 0.459 | 0.459 | 20.49 | 0.188 | 19515 | 0.514 | 0.812 | 0.514 | 0.514
+phase <100 | 7496 | 0.428 | 0.613 | 0.428 | 0.428 | 11.56 | 0.147 | 6899 | 0.459 | 0.661 | 0.459 | 0.459
+map Around UNSW (5 games) | 1899 | 0.602 | 0.937 | 0.602 | 0.602 | 46.25 | 0.124 | 1839 | 0.613 | 0.956 | 0.613 | 0.613
+phase 100-299 | 9677 | 0.481 | 0.776 | 0.481 | 0.481 | 28.11 | 0.182 | 8676 | 0.534 | 0.862 | 0.534 | 0.534
+phase >=300 | 4914 | 0.461 | 0.783 | 0.461 | 0.461 | 19.12 | 0.262 | 3940 | 0.565 | 0.965 | 0.565 | 0.565
+head-on death window (5 records) | 225 | 0.249 | 0.338 | 0.249 | 0.249 | 14.07 | 0.640 | 169 | 0.320 | 0.438 | 0.320 | 0.320
+all queen death windows (5 records) | 305 | 0.295 | 0.446 | 0.295 | 0.295 | 16.25 | 0.498 | 249 | 0.353 | 0.538 | 0.353 | 0.353
+map Australia (5 games) | 1547 | 0.493 | 0.724 | 0.493 | 0.493 | 34.59 | 0.330 | 1374 | 0.540 | 0.799 | 0.540 | 0.540
+map Autarky (4 games) | 1170 | 0.509 | 0.766 | 0.509 | 0.509 | 11.15 | 0.452 | 1107 | 0.537 | 0.809 | 0.537 | 0.537
+map Default (5 games) | 1141 | 0.570 | 0.813 | 0.570 | 0.570 | 13.97 | 0.613 | 1086 | 0.587 | 0.843 | 0.587 | 0.587
+map Islands (5 games) | 1226 | 0.457 | 0.633 | 0.457 | 0.457 | 27.81 | 0.221 | 1171 | 0.475 | 0.659 | 0.475 | 0.475
+map Maze (5 games) | 1359 | 0.735 | 1.473 | 0.735 | 0.735 | 23.59 | 0.015 | 1336 | 0.740 | 1.491 | 0.740 | 0.740
+map Queen Of Spades (5 games) | 1172 | 0.272 | 0.369 | 0.272 | 0.272 | 5.80 | 0.474 | 875 | 0.345 | 0.475 | 0.345 | 0.345
+map Stripes (5 games) | 1015 | 0.046 | 0.046 | 0.046 | 0.046 | 1.40 | 0.403 | 521 | 0.084 | 0.084 | 0.084 | 0.084
+map Tower Defense (5 games) | 1016 | 0.164 | 0.169 | 0.164 | 0.164 | 1.75 | 0.074 | 747 | 0.220 | 0.226 | 0.220 | 0.220
+map weakhold (5 games) | 883 | 0.374 | 0.464 | 0.374 | 0.374 | 10.27 | 0.007 | 880 | 0.375 | 0.466 | 0.375 | 0.375
+Any-friend 2/3-hop fractions equal direct reach by construction: the last friend on any path is itself a direct sender. Multi-hop can expand which friends reach her, but cannot create a record with no direct sender.
+
+Failed games: []

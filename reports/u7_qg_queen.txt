@@ -1,0 +1,16 @@
+out/u7_qf: games 98 win 54 (55.1%) | our queen died 91/98 median r 180 causes {'headon': 66, 'wall': 17, 'self': 8} | enemy queen died 91/98
+   around_unsw: W 7/14  queen died 14/14 median r 256
+   australia: W 6/14  queen died 14/14 median r 217
+   islands: W 8/14  queen died 14/14 median r 193
+   maze: W 10/14  queen died 13/14 median r 164
+   stripes: W 9/14  queen died 10/14 median r 134
+   tower_defense: W 5/14  queen died 13/14 median r 197
+   weakhold: W 9/14  queen died 13/14 median r 121
+out/u7_qg: games 98 win 50 (51.0%) | our queen died 90/98 median r 228.5 causes {'headon': 66, 'wall': 20, 'self': 4} | enemy queen died 93/98
+   around_unsw: W 6/14  queen died 14/14 median r 325
+   australia: W 8/14  queen died 14/14 median r 196
+   islands: W 9/14  queen died 14/14 median r 246
+   maze: W 4/14  queen died 14/14 median r 363
+   stripes: W 13/14  queen died 7/14 median r 122
+   tower_defense: W 2/14  queen died 13/14 median r 214
+   weakhold: W 8/14  queen died 14/14 median r 138

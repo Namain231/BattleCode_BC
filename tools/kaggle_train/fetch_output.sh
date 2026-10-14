@@ -2,6 +2,16 @@
 # Usage: fetch_output.sh OWNER/KERNEL OUTPUT_DIR [MAX_WAIT_SECONDS]
 # Poll every 60s; default 40 minutes. Downloads outputs plus the execution log.
 set -euo pipefail
+uv_retry() {
+  local attempt result
+  for attempt in 1 2 3; do
+    result=$(uv "$@" 2>&1) && { printf '%s\n' "$result"; return 0; }
+    printf '%s\n' "$result" >&2
+    if ! printf '%s' "$result" | grep -Eq 'Failed to fetch|invalid peer certificate|Request failed after'; then return 1; fi
+  done
+  return 1
+}
+
 : "${KAGGLE_API_TOKEN:?Export KAGGLE_API_TOKEN before running; do not put it in files}"
 [[ $# -ge 2 && $# -le 3 ]] || { echo "Usage: $0 OWNER/KERNEL OUTPUT_DIR [MAX_WAIT_SECONDS]" >&2; exit 2; }
 kernel=$1
@@ -11,12 +21,12 @@ max_wait=${3:-2400}
 mkdir -p -- "$out"
 start=$SECONDS
 while true; do
-  status=$(uv run --python 3.11 --with kaggle==2.2.4 kaggle kernels status "$kernel")
+  status=$(uv_retry run --python 3.11 --with kaggle==2.2.4 kaggle kernels status "$kernel")
   printf '%s\n' "$status"
   case "$status" in
     *COMPLETE*) break ;;
     *ERROR*|*CANCEL*)
-      uv run --python 3.11 --with kaggle==2.2.4 kaggle kernels output "$kernel" -p "$out" || true
+      uv_retry run --python 3.11 --with kaggle==2.2.4 kaggle kernels output "$kernel" -p "$out" || true
       echo 'Kernel failed; inspect downloaded execution log' >&2; exit 1 ;;
     *RUNNING*|*QUEUED*) ;;
     *) echo 'Unrecognized kernel status' >&2; exit 1 ;;
@@ -24,4 +34,4 @@ while true; do
   if (( SECONDS - start >= max_wait )); then echo 'Timed out waiting for kernel' >&2; exit 124; fi
   sleep 60
 done
-uv run --python 3.11 --with kaggle==2.2.4 kaggle kernels output "$kernel" -p "$out"
+uv_retry run --python 3.11 --with kaggle==2.2.4 kaggle kernels output "$kernel" -p "$out"

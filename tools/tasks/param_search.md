@@ -8,3 +8,6 @@ Do:
 3. Promote a final candidate only if it beats Sv5.3 by >= 3 pts with paired seeds on >= 1500 games, CPU peak <= 66M, and the critic passes it.
 
 Never submit. Hand the candidate dir and the report to the user.
+
+## DIRECTOR UPDATE 2026-10-05 00:35 (league fidelity result)
+The league is not faithful (see farm_scale.md update). Search objective = closed-start and overall OPENING metrics against the real top-team benchmark (out/opening_census.txt: units@100 per map, first split, eats per round), maximised subject to guards: win rate vs Y9_6 and vs the league not worse than Sv5.3 beyond noise, CPU peak <= 66M. Promotion rule stays: paired seeds, >= 1500 games, critic PASS, and units@100 on the four closed-start maps must move at least halfway to the top-team medians; a win-rate gain is welcome but not required for a candidate to be handed to the user for a ladder test (ladder is the only decisive evidence).
